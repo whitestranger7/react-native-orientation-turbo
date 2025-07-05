@@ -1,12 +1,28 @@
 #import "OrientationTurbo.h"
+#import "OrientationTurboImpl-Interface.h"
 
 @implementation OrientationTurbo
 RCT_EXPORT_MODULE()
 
-- (NSNumber *)multiply:(double)a b:(double)b {
-    NSNumber *result = @(a * b);
+- (nonnull NSString *)getCurrentOrientation {
+  return [[OrientationTurboImpl shared] getCurrentOrientation];
+}
 
-    return result;
+- (nonnull NSNumber *)isLocked {
+  BOOL locked = [[OrientationTurboImpl shared] isLocked];
+  return @(locked);
+}
+
+- (void)lockToLandscape:(nonnull NSString *)direction {
+  [[OrientationTurboImpl shared] lockToLandscape:direction];
+}
+
+- (void)lockToPortrait {
+  [[OrientationTurboImpl shared] lockToPortrait];
+}
+
+- (void)unlockAllOrientations {
+  [[OrientationTurboImpl shared] unlockAllOrientations];
 }
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
