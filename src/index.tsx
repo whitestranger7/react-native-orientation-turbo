@@ -1,24 +1,24 @@
-import OrientationController from './NativeOrientationTurbo';
+import OrientationTurbo from './NativeOrientationTurbo';
 import { LandscapeDirection, Orientation } from './constants';
 
 export const lockToPortrait = () => {
-  OrientationController.lockToPortrait();
+  OrientationTurbo.lockToPortrait();
 };
 
 export const lockToLandscape = (direction: LandscapeDirection) => {
-  OrientationController.lockToLandscape(direction as string);
+  OrientationTurbo.lockToLandscape(direction as string);
 };
 
 export const unlockAllOrientations = () => {
-  OrientationController.unlockAllOrientations();
+  OrientationTurbo.unlockAllOrientations();
 };
 
 export const getCurrentOrientation = (): Orientation => {
-  return OrientationController.getCurrentOrientation() as Orientation;
+  return OrientationTurbo.getCurrentOrientation() as Orientation;
 };
 
 export const isLocked = () => {
-  return OrientationController.isLocked();
+  return OrientationTurbo.isLocked();
 };
 
 export { LandscapeDirection, Orientation };

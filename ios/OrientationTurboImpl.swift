@@ -78,7 +78,7 @@ public class OrientationTurboImpl: NSObject {
   @available(iOS 16.0, *)
   private func updateOrientationModern(_ orientation: UIInterfaceOrientationMask, completion: ((Bool) -> Void)?) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
-      print("OrientationController: No window scene available")
+      print("OrientationTurbo: No window scene available")
       completion?(false)
       return
     }
@@ -91,7 +91,7 @@ public class OrientationTurboImpl: NSObject {
                      !error.localizedDescription.contains("failed")
         
         if !success {
-          print("OrientationController: Orientation update failed - \(error.localizedDescription)")
+          print("OrientationTurbo: Orientation update failed - \(error.localizedDescription)")
         }
         
         completion?(success)
