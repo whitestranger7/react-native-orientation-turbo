@@ -1,15 +1,15 @@
 # react-native-orientation-turbo
 
-A React Native library for controlling device orientation with support for locking to portrait, landscape orientations. Built with **Turbo Modules** for optimal performance.
+A React Native library for controlling device orientation with support for locking to portrait, landscape orientations, and real-time orientation change subscriptions. Built with **Turbo Modules** for optimal performance.
 
 ## Features
 
-**Modern Architecture**: Built with React Native Turbo Modules  
-**Cross Platform**: Support for both iOS and Android  
-**Orientation Locking**: Lock to portrait or landscape orientations  
-**Orientation Detection**: Get current device orientation  
-**TypeScript**: Full TypeScript support with type definitions  
-**Performance**: Native performance with Turbo Module architecture  
+**Modern Architecture**: Built with React Native Turbo Modules
+**Cross Platform**: Support for both iOS and Android
+**Orientation Locking**: Lock to portrait or landscape orientations
+**Real-time Subscriptions**: Subscribe to orientation changes with live updates
+**TypeScript**: Full TypeScript support with type definitions
+**Performance**: Native performance with Turbo Module architecture
 
 ## Requirements
 
@@ -51,8 +51,10 @@ import {
   unlockAllOrientations,
   getCurrentOrientation,
   isLocked,
+  onOrientationChange,
   type LandscapeDirection,
   type Orientation,
+  type OrientationSubscription,
 } from 'react-native-orientation-turbo';
 ```
 
@@ -78,6 +80,11 @@ console.log(currentOrientation); // 'PORTRAIT' | 'LANDSCAPE_LEFT' | 'LANDSCAPE_R
 // Check if orientation is currently locked
 const locked = isLocked();
 console.log(locked); // true | false
+
+//Subscribe to lock orientation changes
+onOrientationChange(({ orientation, isLocked }) => {
+  pass
+})
 ```
 
 ## API Reference
@@ -134,6 +141,56 @@ Returns whether the orientation is currently locked.
 const locked = isLocked();
 ```
 
+### Subscriptions
+
+#### `onOrientationChange(callback: (subscription: OrientationSubscription) => void): Subscription`
+
+Subscribes to orientation changes and receives real-time updates.
+
+**Parameters:**
+- `callback`: Function called when orientation changes, receives `OrientationSubscription` object
+
+**Returns:** Subscription object with `remove()` method to unsubscribe
+
+```typescript
+import { onOrientationChange } from 'react-native-orientation-turbo';
+
+const subscription = onOrientationChange(({ orientation, isLocked }) => {
+  console.log('Current orientation:', orientation);
+  console.log('Is locked:', isLocked);
+});
+
+// Unsubscribe when no longer needed
+subscription.remove();
+```
+
+**React Hook Example:**
+```typescript
+import { useEffect, useRef } from 'react';
+import type { EventSubscription } from 'react-native';
+
+import { onOrientationChange } from 'react-native-orientation-turbo';
+
+const MyComponent = () => {
+  const listenerSubscription = useRef<null | EventSubscription>(null);
+
+  useEffect(() => {
+    listenerSubscription.current = onOrientationChange(({ orientation, isLocked }) => {
+      // Handle orientation change
+      console.log('Orientation:', orientation, 'Locked:', isLocked);
+    });
+
+    return () => {
+      listenerSubscription.current?.remove();
+      listenerSubscription.current = null;
+    }; // Clean up subscription
+  }, []);
+
+  return <View>{/* Your component */}</View>;
+};
+```
+
+
 ### Types
 
 #### `LandscapeDirection`
@@ -155,34 +212,22 @@ enum Orientation {
 }
 ```
 
+#### `OrientationSubscription`
+
+```typescript
+type OrientationSubscription = {
+  orientation: Orientation;
+  isLocked: boolean;
+};
+```
+
 ## Complete Example
 
-Please visit `examples` folder on github page.
+Please visit `example` folder on github page.
 
 ## Enabling New Architecture
 
-This library requires React Native's New Architecture (Turbo Modules). Here's how to enable it:
-
-### For React Native 0.70+
-
-#### iOS
-In your `ios/Podfile`:
-
-```ruby
-use_react_native!(
-  :path => '../node_modules/react-native',
-  :fabric_enabled => true,
-  :new_arch_enabled => true,
-  :hermes_enabled => true
-)
-```
-
-#### Android
-In your `android/gradle.properties`:
-
-```properties
-newArchEnabled=true
-```
+This library requires React Native's New Architecture (Turbo Modules). Please refer to React Native docs on how to enable it.
 
 ## Contributing
 

@@ -1,6 +1,6 @@
 {
   "name": "react-native-orientation-turbo",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "orientation turbo",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
@@ -38,7 +38,7 @@
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",
-    "release": "release-it --only-version"
+    "release": "release-it --no-increment"
   },
   "keywords": [
     "react-native",
