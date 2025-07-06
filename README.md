@@ -1,4 +1,4 @@
-# react-native-orientation-turbo
+# react-native-orientation-turbo 🚀
 
 A React Native library for controlling device orientation with support for locking to portrait, landscape orientations, and real-time orientation change subscriptions. Built with **Turbo Modules** for optimal performance.
 
