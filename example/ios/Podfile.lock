@@ -8,7 +8,7 @@ PODS:
   - hermes-engine (0.80.1):
     - hermes-engine/Pre-built (= 0.80.1)
   - hermes-engine/Pre-built (0.80.1)
-  - OrientationTurbo (0.1.1):
+  - OrientationTurbo (1.0.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2392,7 +2392,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 4f07404533b808de66cf48ac4200463068d0e95a
-  OrientationTurbo: fe006175b588119e2758715acf3a041cb3aa2b86
+  OrientationTurbo: b281e0259a3c9f5b05563422f6ac8a3433f9c30d
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: efa5010912100e944a7ac9a93a157e1def1988fe
   RCTRequired: bbc4cf999ddc4a4b076e076c74dd1d39d0254630
@@ -2455,11 +2455,11 @@ SPEC CHECKSUMS:
   React-timing: c3c923df2b86194e1682e01167717481232f1dc7
   React-utils: 9154a037543147e1c24098f1a48fc8472602c092
   ReactAppDependencyProvider: afd905e84ee36e1678016ae04d7370c75ed539be
-  ReactCodegen: f8d5fb047c4cd9d2caade972cad9edac22521362
+  ReactCodegen: beafdd8d242179433c418670856fdb50656f2580
   ReactCommon: 17fd88849a174bf9ce45461912291aca711410fc
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: daa1e4de4b971b977b23bc842aaa3e135324f1f3
 
 PODFILE CHECKSUM: 407e557c4f54fde69992a57a3ae493c28c1208c1
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.15.2
