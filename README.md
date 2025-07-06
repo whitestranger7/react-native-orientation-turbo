@@ -4,12 +4,12 @@ A React Native library for controlling device orientation with support for locki
 
 ## Features
 
-**Modern Architecture**: Built with React Native Turbo Modules
-**Cross Platform**: Support for both iOS and Android
-**Orientation Locking**: Lock to portrait or landscape orientations
-**Real-time Subscriptions**: Subscribe to orientation changes with live updates
-**TypeScript**: Full TypeScript support with type definitions
-**Performance**: Native performance with Turbo Module architecture
+- **Modern Architecture**: Built with React Native Turbo Modules
+- **Cross Platform**: Support for both iOS and Android
+- **Orientation Locking**: Lock to portrait or landscape orientations
+- **Event Subscriptions**: Subscribe to orientation changes with live updates
+- **TypeScript**: Full TypeScript support with type definitions
+- **Performance**: Native performance with Turbo Module architecture
 
 ## Requirements
 
