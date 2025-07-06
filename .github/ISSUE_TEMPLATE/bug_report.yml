@@ -18,7 +18,7 @@ body:
       options:
         - label: I tested using the latest version of the library, as the bug might be already fixed.
           required: true
-        - label: I tested using a [supported version](https://github.com/reactwg/react-native-releases/blob/main/docs/support.md) of react native.
+        - label: I tested using a react native new architecture enabled.
           required: true
         - label: I checked for possible duplicate issues, with possible answers.
           required: true
@@ -40,14 +40,6 @@ body:
     validations:
       required: true
   - type: textarea
-    id: react-native-info
-    attributes:
-      label: Environment info
-      description: Run `react-native info` in your terminal and paste the results here.
-      render: shell
-    validations:
-      required: true
-  - type: textarea
     id: steps-to-reproduce
     attributes:
       label: Steps to reproduce
@@ -64,4 +56,4 @@ body:
       label: Reproducible example repository 
       description: Please provide a link to a repository on GitHub with a reproducible example.
     validations:
-      required: true
+      required: false
