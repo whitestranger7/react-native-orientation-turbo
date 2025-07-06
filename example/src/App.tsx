@@ -1,5 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Button } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import {
+  Text,
+  View,
+  StyleSheet,
+  Button,
+  type EventSubscription,
+} from 'react-native';
 import {
   lockToLandscape,
   lockToPortrait,
@@ -14,11 +20,17 @@ import {
 export default function App() {
   const [orientation, setOrientation] =
     useState<OrientationSubscription | null>(null);
+  const listenerSubscription = useRef<null | EventSubscription>(null);
 
   useEffect(() => {
-    onOrientationChange((subscription) => {
+    listenerSubscription.current = onOrientationChange((subscription) => {
       setOrientation(subscription);
     });
+
+    return () => {
+      listenerSubscription.current?.remove();
+      listenerSubscription.current = null;
+    };
   }, []);
 
   console.log(orientation);

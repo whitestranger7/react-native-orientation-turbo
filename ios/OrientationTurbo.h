@@ -1,5 +1,6 @@
+#import <Foundation/Foundation.h>
 #import <OrientationTurboSpec/OrientationTurboSpec.h>
 
-@interface OrientationTurbo : NSObject <NativeOrientationTurboSpec>
+@interface OrientationTurbo : NativeOrientationTurboSpecBase <NativeOrientationTurboSpec>
 
 @end
