@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Text, View, StyleSheet, Button } from 'react-native';
 import {
   lockToLandscape,
@@ -6,9 +7,22 @@ import {
   LandscapeDirection,
   getCurrentOrientation,
   isLocked,
+  onOrientationChange,
+  type OrientationSubscription,
 } from 'react-native-orientation-turbo';
 
 export default function App() {
+  const [orientation, setOrientation] =
+    useState<OrientationSubscription | null>(null);
+
+  useEffect(() => {
+    onOrientationChange((subscription) => {
+      setOrientation(subscription);
+    });
+  }, []);
+
+  console.log(orientation);
+
   return (
     <View style={styles.container}>
       <Text>Result: WELCOME</Text>

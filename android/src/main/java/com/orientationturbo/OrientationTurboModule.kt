@@ -1,6 +1,7 @@
 package com.orientationturbo
 
 import android.content.pm.ActivityInfo
+import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.module.annotations.ReactModule
@@ -18,6 +19,14 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   private var currentOrientation: Orientation = Orientation.PORTRAIT
   private var isOrientationLocked: Boolean = false
 
+  private fun emitOnOrientationChange() {
+    val eventData = Arguments.createMap().apply {
+      putString("orientation", currentOrientation.value)
+      putBoolean("isLocked", isOrientationLocked)
+    }
+    emitOnOrientationChange(eventData)
+  }
+
   private fun setOrientation(orientation: Int) {
     UiThreadUtil.runOnUiThread {
       val activity = reactContext.currentActivity
@@ -29,6 +38,7 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
     setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     currentOrientation = Orientation.PORTRAIT
     isOrientationLocked = true
+    emitOnOrientationChange()
   }
 
   override fun lockToLandscape(direction: String) {
@@ -47,11 +57,13 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
       }
     }
     isOrientationLocked = true
+    emitOnOrientationChange()
   }
 
   override fun unlockAllOrientations() {
     setOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
     isOrientationLocked = false
+    emitOnOrientationChange()
   }
 
   override fun getCurrentOrientation(): String {
