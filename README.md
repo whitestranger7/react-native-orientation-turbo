@@ -81,9 +81,9 @@ console.log(currentOrientation); // 'PORTRAIT' | 'LANDSCAPE_LEFT' | 'LANDSCAPE_R
 const locked = isLocked();
 console.log(locked); // true | false
 
-//Subscribe to lock orientation changes
+// Subscribe to lock orientation changes
 onOrientationChange(({ orientation, isLocked }) => {
-  pass
+  // Your code there
 })
 ```
 
