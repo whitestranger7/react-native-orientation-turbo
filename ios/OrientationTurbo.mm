@@ -65,6 +65,11 @@ RCT_EXPORT_MODULE()
   [self emitLockOrientationChangeEvent];
 }
 
+- (void)lockToPortrait:(NSString *)direction {
+  [[OrientationTurboImpl shared] lockToPortrait:direction];
+  [self emitLockOrientationChangeEvent];
+}
+
 - (void)unlockAllOrientations {
   [[OrientationTurboImpl shared] unlockAllOrientations];
   [self emitLockOrientationChangeEvent];

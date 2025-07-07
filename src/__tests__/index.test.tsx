@@ -7,6 +7,7 @@ import {
   isLocked,
   onLockOrientationChange,
   LandscapeDirection,
+  PortraitDirection,
   Orientation,
 } from '../index';
 import OrientationTurbo from '../NativeOrientationTurbo';
@@ -29,9 +30,23 @@ describe('Native Module functions', () => {
   });
 
   describe('lockToPortrait functions', () => {
-    it('should call native lockToPortrait method', () => {
+    it('should call native lockToPortrait method without direction', () => {
       lockToPortrait();
-      expect(OrientationTurbo.lockToPortrait).toHaveBeenCalledTimes(1);
+      expect(OrientationTurbo.lockToPortrait).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should call native lockToPortrait with UP direction', () => {
+      lockToPortrait(PortraitDirection.UP);
+      expect(OrientationTurbo.lockToPortrait).toHaveBeenCalledWith(
+        PortraitDirection.UP
+      );
+    });
+
+    it('should call native lockToPortrait with UPSIDE_DOWN direction (iOS only)', () => {
+      lockToPortrait(PortraitDirection.UPSIDE_DOWN);
+      expect(OrientationTurbo.lockToPortrait).toHaveBeenCalledWith(
+        PortraitDirection.UPSIDE_DOWN
+      );
     });
   });
 

@@ -2,7 +2,7 @@ import { TurboModuleRegistry, type TurboModule } from 'react-native';
 import type { EventEmitter } from 'react-native/Libraries/Types/CodegenTypes';
 
 export interface Spec extends TurboModule {
-  lockToPortrait(): void;
+  lockToPortrait(direction?: string): void;
   lockToLandscape(direction: string): void;
   unlockAllOrientations(): void;
   getCurrentOrientation(): string;

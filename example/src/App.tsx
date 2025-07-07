@@ -60,7 +60,7 @@ export default function App() {
     <View style={styles.container}>
       <Text>Result: WELCOME</Text>
       <View>
-        <Button title="Lock to Portrait" onPress={lockToPortrait} />
+        <Button title="Lock to Portrait" onPress={() => lockToPortrait()} />
         <Button
           title="Lock to Landscape Left"
           onPress={() => lockToLandscape(LandscapeDirection.LEFT)}

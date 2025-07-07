@@ -16,7 +16,6 @@ public class OrientationTurboImpl: NSObject {
   
   private override init() {
     super.init()
-    // Initialize current orientation with actual device orientation
     currentDeviceOrientation = getOrientationFromDevice()
   }
   
@@ -52,8 +51,6 @@ public class OrientationTurboImpl: NSObject {
   }
   
   @objc private func deviceOrientationDidChange() {
-    // For device orientation tracking, always use actual device orientation
-    // regardless of what the app supports in its interface orientations
     let newOrientation = getOrientationFromDevice()
     
     print("OrientationTurbo: Device orientation changed from '\(currentDeviceOrientation)' to '\(newOrientation)'")
@@ -71,8 +68,24 @@ public class OrientationTurboImpl: NSObject {
   // MARK: - Public Methods
   
   @objc public func lockToPortrait() {
-    self.updateLockState(locked: true, orientation: .portrait)
-    self.changeLockOrientation(.portrait)
+    lockToPortraitWithDirection(nil)
+  }
+  
+  @objc public func lockToPortrait(_ direction: String?) {
+    lockToPortraitWithDirection(direction)
+  }
+  
+  private func lockToPortraitWithDirection(_ direction: String?) {
+    let orientation: UIInterfaceOrientationMask
+    
+    if direction == "UPSIDE_DOWN" {
+      orientation = .portraitUpsideDown
+    } else {
+      orientation = .portrait
+    }
+    
+    self.updateLockState(locked: true, orientation: orientation)
+    self.changeLockOrientation(orientation)
   }
   
   @objc public func lockToLandscape(_ direction: String) {

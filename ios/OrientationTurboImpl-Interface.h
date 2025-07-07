@@ -6,6 +6,7 @@
 - (void)startOrientationTracking;
 - (void)stopOrientationTracking;
 - (void)lockToPortrait;
+- (void)lockToPortrait:(NSString * _Nullable)direction;
 - (void)lockToLandscape:(NSString * _Nonnull)direction;
 - (void)unlockAllOrientations;
 - (NSString * _Nonnull)getCurrentOrientation;

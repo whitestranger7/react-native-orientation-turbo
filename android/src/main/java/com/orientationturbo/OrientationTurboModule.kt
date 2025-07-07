@@ -96,8 +96,22 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   }
 
   override fun lockToPortrait() {
-    setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-    currentLockedOrientation = Orientation.PORTRAIT
+    lockToPortrait(null)
+  }
+
+  override fun lockToPortrait(direction: String?) {
+    when (direction) {
+      "UPSIDE_DOWN" -> {
+        // Note: Android rarely supports upside-down orientation
+        // Most devices/apps disable it, but we'll try anyway
+        setOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT)
+        currentLockedOrientation = Orientation.PORTRAIT // Android doesn't distinguish upside-down
+      }
+      else -> {
+        setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+        currentLockedOrientation = Orientation.PORTRAIT
+      }
+    }
     isOrientationLocked = true
     emitOnLockOrientationChange()
   }
@@ -128,7 +142,13 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   }
 
   override fun getCurrentOrientation(): String {
-    return currentLockedOrientation.value
+    // If orientation is locked, return the locked orientation
+    return if (isOrientationLocked) {
+      currentLockedOrientation.value
+    } else {
+      // If not locked, return the current device orientation
+      currentDeviceOrientation.value
+    }
   }
 
   override fun isLocked(): Boolean {
