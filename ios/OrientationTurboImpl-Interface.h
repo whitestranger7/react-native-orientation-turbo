@@ -3,10 +3,13 @@
 @interface OrientationTurboImpl : NSObject
 
 + (OrientationTurboImpl * _Nonnull)shared;
+- (void)startOrientationTracking;
+- (void)stopOrientationTracking;
 - (void)lockToPortrait;
 - (void)lockToLandscape:(NSString * _Nonnull)direction;
 - (void)unlockAllOrientations;
 - (NSString * _Nonnull)getCurrentOrientation;
 - (BOOL)isLocked;
+- (void)setOnOrientationChange:(void (^_Nullable)(NSString * _Nonnull))callback;
 
 @end

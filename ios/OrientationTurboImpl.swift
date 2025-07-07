@@ -7,33 +7,87 @@ public class OrientationTurboImpl: NSObject {
   
   private var currentLockedOrientation: UIInterfaceOrientationMask?
   private var isOrientationLocked: Bool = false
+  private var isOrientationTrackingEnabled: Bool = false
+  private var currentDeviceOrientation: String = "PORTRAIT"
   
   private let lockQueue = DispatchQueue(label: "orientation.lock.queue", attributes: .concurrent)
   
+  @objc public var onOrientationChange: ((String) -> Void)?
+  
   private override init() {
     super.init()
+    // Initialize current orientation with actual device orientation
+    currentDeviceOrientation = getOrientationFromDevice()
   }
   
+  // MARK: - Orientation Tracking Methods
+  
+  @objc public func startOrientationTracking() {
+    guard !isOrientationTrackingEnabled else { return }
+    
+    DispatchQueue.main.async { [weak self] in
+      UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+      NotificationCenter.default.addObserver(
+        self as Any,
+        selector: #selector(self?.deviceOrientationDidChange),
+        name: UIDevice.orientationDidChangeNotification,
+        object: nil
+      )
+      self?.isOrientationTrackingEnabled = true
+    }
+  }
+  
+  @objc public func stopOrientationTracking() {
+    guard isOrientationTrackingEnabled else { return }
+    
+    DispatchQueue.main.async { [weak self] in
+      NotificationCenter.default.removeObserver(
+        self as Any,
+        name: UIDevice.orientationDidChangeNotification,
+        object: nil
+      )
+      UIDevice.current.endGeneratingDeviceOrientationNotifications()
+      self?.isOrientationTrackingEnabled = false
+    }
+  }
+  
+  @objc private func deviceOrientationDidChange() {
+    // For device orientation tracking, always use actual device orientation
+    // regardless of what the app supports in its interface orientations
+    let newOrientation = getOrientationFromDevice()
+    
+    print("OrientationTurbo: Device orientation changed from '\(currentDeviceOrientation)' to '\(newOrientation)'")
+    
+    guard newOrientation != currentDeviceOrientation else { 
+      print("OrientationTurbo: No change, ignoring")
+      return 
+    }
+    
+    currentDeviceOrientation = newOrientation
+    print("OrientationTurbo: Emitting orientation change event: \(newOrientation)")
+    onOrientationChange?(newOrientation)
+  }
+
   // MARK: - Public Methods
   
   @objc public func lockToPortrait() {
     self.updateLockState(locked: true, orientation: .portrait)
-    self.changeOrientation(.portrait)
+    self.changeLockOrientation(.portrait)
   }
   
   @objc public func lockToLandscape(_ direction: String) {
     let orientation: UIInterfaceOrientationMask = direction == "LEFT" ? .landscapeLeft : .landscapeRight
     self.updateLockState(locked: true, orientation: orientation)
-    self.changeOrientation(orientation)
+    self.changeLockOrientation(orientation)
   }
   
   @objc public func unlockAllOrientations() {
     self.updateLockState(locked: false, orientation: nil)
     
-    self.changeOrientation(.portrait) { [weak self] success in
+    self.changeLockOrientation(.portrait) { [weak self] success in
       if success {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          self?.changeOrientation(.all)
+          self?.changeLockOrientation(.all)
         }
       }
     }
@@ -64,7 +118,7 @@ public class OrientationTurboImpl: NSObject {
     }
   }
   
-  private func changeOrientation(_ orientation: UIInterfaceOrientationMask, completion: ((Bool) -> Void)? = nil) {
+  private func changeLockOrientation(_ orientation: UIInterfaceOrientationMask, completion: ((Bool) -> Void)? = nil) {
     DispatchQueue.main.async {
       if #available(iOS 16.0, *) {
         self.updateOrientationModern(orientation, completion: completion)
@@ -109,34 +163,34 @@ public class OrientationTurboImpl: NSObject {
     self.forceInterfaceOrientationUpdate(orientation)
   }
   
-      private func forceInterfaceOrientationUpdate(_ orientation: UIInterfaceOrientationMask) {
-        guard #available(iOS 13.0, *),
-              let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
-            return
+  private func forceInterfaceOrientationUpdate(_ orientation: UIInterfaceOrientationMask) {
+    guard #available(iOS 13.0, *),
+          let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
+        return
+    }
+    
+    if #available(iOS 16.0, *) {
+        if let window = windowScene.windows.first {
+            window.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
         }
-        
+    }
+    
+    let targetOrientation = self.getTargetOrientation(from: orientation)
+    NotificationCenter.default.post(
+        name: NSNotification.Name("ForceOrientation"),
+        object: targetOrientation
+    )
+    
+    if #available(iOS 13.0, *) {
         if #available(iOS 16.0, *) {
-            if let window = windowScene.windows.first {
-                window.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
-            }
-        }
-        
-        let targetOrientation = self.getTargetOrientation(from: orientation)
-        NotificationCenter.default.post(
-            name: NSNotification.Name("ForceOrientation"),
-            object: targetOrientation
-        )
-        
-        if #available(iOS 13.0, *) {
-            if #available(iOS 16.0, *) {
-                // iOS 16+ already handled above
-            } else {
-                DispatchQueue.main.async {
-                    UIViewController.attemptRotationToDeviceOrientation()
-                }
+            // iOS 16+ already handled above
+        } else {
+            DispatchQueue.main.async {
+                UIViewController.attemptRotationToDeviceOrientation()
             }
         }
     }
+  }
   
   private func getTargetOrientation(from mask: UIInterfaceOrientationMask) -> UIInterfaceOrientation? {
     switch mask {
@@ -213,5 +267,9 @@ public class OrientationTurboImpl: NSObject {
     @unknown default:
       return "PORTRAIT"
     }
+  }
+  
+  deinit {
+    stopOrientationTracking()
   }
 }

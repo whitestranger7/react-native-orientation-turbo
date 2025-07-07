@@ -4,6 +4,28 @@
 @implementation OrientationTurbo
 RCT_EXPORT_MODULE()
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        __weak __typeof(self) weakSelf = self;
+        [[OrientationTurboImpl shared] setOnOrientationChange:^(NSString *orientation) {
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (strongSelf) {
+                [strongSelf emitOrientationChangeEvent:orientation];
+            }
+        }];
+    }
+    return self;
+}
+
+- (void)emitOrientationChangeEvent:(NSString *)orientation {
+    NSDictionary *eventData = @{
+        @"orientation": orientation
+    };
+    
+    [self emitOnOrientationChange:eventData];
+}
+
 - (void)emitLockOrientationChangeEvent {
   NSString *currentOrientation = [[OrientationTurboImpl shared] getCurrentOrientation];
   BOOL isLocked = [[OrientationTurboImpl shared] isLocked];
@@ -14,6 +36,14 @@ RCT_EXPORT_MODULE()
   };
   
   [self emitOnLockOrientationChange:eventData];
+}
+
+- (void)startOrientationTracking {
+    [[OrientationTurboImpl shared] startOrientationTracking];
+}
+
+- (void)stopOrientationTracking {
+    [[OrientationTurboImpl shared] stopOrientationTracking];
 }
 
 - (nonnull NSString *)getCurrentOrientation {

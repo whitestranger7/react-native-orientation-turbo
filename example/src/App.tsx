@@ -26,26 +26,29 @@ export default function App() {
     useState<LockOrientationSubscription | null>(null);
   const [orientation, setOrientation] =
     useState<OrientationSubscription | null>(null);
-  const listenerSubscription = useRef<null | EventSubscription>(null);
-
-  useEffect(() => {
-    listenerSubscription.current = onLockOrientationChange((subscription) => {
-      setLockOrientation(subscription);
-    });
-
-    return () => {
-      listenerSubscription.current?.remove();
-      listenerSubscription.current = null;
-    };
-  }, []);
+  const listenerLockSubscription = useRef<EventSubscription | null>(null);
+  const listenerOrientationSubscription = useRef<EventSubscription | null>(
+    null
+  );
 
   useEffect(() => {
     startOrientationTracking();
-    listenerSubscription.current = onOrientationChange((subscription) => {
-      setOrientation(subscription);
-    });
+    listenerLockSubscription.current = onLockOrientationChange(
+      (subscription) => {
+        setLockOrientation(subscription);
+      }
+    );
+    listenerOrientationSubscription.current = onOrientationChange(
+      (subscription) => {
+        setOrientation(subscription);
+      }
+    );
 
     return () => {
+      listenerOrientationSubscription.current?.remove();
+      listenerOrientationSubscription.current?.remove();
+      listenerOrientationSubscription.current = null;
+      listenerLockSubscription.current = null;
       stopOrientationTracking();
     };
   }, []);
