@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2025-07-07
+
+### Added
+- **Physical Device Orientation Tracking**: `startOrientationTracking()` and `stopOrientationTracking()` - Control native sensor tracking for device orientation changes
+- **Enhanced Orientation Subscription**: Physical device orientation changes now detected via native sensors when tracking is enabled
+- **Battery Optimization**: Orientation tracking can be started/stopped as needed to conserve battery and device resources
+
+### Fixed
+- **iOS Lock Functionality**: Resolved orientation locking issues on iOS platform for improved reliability
+
+### Changed
+- **Orientation Change Detection**: `onOrientationChange` now added and requires `startOrientationTracking()` to be called first for physical device rotation detection
+- **Performance Improvements**: More efficient orientation change handling with optional sensor tracking
+
+#### Documentation
+- README.md updated with iOS setup instructions including AppDelegate.swift configuration
+- Added `startOrientationTracking()` and `stopOrientationTracking()` API documentation
+- Added `onOrientationChange` API documentation
+- Types and Enums documentation is enhanced 
+- Enhanced setup guide with detailed iOS integration steps
+
 ## [1.0.0] - 2025-07-06
 
 ### Added
