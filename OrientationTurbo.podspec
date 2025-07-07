@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
 
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
-    'SWIFT_OBJC_INTERFACE_HEADER_NAME' => 'OrientationController-Swift.h'
+    'SWIFT_OBJC_INTERFACE_HEADER_NAME' => 'OrientationTurbo-Swift.h'
   }
 
   install_modules_dependencies(s)

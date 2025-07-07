@@ -3,8 +3,10 @@ import UIKit
 @objc(OrientationTurboImpl)
 public class OrientationTurboImpl: NSObject {
   
+  // MARK: - Singleton
   @objc public static let shared = OrientationTurboImpl()
   
+  // MARK: - Properties
   private var currentLockedOrientation: UIInterfaceOrientationMask?
   private var isOrientationLocked: Bool = false
   private var isOrientationTrackingEnabled: Bool = false
@@ -14,12 +16,30 @@ public class OrientationTurboImpl: NSObject {
   
   @objc public var onOrientationChange: ((String) -> Void)?
   
+  // MARK: - Initialization
   private override init() {
     super.init()
     currentDeviceOrientation = getOrientationFromDevice()
   }
   
-  // MARK: - Orientation Tracking Methods
+  deinit {
+    stopOrientationTracking()
+  }
+  
+  // MARK: - AppDelegate Integration
+  
+  /// Returns the currently supported interface orientations for the AppDelegate to use
+  @objc public func getSupportedInterfaceOrientations() -> UIInterfaceOrientationMask {
+    return lockQueue.sync {
+      if isOrientationLocked, let lockedOrientation = currentLockedOrientation {
+        return lockedOrientation
+      } else {
+        return .all
+      }
+    }
+  }
+  
+  // MARK: - Orientation Tracking
   
   @objc public func startOrientationTracking() {
     guard !isOrientationTrackingEnabled else { return }
@@ -53,54 +73,39 @@ public class OrientationTurboImpl: NSObject {
   @objc private func deviceOrientationDidChange() {
     let newOrientation = getOrientationFromDevice()
     
-    print("OrientationTurbo: Device orientation changed from '\(currentDeviceOrientation)' to '\(newOrientation)'")
-    
-    guard newOrientation != currentDeviceOrientation else { 
-      print("OrientationTurbo: No change, ignoring")
-      return 
+    guard newOrientation != currentDeviceOrientation else {
+      return
     }
     
     currentDeviceOrientation = newOrientation
-    print("OrientationTurbo: Emitting orientation change event: \(newOrientation)")
     onOrientationChange?(newOrientation)
   }
-
-  // MARK: - Public Methods
+  
+  // MARK: - Public Orientation Control
   
   @objc public func lockToPortrait() {
-    lockToPortraitWithDirection(nil)
+    lockToPortrait(nil)
   }
   
   @objc public func lockToPortrait(_ direction: String?) {
-    lockToPortraitWithDirection(direction)
-  }
-  
-  private func lockToPortraitWithDirection(_ direction: String?) {
-    let orientation: UIInterfaceOrientationMask
-    
-    if direction == "UPSIDE_DOWN" {
-      orientation = .portraitUpsideDown
-    } else {
-      orientation = .portrait
-    }
-    
-    self.updateLockState(locked: true, orientation: orientation)
-    self.changeLockOrientation(orientation)
+    let orientation: UIInterfaceOrientationMask = (direction == "UPSIDE_DOWN") ? .portraitUpsideDown : .portrait
+    lockToOrientation(orientation)
   }
   
   @objc public func lockToLandscape(_ direction: String) {
-    let orientation: UIInterfaceOrientationMask = direction == "LEFT" ? .landscapeLeft : .landscapeRight
-    self.updateLockState(locked: true, orientation: orientation)
-    self.changeLockOrientation(orientation)
+    let orientation: UIInterfaceOrientationMask = (direction == "LEFT") ? .landscapeLeft : .landscapeRight
+    lockToOrientation(orientation)
   }
   
   @objc public func unlockAllOrientations() {
-    self.updateLockState(locked: false, orientation: nil)
+    updateLockState(locked: false, orientation: nil)
     
-    self.changeLockOrientation(.portrait) { [weak self] success in
+    // First rotate to portrait, then unlock all orientations after a brief delay.
+    // Workaround to keep PORTRAIT back to default
+    requestOrientationChange(.portrait) { [weak self] success in
       if success {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          self?.changeLockOrientation(.all)
+          self?.requestOrientationChange(.all)
         }
       }
     }
@@ -108,42 +113,80 @@ public class OrientationTurboImpl: NSObject {
   
   @objc public func getCurrentOrientation() -> String {
     guard Thread.isMainThread else {
-      var result = "UNKNOWN"
-      DispatchQueue.main.sync {
-        result = self.getCurrentOrientationInternal()
+      return DispatchQueue.main.sync {
+        return getCurrentOrientationInternal()
       }
-      return result
     }
-    
-    return self.getCurrentOrientationInternal()
+    return getCurrentOrientationInternal()
   }
   
   @objc public func isLocked() -> Bool {
-    return lockQueue.sync { self.isOrientationLocked }
+    return lockQueue.sync { isOrientationLocked }
   }
   
-  // MARK: - Private Methods
+  // MARK: - Private Implementation
+  
+  private func lockToOrientation(_ orientation: UIInterfaceOrientationMask) {
+    updateLockState(locked: true, orientation: orientation)
+    requestOrientationChange(orientation)
+  }
   
   private func updateLockState(locked: Bool, orientation: UIInterfaceOrientationMask?) {
-    lockQueue.async(flags: .barrier) {
-      self.isOrientationLocked = locked
-      self.currentLockedOrientation = orientation
+    lockQueue.async(flags: .barrier) { [weak self] in
+      self?.isOrientationLocked = locked
+      self?.currentLockedOrientation = orientation
+      
+      DispatchQueue.main.async {
+        self?.notifyOrientationSupportChanged()
+      }
     }
   }
   
-  private func changeLockOrientation(_ orientation: UIInterfaceOrientationMask, completion: ((Bool) -> Void)? = nil) {
-    DispatchQueue.main.async {
+  private func notifyOrientationSupportChanged() {
+    if #available(iOS 16.0, *) {
+      updateSupportedOrientationsModern()
+    } else {
+      updateSupportedOrientationsLegacy()
+    }
+  }
+  
+  private func requestOrientationChange(_ orientation: UIInterfaceOrientationMask, completion: ((Bool) -> Void)? = nil) {
+    DispatchQueue.main.async { [weak self] in
       if #available(iOS 16.0, *) {
-        self.updateOrientationModern(orientation, completion: completion)
+        self?.requestOrientationChangeModern(orientation, completion: completion)
       } else {
-        self.updateOrientationLegacy(orientation)
+        self?.requestOrientationChangeLegacy(orientation)
         completion?(true)
       }
     }
   }
   
+  // MARK: - iOS 16+ Implementation
+  
   @available(iOS 16.0, *)
-  private func updateOrientationModern(_ orientation: UIInterfaceOrientationMask, completion: ((Bool) -> Void)?) {
+  private func updateSupportedOrientationsModern() {
+    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
+      return
+    }
+    
+    let supportedOrientations = getSupportedInterfaceOrientations()
+    let geometryPreferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: supportedOrientations)
+    
+    windowScene.requestGeometryUpdate(geometryPreferences) { error in
+      DispatchQueue.main.async {
+        if !error.localizedDescription.isEmpty && !error.localizedDescription.contains("succeeded") {
+          print("OrientationTurbo: Failed to update supported orientations - \(error.localizedDescription)")
+        }
+      }
+    }
+    
+    if let window = windowScene.windows.first {
+      window.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+    }
+  }
+  
+  @available(iOS 16.0, *)
+  private func requestOrientationChangeModern(_ orientation: UIInterfaceOrientationMask, completion: ((Bool) -> Void)?) {
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
       print("OrientationTurbo: No window scene available")
       completion?(false)
@@ -153,12 +196,12 @@ public class OrientationTurboImpl: NSObject {
     let geometryPreferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: orientation)
     windowScene.requestGeometryUpdate(geometryPreferences) { error in
       DispatchQueue.main.async {
-        let success = error.localizedDescription.contains("succeeded") ||
-                     error.localizedDescription.isEmpty ||
+        let success = error.localizedDescription.isEmpty || 
+                     error.localizedDescription.contains("succeeded") ||
                      !error.localizedDescription.contains("failed")
         
         if !success {
-          print("OrientationTurbo: Orientation update failed - \(error.localizedDescription)")
+          print("OrientationTurbo: Orientation change failed - \(error.localizedDescription)")
         }
         
         completion?(success)
@@ -166,65 +209,49 @@ public class OrientationTurboImpl: NSObject {
     }
   }
   
-  private func updateOrientationLegacy(_ orientation: UIInterfaceOrientationMask) {
-    NotificationCenter.default.post(
-      name: NSNotification.Name("OrientationDidChange"),
-      object: nil,
-      userInfo: ["orientation": orientation.rawValue]
-    )
+  // MARK: - iOS 15 and Below Implementation
+  
+  private func updateSupportedOrientationsLegacy() {
+    UIViewController.attemptRotationToDeviceOrientation()
     
-    self.forceInterfaceOrientationUpdate(orientation)
+    NotificationCenter.default.post(
+      name: NSNotification.Name("OrientationSupportDidChange"),
+      object: nil,
+      userInfo: ["supportedOrientations": getSupportedInterfaceOrientations().rawValue]
+    )
   }
   
-  private func forceInterfaceOrientationUpdate(_ orientation: UIInterfaceOrientationMask) {
-    guard #available(iOS 13.0, *),
-          let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
-        return
+  private func requestOrientationChangeLegacy(_ orientation: UIInterfaceOrientationMask) {
+    // Force device orientation using private API (use with caution)
+    if orientation != .all, let targetOrientation = getTargetOrientation(from: orientation) {
+      UIDevice.current.setValue(targetOrientation.rawValue, forKey: "orientation")
     }
     
-    if #available(iOS 16.0, *) {
-        if let window = windowScene.windows.first {
-            window.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
-        }
-    }
+    UIViewController.attemptRotationToDeviceOrientation()
     
-    let targetOrientation = self.getTargetOrientation(from: orientation)
     NotificationCenter.default.post(
-        name: NSNotification.Name("ForceOrientation"),
-        object: targetOrientation
+      name: NSNotification.Name("ForceOrientationChange"),
+      object: orientation
     )
-    
-    if #available(iOS 13.0, *) {
-        if #available(iOS 16.0, *) {
-            // iOS 16+ already handled above
-        } else {
-            DispatchQueue.main.async {
-                UIViewController.attemptRotationToDeviceOrientation()
-            }
-        }
-    }
   }
+  
+  // MARK: - Orientation Helpers
   
   private func getTargetOrientation(from mask: UIInterfaceOrientationMask) -> UIInterfaceOrientation? {
     switch mask {
-    case .portrait:
-      return .portrait
-    case .landscapeLeft:
-      return .landscapeLeft
-    case .landscapeRight:
-      return .landscapeRight
-    case .portraitUpsideDown:
-      return .portraitUpsideDown
-    default:
-      return nil
+    case .portrait: return .portrait
+    case .landscapeLeft: return .landscapeLeft
+    case .landscapeRight: return .landscapeRight
+    case .portraitUpsideDown: return .portraitUpsideDown
+    default: return nil
     }
   }
   
   private func getCurrentOrientationInternal() -> String {
     if #available(iOS 13.0, *) {
-      return self.getOrientationFromWindowScene() ?? self.getOrientationFromDevice()
+      return getOrientationFromWindowScene() ?? getOrientationFromDevice()
     } else {
-      return self.getOrientationFromDevice()
+      return getOrientationFromDevice()
     }
   }
   
@@ -235,54 +262,38 @@ public class OrientationTurboImpl: NSObject {
     }
     
     switch windowScene.interfaceOrientation {
-    case .portrait:
-      return "PORTRAIT"
-    case .portraitUpsideDown:
-      return "PORTRAIT_UPSIDE_DOWN"
-    case .landscapeLeft:
-      return "LANDSCAPE_LEFT"
-    case .landscapeRight:
-      return "LANDSCAPE_RIGHT"
-    case .unknown:
-      return nil
-    @unknown default:
-      return nil
+    case .portrait: return "PORTRAIT"
+    case .portraitUpsideDown: return "PORTRAIT_UPSIDE_DOWN"
+    case .landscapeLeft: return "LANDSCAPE_LEFT"
+    case .landscapeRight: return "LANDSCAPE_RIGHT"
+    case .unknown: return nil
+    @unknown default: return nil
     }
   }
   
   private func getOrientationFromDevice() -> String {
     switch UIDevice.current.orientation {
-    case .portrait:
-      return "PORTRAIT"
-    case .portraitUpsideDown:
-      return "PORTRAIT_UPSIDE_DOWN"
-    case .landscapeLeft:
-      return "LANDSCAPE_LEFT"
-    case .landscapeRight:
-      return "LANDSCAPE_RIGHT"
+    case .portrait: return "PORTRAIT"
+    case .portraitUpsideDown: return "PORTRAIT_UPSIDE_DOWN"
+    case .landscapeLeft: return "LANDSCAPE_LEFT"
+    case .landscapeRight: return "LANDSCAPE_RIGHT"
     case .faceUp, .faceDown, .unknown:
-      if #available(iOS 13.0, *) {
-        return "PORTRAIT"
-      } else {
-        switch UIApplication.shared.statusBarOrientation {
-        case .portrait:
-          return "PORTRAIT"
-        case .portraitUpsideDown:
-          return "PORTRAIT_UPSIDE_DOWN"
-        case .landscapeLeft:
-          return "LANDSCAPE_LEFT"
-        case .landscapeRight:
-          return "LANDSCAPE_RIGHT"
-        default:
-          return "PORTRAIT"
-        }
-      }
-    @unknown default:
-      return "PORTRAIT"
+      return getOrientationFallback()
+    @unknown default: return "PORTRAIT"
     }
   }
   
-  deinit {
-    stopOrientationTracking()
+  private func getOrientationFallback() -> String {
+    if #available(iOS 13.0, *) {
+      return "PORTRAIT"
+    } else {
+      switch UIApplication.shared.statusBarOrientation {
+      case .portrait: return "PORTRAIT"
+      case .portraitUpsideDown: return "PORTRAIT_UPSIDE_DOWN"
+      case .landscapeLeft: return "LANDSCAPE_LEFT"
+      case .landscapeRight: return "LANDSCAPE_RIGHT"
+      default: return "PORTRAIT"
+      }
+    }
   }
 }

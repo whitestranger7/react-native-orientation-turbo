@@ -2392,7 +2392,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 4f07404533b808de66cf48ac4200463068d0e95a
-  OrientationTurbo: b281e0259a3c9f5b05563422f6ac8a3433f9c30d
+  OrientationTurbo: 65748f02cf86c697ce00f1d086f01b0a78eec384
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: efa5010912100e944a7ac9a93a157e1def1988fe
   RCTRequired: bbc4cf999ddc4a4b076e076c74dd1d39d0254630

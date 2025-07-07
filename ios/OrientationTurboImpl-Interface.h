@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 @interface OrientationTurboImpl : NSObject
 
@@ -12,5 +13,6 @@
 - (NSString * _Nonnull)getCurrentOrientation;
 - (BOOL)isLocked;
 - (void)setOnOrientationChange:(void (^_Nullable)(NSString * _Nonnull))callback;
+- (UIInterfaceOrientationMask)getSupportedInterfaceOrientations;
 
 @end
