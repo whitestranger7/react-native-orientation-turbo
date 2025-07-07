@@ -51,10 +51,10 @@ import {
   unlockAllOrientations,
   getCurrentOrientation,
   isLocked,
-  onOrientationChange,
-  type LandscapeDirection,
-  type Orientation,
-  type OrientationSubscription,
+  onLockOrientationChange,
+  LandscapeDirection,
+  Orientation,
+  type LockOrientationSubscription,
 } from 'react-native-orientation-turbo';
 ```
 
@@ -82,7 +82,7 @@ const locked = isLocked();
 console.log(locked); // true | false
 
 // Subscribe to lock orientation changes
-onOrientationChange(({ orientation, isLocked }) => {
+onLockOrientationChange(({ orientation, isLocked }) => {
   // Your code there
 })
 ```
@@ -143,19 +143,19 @@ const locked = isLocked();
 
 ### Subscriptions
 
-#### `onOrientationChange(callback: (subscription: OrientationSubscription) => void): Subscription`
+#### `onLockOrientationChange(callback: (subscription: LockOrientationSubscription) => void): Subscription`
 
 Subscribes to orientation changes and receives real-time updates.
 
 **Parameters:**
-- `callback`: Function called when orientation changes, receives `OrientationSubscription` object
+- `callback`: Function called when orientation changes, receives `LockOrientationSubscription` object
 
 **Returns:** Subscription object with `remove()` method to unsubscribe
 
 ```typescript
-import { onOrientationChange } from 'react-native-orientation-turbo';
+import { onLockOrientationChange } from 'react-native-orientation-turbo';
 
-const subscription = onOrientationChange(({ orientation, isLocked }) => {
+const subscription = onLockOrientationChange(({ orientation, isLocked }) => {
   console.log('Current orientation:', orientation);
   console.log('Is locked:', isLocked);
 });
@@ -169,13 +169,13 @@ subscription.remove();
 import { useEffect, useRef } from 'react';
 import type { EventSubscription } from 'react-native';
 
-import { onOrientationChange } from 'react-native-orientation-turbo';
+import { onLockOrientationChange } from 'react-native-orientation-turbo';
 
 const MyComponent = () => {
   const listenerSubscription = useRef<null | EventSubscription>(null);
 
   useEffect(() => {
-    listenerSubscription.current = onOrientationChange(({ orientation, isLocked }) => {
+    listenerSubscription.current = onLockOrientationChange(({ orientation, isLocked }) => {
       // Handle orientation change
       console.log('Orientation:', orientation, 'Locked:', isLocked);
     });
@@ -212,10 +212,10 @@ enum Orientation {
 }
 ```
 
-#### `OrientationSubscription`
+#### `LockOrientationSubscription`
 
 ```typescript
-type OrientationSubscription = {
+type LockOrientationSubscription = {
   orientation: Orientation;
   isLocked: boolean;
 };

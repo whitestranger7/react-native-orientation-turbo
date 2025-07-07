@@ -1,6 +1,6 @@
 import type { Orientation } from './constants';
 
-export type OrientationSubscription = {
+export type LockOrientationSubscription = {
   orientation: Orientation;
   isLocked: boolean;
 };

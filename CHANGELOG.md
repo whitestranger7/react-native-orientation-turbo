@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [1.0.0] - 2025-07-06
 
 ### Added
-- **Orientation Change Subscription**: `onOrientationChange(callback: { callback: (subscription: OrientationSubscription) => void })` - Subscribe to real-time orientation changes
+- **Orientation Change Subscription**: `onOrientationChange(callback: { callback: (subscription: LockOrientationSubscription) => void })` - Subscribe to real-time orientation changes
 
 #### Documentation
 - README.md updated with new `onOrientationChange(callback)`

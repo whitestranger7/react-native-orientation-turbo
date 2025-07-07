@@ -5,7 +5,7 @@ import {
   unlockAllOrientations,
   getCurrentOrientation,
   isLocked,
-  onOrientationChange,
+  onLockOrientationChange,
   LandscapeDirection,
   Orientation,
 } from '../index';
@@ -19,7 +19,7 @@ jest.mock('../NativeOrientationTurbo', () => ({
     unlockAllOrientations: jest.fn(),
     getCurrentOrientation: jest.fn(),
     isLocked: jest.fn(),
-    onOrientationChange: jest.fn(),
+    onLockOrientationChange: jest.fn(),
   },
 }));
 
@@ -113,13 +113,13 @@ describe('Native Module functions', () => {
     });
   });
 
-  describe('onOrientationChange subscription function', () => {
+  describe('onLockOrientationChange subscription function', () => {
     it('should register orientation change listener', () => {
       const mockCallback = jest.fn();
 
-      onOrientationChange(mockCallback);
+      onLockOrientationChange(mockCallback);
 
-      expect(OrientationTurbo.onOrientationChange).toHaveBeenCalledWith(
+      expect(OrientationTurbo.onLockOrientationChange).toHaveBeenCalledWith(
         expect.any(Function)
       );
     });
@@ -128,14 +128,14 @@ describe('Native Module functions', () => {
       const mockCallback = jest.fn();
       const mockNativeCallback = jest.fn();
 
-      (OrientationTurbo.onOrientationChange as jest.Mock).mockImplementation(
-        (callback) => {
-          mockNativeCallback.mockImplementation(callback as any);
-          return { remove: jest.fn() };
-        }
-      );
+      (
+        OrientationTurbo.onLockOrientationChange as jest.Mock
+      ).mockImplementation((callback) => {
+        mockNativeCallback.mockImplementation(callback as any);
+        return { remove: jest.fn() };
+      });
 
-      onOrientationChange(mockCallback);
+      onLockOrientationChange(mockCallback);
 
       mockNativeCallback({ orientation: Orientation.PORTRAIT, isLocked: true });
 

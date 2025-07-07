@@ -7,7 +7,7 @@ export interface Spec extends TurboModule {
   unlockAllOrientations(): void;
   getCurrentOrientation(): string;
   isLocked(): boolean;
-  readonly onOrientationChange: EventEmitter<{
+  readonly onLockOrientationChange: EventEmitter<{
     orientation: string;
     isLocked: boolean;
   }>;

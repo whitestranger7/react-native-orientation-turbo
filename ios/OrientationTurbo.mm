@@ -4,7 +4,7 @@
 @implementation OrientationTurbo
 RCT_EXPORT_MODULE()
 
-- (void)emitOrientationChangeEvent {
+- (void)emitLockOrientationChangeEvent {
   NSString *currentOrientation = [[OrientationTurboImpl shared] getCurrentOrientation];
   BOOL isLocked = [[OrientationTurboImpl shared] isLocked];
   
@@ -13,7 +13,7 @@ RCT_EXPORT_MODULE()
     @"isLocked": @(isLocked)
   };
   
-  [self emitOnOrientationChange:eventData];
+  [self emitOnLockOrientationChange:eventData];
 }
 
 - (nonnull NSString *)getCurrentOrientation {
@@ -27,17 +27,17 @@ RCT_EXPORT_MODULE()
 
 - (void)lockToLandscape:(nonnull NSString *)direction {
   [[OrientationTurboImpl shared] lockToLandscape:direction];
-  [self emitOrientationChangeEvent];
+  [self emitLockOrientationChangeEvent];
 }
 
 - (void)lockToPortrait {
   [[OrientationTurboImpl shared] lockToPortrait];
-  [self emitOrientationChangeEvent];
+  [self emitLockOrientationChangeEvent];
 }
 
 - (void)unlockAllOrientations {
   [[OrientationTurboImpl shared] unlockAllOrientations];
-  [self emitOrientationChangeEvent];
+  [self emitLockOrientationChangeEvent];
 }
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:

@@ -19,12 +19,12 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   private var currentOrientation: Orientation = Orientation.PORTRAIT
   private var isOrientationLocked: Boolean = false
 
-  private fun emitOnOrientationChange() {
+  private fun emitOnLockOrientationChange() {
     val eventData = Arguments.createMap().apply {
       putString("orientation", currentOrientation.value)
       putBoolean("isLocked", isOrientationLocked)
     }
-    emitOnOrientationChange(eventData)
+    emitOnLockOrientationChange(eventData)
   }
 
   private fun setOrientation(orientation: Int) {
@@ -38,7 +38,7 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
     setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     currentOrientation = Orientation.PORTRAIT
     isOrientationLocked = true
-    emitOnOrientationChange()
+    emitOnLockOrientationChange()
   }
 
   override fun lockToLandscape(direction: String) {
@@ -57,13 +57,13 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
       }
     }
     isOrientationLocked = true
-    emitOnOrientationChange()
+    emitOnLockOrientationChange()
   }
 
   override fun unlockAllOrientations() {
     setOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
     isOrientationLocked = false
-    emitOnOrientationChange()
+    emitOnLockOrientationChange()
   }
 
   override fun getCurrentOrientation(): String {

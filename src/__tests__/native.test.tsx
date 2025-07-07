@@ -15,7 +15,7 @@ describe('Native Module should be bound to the TurboModuleRegistry', () => {
       unlockAllOrientations: jest.fn(),
       getCurrentOrientation: jest.fn(),
       isLocked: jest.fn(),
-      onOrientationChange: jest.fn(),
+      onLockOrientationChange: jest.fn(),
     };
 
     (TurboModuleRegistry.getEnforcing as jest.Mock).mockReturnValue(mockModule);
