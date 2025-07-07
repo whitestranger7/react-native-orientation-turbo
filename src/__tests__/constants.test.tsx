@@ -28,8 +28,8 @@ describe('Constants should be defined correctly', () => {
       expect(Orientation.LANDSCAPE_RIGHT).toBe('LANDSCAPE_RIGHT');
     });
 
-    it('should have only 3 values', () => {
-      expect(Object.keys(Orientation)).toHaveLength(3);
+    it('should have only 4 values', () => {
+      expect(Object.keys(Orientation)).toHaveLength(4);
     });
   });
 });
