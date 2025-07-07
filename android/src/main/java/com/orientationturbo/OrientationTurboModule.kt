@@ -1,6 +1,8 @@
 package com.orientationturbo
 
 import android.content.pm.ActivityInfo
+import android.hardware.SensorManager
+import android.view.OrientationEventListener
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.UiThreadUtil
@@ -16,15 +18,60 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
     return NAME
   }
 
-  private var currentOrientation: Orientation = Orientation.PORTRAIT
+  private var currentLockedOrientation: Orientation = Orientation.PORTRAIT
+  private var currentDeviceOrientation: Orientation = Orientation.PORTRAIT
   private var isOrientationLocked: Boolean = false
+  private var orientationEventListener: OrientationEventListener? = null
+  private var isOrientationTrackingEnabled = false
+
+
+  private fun emitOnOrientationChange() {
+    val eventData = Arguments.createMap().apply {
+      putString("orientation", currentDeviceOrientation.value)
+    }
+    emitOnOrientationChange(eventData)
+  }
 
   private fun emitOnLockOrientationChange() {
     val eventData = Arguments.createMap().apply {
-      putString("orientation", currentOrientation.value)
+      if (isOrientationLocked) {
+        putString("orientation", currentLockedOrientation.value)
+      } else {
+        putNull("orientation")
+      }
       putBoolean("isLocked", isOrientationLocked)
     }
     emitOnLockOrientationChange(eventData)
+  }
+
+  private fun setupOrientationListener() {
+    orientationEventListener = object : OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_NORMAL) {
+      override fun onOrientationChanged(orientation: Int) {
+        if (orientation == ORIENTATION_UNKNOWN) return
+
+        val newDeviceOrientation = when (orientation) {
+          in 0..44, in 315..359 -> Orientation.PORTRAIT
+          in 45..134 -> Orientation.LANDSCAPE_RIGHT
+          in 135..224 -> Orientation.PORTRAIT
+          in 225..314 -> Orientation.LANDSCAPE_LEFT
+          else -> return
+        }
+
+        if (newDeviceOrientation != currentDeviceOrientation) {
+          currentDeviceOrientation = newDeviceOrientation
+          emitOnOrientationChange()
+        }
+      }
+    }
+
+    if (orientationEventListener?.canDetectOrientation() == true) {
+      orientationEventListener?.enable()
+    }
+  }
+
+  private fun stopOrientationListener() {
+    orientationEventListener?.disable()
+    orientationEventListener = null
   }
 
   private fun setOrientation(orientation: Int) {
@@ -34,9 +81,23 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
     }
   }
 
+  override fun startOrientationTracking() {
+    if (!isOrientationTrackingEnabled) {
+      setupOrientationListener()
+      isOrientationTrackingEnabled = true
+    }
+  }
+
+  override fun stopOrientationTracking() {
+    if (isOrientationTrackingEnabled) {
+      stopOrientationListener()
+      isOrientationTrackingEnabled = false
+    }
+  }
+
   override fun lockToPortrait() {
     setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-    currentOrientation = Orientation.PORTRAIT
+    currentLockedOrientation = Orientation.PORTRAIT
     isOrientationLocked = true
     emitOnLockOrientationChange()
   }
@@ -45,15 +106,15 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
     when (direction) {
       LandscapeDirection.LEFT.value -> {
         setOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-        currentOrientation = Orientation.LANDSCAPE_LEFT
+        currentLockedOrientation = Orientation.LANDSCAPE_LEFT
       }
       LandscapeDirection.RIGHT.value -> {
         setOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-        currentOrientation = Orientation.LANDSCAPE_RIGHT
+        currentLockedOrientation = Orientation.LANDSCAPE_RIGHT
       }
       else -> {
         setOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-        currentOrientation = Orientation.LANDSCAPE_LEFT
+        currentLockedOrientation = Orientation.LANDSCAPE_LEFT
       }
     }
     isOrientationLocked = true
@@ -67,7 +128,7 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   }
 
   override fun getCurrentOrientation(): String {
-    return currentOrientation.value
+    return currentLockedOrientation.value
   }
 
   override fun isLocked(): Boolean {

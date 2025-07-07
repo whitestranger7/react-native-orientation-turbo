@@ -13,18 +13,24 @@ import {
   LandscapeDirection,
   getCurrentOrientation,
   isLocked,
+  onOrientationChange,
   onLockOrientationChange,
+  startOrientationTracking,
+  stopOrientationTracking,
+  type OrientationSubscription,
   type LockOrientationSubscription,
 } from 'react-native-orientation-turbo';
 
 export default function App() {
-  const [orientation, setOrientation] =
+  const [lockOrientation, setLockOrientation] =
     useState<LockOrientationSubscription | null>(null);
+  const [orientation, setOrientation] =
+    useState<OrientationSubscription | null>(null);
   const listenerSubscription = useRef<null | EventSubscription>(null);
 
   useEffect(() => {
     listenerSubscription.current = onLockOrientationChange((subscription) => {
-      setOrientation(subscription);
+      setLockOrientation(subscription);
     });
 
     return () => {
@@ -33,6 +39,18 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    startOrientationTracking();
+    listenerSubscription.current = onOrientationChange((subscription) => {
+      setOrientation(subscription);
+    });
+
+    return () => {
+      stopOrientationTracking();
+    };
+  }, []);
+
+  console.log(lockOrientation);
   console.log(orientation);
 
   return (

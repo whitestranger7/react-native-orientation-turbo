@@ -1,6 +1,17 @@
 import OrientationTurbo from './NativeOrientationTurbo';
 import { LandscapeDirection, Orientation } from './constants';
-import type { LockOrientationSubscription } from './types';
+import type {
+  LockOrientationSubscription,
+  OrientationSubscription,
+} from './types';
+
+export const startOrientationTracking = () => {
+  OrientationTurbo.startOrientationTracking();
+};
+
+export const stopOrientationTracking = () => {
+  OrientationTurbo.stopOrientationTracking();
+};
 
 export const lockToPortrait = () => {
   OrientationTurbo.lockToPortrait();
@@ -26,8 +37,21 @@ export const onLockOrientationChange = (
   callback: (subscription: LockOrientationSubscription) => void
 ) => {
   return OrientationTurbo.onLockOrientationChange(
-    callback as (arg: { orientation: string; isLocked: boolean }) => void
+    callback as (arg: { orientation: string | null; isLocked: boolean }) => void
   );
 };
 
-export { LandscapeDirection, Orientation, type LockOrientationSubscription };
+export const onOrientationChange = (
+  callback: (subscription: OrientationSubscription) => void
+) => {
+  return OrientationTurbo.onOrientationChange(
+    callback as (arg: { orientation: string }) => void
+  );
+};
+
+export {
+  LandscapeDirection,
+  Orientation,
+  type LockOrientationSubscription,
+  type OrientationSubscription,
+};
