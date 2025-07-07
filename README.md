@@ -34,8 +34,42 @@ yarn add react-native-orientation-turbo
 
 ### iOS Setup
 
+1. Install pods:
 ```sh
 cd ios && pod install
+```
+
+2. Modify your `AppDelegate.swift` file:
+
+**Add the import statement:**
+```swift
+import OrientationTurbo
+```
+
+**Add the orientation support method:**
+```swift
+func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+  return OrientationTurboImpl.shared.getSupportedInterfaceOrientations()
+}
+```
+
+Your `AppDelegate.swift` should look like this:
+```swift
+import UIKit
+import React
+import React_RCTAppDelegate
+import ReactAppDependencyProvider
+import OrientationTurbo  // Add this import
+
+@main
+class AppDelegate: UIResponder, UIApplicationDelegate {
+  // ... other code ...
+  
+  // Add this method
+  func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+    return OrientationTurboImpl.shared.getSupportedInterfaceOrientations()
+  }
+}
 ```
 
 ### Android Setup
@@ -51,9 +85,14 @@ import {
   unlockAllOrientations,
   getCurrentOrientation,
   isLocked,
+  onOrientationChange,
   onLockOrientationChange,
-  LandscapeDirection,
+  startOrientationTracking,
+  stopOrientationTracking,
+  PortraitDirection,
   Orientation,
+  LandscapeDirection,
+  type OrientationSubscription,
   type LockOrientationSubscription,
 } from 'react-native-orientation-turbo';
 ```
@@ -61,8 +100,17 @@ import {
 ### Basic Examples
 
 ```typescript
+// Starts tracking native sensors for onOrientationChange.
+startOrientationTracking();
+
+// Stops tracking native sensors.
+stopOrientationTracking();
+
 // Lock to portrait orientation
 lockToPortrait();
+
+// Lock to portrait UPSIDE_DOWN orientation
+lockToPortrait(PortraitDirection.UPSIDE_DOWN);
 
 // Lock to landscape left
 lockToLandscape(LandscapeDirection.LEFT);
@@ -85,18 +133,49 @@ console.log(locked); // true | false
 onLockOrientationChange(({ orientation, isLocked }) => {
   // Your code there
 })
+
+// Subscribe to device orientation changes
+onOrientationChange(({ orientation }) => {
+  // Your code there
+})
 ```
 
 ## API Reference
 
 ### Methods
 
-#### `lockToPortrait(): void`
+#### `startOrientationTracking(): void`
+
+Starts using native sensors to track device orientation changes.
+When device is physically rotates - sensors are detecting changes and expose it via `onOrientationChange` subscription.
+Drains battery faster and uses device power resources. 
+Recommended to use only when sensors are needed and remove when not needed remove sensors tracking by using `stopOrientationTracking`.
+
+```typescript
+startOrientationTracking();
+```
+
+#### `stopOrientationTracking(): void`
+
+Stops using native sensors if it's used. Physical devices rotation would no longer be tracked.
+
+```typescript
+stopOrientationTracking();
+```
+
+#### `lockToPortrait(direction?: PortraitDirection): void`
 
 Locks the device orientation to portrait mode.
 
+**Parameters:**
+- `direction?`: `PortraitDirection.UP` or `PortraitDirection.UPSIDE_DOWN` or `undefined`
+
 ```typescript
-lockToPortrait();
+import { PortraitDirection } from 'react-native-orientation-turbo';
+
+lockToPortrait(); // same as lockToPortrait(PortraitDirection.UP)
+lockToPortrait(PortraitDirection.UP);
+lockToPortrait(PortraitDirection.UPSIDE_DOWN);
 ```
 
 #### `lockToLandscape(direction: LandscapeDirection): void`
@@ -143,12 +222,12 @@ const locked = isLocked();
 
 ### Subscriptions
 
-#### `onLockOrientationChange(callback: (subscription: LockOrientationSubscription) => void): Subscription`
+#### `onLockOrientationChange(callback: (subscription: LockOrientationSubscription) => void)`
 
 Subscribes to orientation changes and receives real-time updates.
 
 **Parameters:**
-- `callback`: Function called when orientation changes, receives `LockOrientationSubscription` object
+- `callback`: Function called when lock state orientation changes, receives `LockOrientationSubscription` object
 
 **Returns:** Subscription object with `remove()` method to unsubscribe
 
@@ -172,12 +251,58 @@ import type { EventSubscription } from 'react-native';
 import { onLockOrientationChange } from 'react-native-orientation-turbo';
 
 const MyComponent = () => {
+  const lockListenerSubscription = useRef<null | EventSubscription>(null);
+
+  useEffect(() => {
+    lockListenerSubscription.current = onLockOrientationChange(({ orientation, isLocked }) => {
+      // Handle orientation change
+      console.log('Orientation:', orientation, 'Locked:', isLocked);
+    });
+
+    return () => {
+      lockListenerSubscription.current?.remove();
+      lockListenerSubscription.current = null;
+    }; // Clean up subscription
+  }, []);
+
+  return <View>{/* Your component */}</View>;
+};
+```
+
+#### `onOrientationChange(callback: (subscription: OrientationSubscription) => void)`
+
+Subscribes to orientation changes and receives real-time updates.
+
+**Parameters:**
+- `callback`: Function called when device physical orientation changes, receives `OrientationSubscription` object
+
+**Returns:** Subscription object with `remove()` method to unsubscribe
+
+```typescript
+import { onOrientationChange } from 'react-native-orientation-turbo';
+
+const subscription = onOrientationChange(({ orientation }) => {
+  console.log('Current device orientation:', orientation);
+});
+
+// Unsubscribe when no longer needed
+subscription.remove();
+```
+
+**React Hook Example:**
+```typescript
+import { useEffect, useRef } from 'react';
+import type { EventSubscription } from 'react-native';
+
+import { onOrientationChange } from 'react-native-orientation-turbo';
+
+const MyComponent = () => {
   const listenerSubscription = useRef<null | EventSubscription>(null);
 
   useEffect(() => {
-    listenerSubscription.current = onLockOrientationChange(({ orientation, isLocked }) => {
+    listenerSubscription.current = onOrientationChange(({ orientation }) => {
       // Handle orientation change
-      console.log('Orientation:', orientation, 'Locked:', isLocked);
+      console.log('Orientation:', orientation);
     });
 
     return () => {
@@ -190,7 +315,6 @@ const MyComponent = () => {
 };
 ```
 
-
 ### Types
 
 #### `LandscapeDirection`
@@ -199,6 +323,15 @@ const MyComponent = () => {
 enum LandscapeDirection {
   LEFT = 'LEFT',
   RIGHT = 'RIGHT',
+}
+```
+
+#### `PortraitDirection`
+
+```typescript
+enum PortraitDirection {
+  UP = 'UP',
+  UPSIDE_DOWN = 'UPSIDE_DOWN', // iOS only
 }
 ```
 
@@ -216,8 +349,16 @@ enum Orientation {
 
 ```typescript
 type LockOrientationSubscription = {
-  orientation: Orientation;
+  orientation: Orientation | null;
   isLocked: boolean;
+};
+```
+
+#### `OrientationSubscription`
+
+```typescript
+type OrientationSubscription = {
+  orientation: Orientation;
 };
 ```
 
