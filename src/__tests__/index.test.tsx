@@ -6,6 +6,9 @@ import {
   getCurrentOrientation,
   isLocked,
   onLockOrientationChange,
+  onOrientationChange,
+  startOrientationTracking,
+  stopOrientationTracking,
   LandscapeDirection,
   PortraitDirection,
   Orientation,
@@ -15,18 +18,35 @@ import OrientationTurbo from '../NativeOrientationTurbo';
 jest.mock('../NativeOrientationTurbo', () => ({
   __esModule: true,
   default: {
+    startOrientationTracking: jest.fn(),
+    stopOrientationTracking: jest.fn(),
     lockToPortrait: jest.fn(),
     lockToLandscape: jest.fn(),
     unlockAllOrientations: jest.fn(),
     getCurrentOrientation: jest.fn(),
     isLocked: jest.fn(),
     onLockOrientationChange: jest.fn(),
+    onOrientationChange: jest.fn(),
   },
 }));
 
 describe('Native Module functions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('orientation tracking functions', () => {
+    it('should call native startOrientationTracking method', () => {
+      startOrientationTracking();
+      expect(OrientationTurbo.startOrientationTracking).toHaveBeenCalledTimes(
+        1
+      );
+    });
+
+    it('should call native stopOrientationTracking method', () => {
+      stopOrientationTracking();
+      expect(OrientationTurbo.stopOrientationTracking).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('lockToPortrait functions', () => {
@@ -125,6 +145,66 @@ describe('Native Module functions', () => {
       const result = isLocked();
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('onOrientationChange subscription function', () => {
+    it('should register orientation change listener', () => {
+      const mockCallback = jest.fn();
+
+      onOrientationChange(mockCallback);
+
+      expect(OrientationTurbo.onOrientationChange).toHaveBeenCalledWith(
+        expect.any(Function)
+      );
+    });
+
+    it('should call callback with proper subscription format', () => {
+      const mockCallback = jest.fn();
+      const mockNativeCallback = jest.fn();
+
+      (OrientationTurbo.onOrientationChange as jest.Mock).mockImplementation(
+        (callback) => {
+          mockNativeCallback.mockImplementation(callback as any);
+          return { remove: jest.fn() };
+        }
+      );
+
+      onOrientationChange(mockCallback);
+
+      mockNativeCallback({ orientation: Orientation.LANDSCAPE_LEFT });
+
+      expect(mockCallback).toHaveBeenCalledWith({
+        orientation: Orientation.LANDSCAPE_LEFT,
+      });
+    });
+
+    it('should handle all orientation values in callback', () => {
+      const mockCallback = jest.fn();
+      const mockNativeCallback = jest.fn();
+
+      (OrientationTurbo.onOrientationChange as jest.Mock).mockImplementation(
+        (callback) => {
+          mockNativeCallback.mockImplementation(callback as any);
+          return { remove: jest.fn() };
+        }
+      );
+
+      onOrientationChange(mockCallback);
+
+      const orientations = [
+        Orientation.PORTRAIT,
+        Orientation.LANDSCAPE_LEFT,
+        Orientation.LANDSCAPE_RIGHT,
+        Orientation.PORTRAIT_UPSIDE_DOWN,
+      ];
+
+      orientations.forEach((orientation) => {
+        mockNativeCallback({ orientation });
+        expect(mockCallback).toHaveBeenCalledWith({ orientation });
+      });
+
+      expect(mockCallback).toHaveBeenCalledTimes(4);
     });
   });
 
