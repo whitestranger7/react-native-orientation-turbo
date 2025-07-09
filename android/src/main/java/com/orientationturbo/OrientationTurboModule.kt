@@ -24,6 +24,19 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   private var orientationEventListener: OrientationEventListener? = null
   private var isOrientationTrackingEnabled = false
 
+  init {
+    if (OrientationTurbo.sharedState != null) { 
+      syncWithSharedState()
+    }
+  }
+
+  private fun syncWithSharedState() {
+    OrientationTurbo.sharedState?.let { sharedState ->
+      currentLockedOrientation = sharedState.orientation
+      isOrientationLocked = sharedState.isLocked
+      OrientationTurbo.clearSharedState()
+    }
+  }
 
   private fun emitOnOrientationChange() {
     val eventData = Arguments.createMap().apply {

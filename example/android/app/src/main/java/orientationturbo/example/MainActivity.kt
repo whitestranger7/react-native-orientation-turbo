@@ -1,9 +1,11 @@
 package orientationturbo.example
 
+import android.os.Bundle
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
+import com.orientationturbo.OrientationTurbo
 
 class MainActivity : ReactActivity() {
 
@@ -12,6 +14,13 @@ class MainActivity : ReactActivity() {
    * rendering of the component.
    */
   override fun getMainComponentName(): String = "OrientationTurboExample"
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    // Static class to call before OrientationTurboModule is instantiated
+    // This lock state will be synced with OrientationTurboModule after app is run
+    OrientationTurbo.lockToPortrait(this)
+    super.onCreate(savedInstanceState)
+  }
 
   /**
    * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]
