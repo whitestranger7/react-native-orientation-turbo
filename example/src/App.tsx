@@ -1,27 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { Navigation } from './navigation/Navigation';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useEffect, useRef, useState } from 'react';
 import {
-  Text,
-  View,
-  StyleSheet,
-  Button,
-  type EventSubscription,
-} from 'react-native';
-import {
-  lockToLandscape,
-  lockToPortrait,
-  unlockAllOrientations,
-  LandscapeDirection,
-  getCurrentOrientation,
-  isLocked,
-  onOrientationChange,
   onLockOrientationChange,
+  onOrientationChange,
   startOrientationTracking,
   stopOrientationTracking,
-  type OrientationSubscription,
   type LockOrientationSubscription,
+  type OrientationSubscription,
 } from 'react-native-orientation-turbo';
+import type { EventSubscription } from 'react-native';
 
-export default function App() {
+export const App = () => {
   const [lockOrientation, setLockOrientation] =
     useState<LockOrientationSubscription | null>(null);
   const [orientation, setOrientation] =
@@ -57,36 +48,10 @@ export default function App() {
   console.log(orientation);
 
   return (
-    <View style={styles.container}>
-      <Text>Result: WELCOME</Text>
-      <View>
-        <Button title="Lock to Portrait" onPress={() => lockToPortrait()} />
-        <Button
-          title="Lock to Landscape Left"
-          onPress={() => lockToLandscape(LandscapeDirection.LEFT)}
-        />
-        <Button
-          title="Lock to Landscape Right"
-          onPress={() => lockToLandscape(LandscapeDirection.RIGHT)}
-        />
-        <Button
-          title="Unlock All Orientations"
-          onPress={unlockAllOrientations}
-        />
-        <Button
-          title="Get Current Orientation"
-          onPress={() => console.log(getCurrentOrientation())}
-        />
-        <Button title="Is Locked" onPress={() => console.log(isLocked())} />
-      </View>
-    </View>
+    <GestureHandlerRootView>
+      <SafeAreaProvider>
+        <Navigation />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+};
