@@ -27,30 +27,22 @@ object OrientationTurbo {
    */
   @SuppressLint("SourceLockedOrientationActivity")
   @JvmStatic
-  fun lockToPortrait(activity: Activity, direction: String? = null) {
-    when (direction) {
-      "UPSIDE_DOWN" -> {
-        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
-        sharedState = OrientationState(Orientation.PORTRAIT, true)
-      }
-      else -> {
-        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        sharedState = OrientationState(Orientation.PORTRAIT, true)
-      }
-    }
+  fun lockToPortrait(activity: Activity) {
+    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    sharedState = OrientationState(Orientation.PORTRAIT, true)
   }
 
   /**
    * Locks the device to landscape orientation
    */
   @JvmStatic
-  fun lockToLandscape(activity: Activity, direction: String) {
+  fun lockToLandscape(activity: Activity, direction: LandscapeDirection) {
     when (direction) {
-      LandscapeDirection.LEFT.value -> {
+      LandscapeDirection.LEFT -> {
         activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         sharedState = OrientationState(Orientation.LANDSCAPE_LEFT, true)
       }
-      LandscapeDirection.RIGHT.value -> {
+      LandscapeDirection.RIGHT -> {
         activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
         sharedState = OrientationState(Orientation.LANDSCAPE_RIGHT, true)
       }
