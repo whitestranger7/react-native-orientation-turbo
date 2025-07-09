@@ -9,6 +9,7 @@ import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.module.annotations.ReactModule
 import com.orientationturbo.enums.LandscapeDirection
 import com.orientationturbo.enums.Orientation
+import com.orientationturbo.utils.OrientationSync
 
 @ReactModule(name = OrientationTurboModule.NAME)
 class OrientationTurboModule(private val reactContext: ReactApplicationContext) :
@@ -25,16 +26,9 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   private var isOrientationTrackingEnabled = false
 
   init {
-    if (OrientationTurbo.sharedState != null) { 
-      syncWithSharedState()
-    }
-  }
-
-  private fun syncWithSharedState() {
-    OrientationTurbo.sharedState?.let { sharedState ->
-      currentLockedOrientation = sharedState.orientation
-      isOrientationLocked = sharedState.isLocked
-      OrientationTurbo.clearSharedState()
+    OrientationSync.getInitialOrientationState(reactContext).let { state ->
+      currentLockedOrientation = state.orientation
+      isOrientationLocked = state.isLocked
     }
   }
 
