@@ -23,6 +23,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     reactNativeFactory = factory
 
     window = UIWindow(frame: UIScreen.main.bounds)
+    
+    // This locks orientation before react native is booted
+    OrientationTurboImpl.shared.lockToPortrait()
 
     factory.startReactNative(
       withModuleName: "OrientationTurboExample",
