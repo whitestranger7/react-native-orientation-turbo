@@ -8,22 +8,18 @@ RCT_EXPORT_MODULE()
     self = [super init];
     if (self) {
         __weak __typeof(self) weakSelf = self;
-        [[OrientationTurboImpl shared] setOnOrientationChange:^(NSString *orientation) {
+        [[OrientationTurboImpl shared] setOnOrientationChange:^(NSDictionary *orientationEvent) {
             __strong __typeof(weakSelf) strongSelf = weakSelf;
             if (strongSelf) {
-                [strongSelf emitOrientationChangeEvent:orientation];
+                [strongSelf emitOrientationChangeEvent:orientationEvent];
             }
         }];
     }
     return self;
 }
 
-- (void)emitOrientationChangeEvent:(NSString *)orientation {
-    NSDictionary *eventData = @{
-        @"orientation": orientation
-    };
-    
-    [self emitOnOrientationChange:eventData];
+- (void)emitOrientationChangeEvent:(NSDictionary *)orientationEvent {
+    [self emitOnOrientationChange:orientationEvent];
 }
 
 - (void)emitLockOrientationChangeEvent {

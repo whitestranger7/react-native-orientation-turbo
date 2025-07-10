@@ -14,7 +14,7 @@ public class OrientationTurboImpl: NSObject {
   
   private let lockQueue = DispatchQueue(label: "orientation.lock.queue", attributes: .concurrent)
   
-  @objc public var onOrientationChange: ((String) -> Void)?
+  @objc public var onOrientationChange: ((NSDictionary) -> Void)?
   
   // MARK: - Initialization
   private override init() {
@@ -77,8 +77,14 @@ public class OrientationTurboImpl: NSObject {
       return
     }
     
+    let orientationEvent: NSDictionary = [
+       "orientation": newOrientation,
+       "faceDirection": getFaceDirection(for: newOrientation),
+       "platform": "ios"
+     ]
+    
     currentDeviceOrientation = newOrientation
-    onOrientationChange?(newOrientation)
+    onOrientationChange?(orientationEvent)
   }
   
   // MARK: - Public Orientation Control
@@ -267,7 +273,9 @@ public class OrientationTurboImpl: NSObject {
     case .portraitUpsideDown: return "PORTRAIT_UPSIDE_DOWN"
     case .landscapeLeft: return "LANDSCAPE_LEFT"
     case .landscapeRight: return "LANDSCAPE_RIGHT"
-    case .faceUp, .faceDown, .unknown:
+    case .faceUp: return "FACE_UP"
+    case .faceDown: return "FACE_DOWN"
+    case .unknown:
       return getOrientationFallback()
     @unknown default: return "PORTRAIT"
     }
@@ -284,6 +292,17 @@ public class OrientationTurboImpl: NSObject {
       case .landscapeRight: return "LANDSCAPE_RIGHT"
       default: return "PORTRAIT"
       }
+    }
+  }
+  
+  private func getFaceDirection(for orientation: String) -> String {
+    switch orientation {
+    case "FACE_DOWN":
+      return "DOWN"
+    case "FACE_UP", "PORTRAIT", "LANDSCAPE_LEFT", "LANDSCAPE_RIGHT", "PORTRAIT_UPSIDE_DOWN":
+      return "UP"
+    default:
+      return "UP"
     }
   }
 }

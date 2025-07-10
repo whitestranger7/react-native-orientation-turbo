@@ -18,6 +18,8 @@ export interface Spec extends TurboModule {
 
   readonly onOrientationChange: EventEmitter<{
     orientation: string;
+    faceDirection: string;
+    platform: string;
   }>;
 }
 
