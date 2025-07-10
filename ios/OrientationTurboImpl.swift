@@ -99,16 +99,6 @@ public class OrientationTurboImpl: NSObject {
   
   @objc public func unlockAllOrientations() {
     updateLockState(locked: false, orientation: nil)
-    
-    // First rotate to portrait, then unlock all orientations after a brief delay.
-    // Workaround to keep PORTRAIT back to default
-    requestOrientationChange(.portrait) { [weak self] success in
-      if success {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          self?.requestOrientationChange(.all)
-        }
-      }
-    }
   }
   
   @objc public func getCurrentOrientation() -> String {
