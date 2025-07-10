@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2025-07-10
+
+### Added
+#### Early Orientation Locking
+- **Pre-React Native Orientation Control**: Lock orientation before React Native loads (before bootsplash screen)
+- **iOS Early Locking**: `OrientationTurboImpl.shared.lockToPortrait()` and `OrientationTurboImpl.shared.lockToLandscape()` methods for AppDelegate integration
+- **Android Early Locking**: `OrientationTurbo.lockToPortrait()` and `OrientationTurbo.lockToLandscape()` static methods for MainActivity integration
+- **State Synchronization**: Automatic sync between early native orientation locks and JavaScript context on library initialization
+
+#### Android
+- **Native Static Class**: `OrientationTurbo` singleton class with static methods for early orientation control
+- **OrientationSync Utility**: `OrientationSync.kt` utility class for state management and synchronization
+- **AndroidManifest.xml Sync**: Automatic synchronization with `android:screenOrientation` manifest settings on initialization
+- **State Persistence**: Shared state management between early native locks and OrientationTurboModule
+
+### Fixes
+#### iOS
+- **unlockAllOrientations functionality fix**: Redundant dispatch was removed and execution order corrected
+- **getLockCurrentOrientation fix**: Function now properly returns locked orientation state vs device orientation
+- **null state for onLockOrientationChange**: `onLockOrientationChange` `orientation` now returns null for iOS when orientation is not locked
+
+### Docs
+- **Advanced Usage Guide**: Comprehensive `docs/ADVANCED_USAGE.md` with early locking examples, state synchronization, and integration patterns
+- **README.md Enhanced**: Added advanced features section with early locking examples and AndroidManifest.xml sync information
+- **Documentation Structure**: Organized documentation with clear separation between basic and advanced usage
+
 ## [2.0.0] - 2025-07-07
 
 ### Added

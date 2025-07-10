@@ -7,6 +7,9 @@ A React Native library for controlling device orientation with support for locki
 - **Modern Architecture**: Built with React Native Turbo Modules
 - **Cross Platform**: Support for both iOS and Android
 - **Orientation Locking**: Lock to portrait or landscape orientations
+- **Early Orientation Locking**: Lock orientation before React Native loads (before bootsplash)
+- **AndroidManifest.xml Sync**: Automatic synchronization with Android manifest orientation settings
+- **State Synchronization**: Seamless state sync between Native and JavaScript contexts
 - **Event Subscriptions**: Subscribe to orientation changes with live updates
 - **TypeScript**: Full TypeScript support with type definitions
 - **Performance**: Native performance with Turbo Module architecture
@@ -76,6 +79,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 No additional setup required for Android.
 
+> **Note**: The library automatically syncs with your `AndroidManifest.xml` orientation settings. If you have `android:screenOrientation` set in your manifest, the library will respect and sync with those settings into state on initialization.
+
 ## Usage
 
 ```typescript
@@ -121,7 +126,7 @@ lockToLandscape(LandscapeDirection.RIGHT);
 // Unlock all orientations (allow rotation)
 unlockAllOrientations();
 
-// Get current orientation
+// Get current orientation. If screen is locked - returns lock state, if not - returns current device orientation
 const currentOrientation = getCurrentOrientation();
 console.log(currentOrientation); // 'PORTRAIT' | 'LANDSCAPE_LEFT' | 'LANDSCAPE_RIGHT'
 
@@ -361,6 +366,49 @@ type OrientationSubscription = {
   orientation: Orientation;
 };
 ```
+
+## Advanced Features
+
+### Early Orientation Locking
+
+Lock orientation before React Native loads (useful for preventing orientation changes during app initialization/bootsplash):
+
+**iOS - AppDelegate.swift:**
+```swift
+func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    // Lock orientation BEFORE React Native loads
+    OrientationTurboImpl.shared.lockToPortrait()
+    
+    // Your existing setup...
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+}
+```
+
+**Android - MainActivity.kt:**
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+    // Lock orientation BEFORE React Native loads
+    OrientationTurbo.lockToPortrait(this)
+    
+    super.onCreate(savedInstanceState)
+}
+```
+
+### AndroidManifest.xml Synchronization
+
+The library automatically syncs with your Android manifest orientation settings:
+
+```xml
+<activity android:screenOrientation="portrait">
+  <!-- Library will automatically sync to portrait on initialization -->
+</activity>
+```
+
+### State Synchronization
+
+Early orientation locks are automatically synchronized with your JavaScript context when the library initializes, ensuring consistent state across native and JavaScript.
+
+For comprehensive documentation on advanced features, early orientation locking, state synchronization, and integration patterns, see **[Advanced Usage Guide](docs/ADVANCED_USAGE.md)**.
 
 ## Complete Example
 
