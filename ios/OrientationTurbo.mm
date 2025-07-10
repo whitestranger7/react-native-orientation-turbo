@@ -31,7 +31,7 @@ RCT_EXPORT_MODULE()
   BOOL isLocked = [[OrientationTurboImpl shared] isLocked];
   
   NSDictionary *eventData = @{
-    @"orientation": currentOrientation,
+    @"orientation": isLocked ? currentOrientation : [NSNull null],
     @"isLocked": @(isLocked)
   };
   
