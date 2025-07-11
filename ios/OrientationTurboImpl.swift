@@ -292,6 +292,7 @@ public class OrientationTurboImpl: NSObject {
     }
   }
   
+  // for future face direction support
   private func getFaceDirection(for orientation: String) -> String {
     switch orientation {
     case "FACE_DOWN":
