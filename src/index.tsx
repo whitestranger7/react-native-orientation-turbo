@@ -1,6 +1,5 @@
 import OrientationTurbo from './NativeOrientationTurbo';
 import {
-  FaceDirection,
   LandscapeDirection,
   PortraitDirection,
   Orientation,
@@ -55,7 +54,6 @@ export const onOrientationChange = (
 };
 
 export {
-  FaceDirection,
   LandscapeDirection,
   PortraitDirection,
   Orientation,
