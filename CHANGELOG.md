@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2025-07-11
+
+### Added
+#### iOS
+- **FACE_UP & FACE_DOWN orientation support**: `FACE_UP` and `FACE_DOWN` support. Enum `Orientation` type was updated
+
 ## [2.1.0] - 2025-07-10
 
 ### Added

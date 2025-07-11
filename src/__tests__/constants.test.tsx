@@ -50,8 +50,16 @@ describe('Constants should be defined correctly', () => {
       expect(Orientation.PORTRAIT_UPSIDE_DOWN).toBe('PORTRAIT_UPSIDE_DOWN');
     });
 
-    it('should have only 4 values', () => {
-      expect(Object.keys(Orientation)).toHaveLength(4);
+    it('should have correct FACE_UP value', () => {
+      expect(Orientation.FACE_UP).toBe('FACE_UP');
+    });
+
+    it('should have correct FACE_DOWN value', () => {
+      expect(Orientation.FACE_DOWN).toBe('FACE_DOWN');
+    });
+
+    it('should have only 6 values', () => {
+      expect(Object.keys(Orientation)).toHaveLength(6);
     });
   });
 });

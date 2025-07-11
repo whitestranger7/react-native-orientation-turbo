@@ -13,4 +13,6 @@ export enum Orientation {
   LANDSCAPE_LEFT = 'LANDSCAPE_LEFT',
   LANDSCAPE_RIGHT = 'LANDSCAPE_RIGHT',
   PORTRAIT_UPSIDE_DOWN = 'PORTRAIT_UPSIDE_DOWN', // iOS only
+  FACE_UP = 'FACE_UP', // iOS only
+  FACE_DOWN = 'FACE_DOWN', // iOS only
 }

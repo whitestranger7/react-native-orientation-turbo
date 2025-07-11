@@ -12,7 +12,7 @@
 - (void)unlockAllOrientations;
 - (NSString * _Nonnull)getCurrentOrientation;
 - (BOOL)isLocked;
-- (void)setOnOrientationChange:(void (^_Nullable)(NSString * _Nonnull))callback;
+- (void)setOnOrientationChange:(void (^_Nullable)(NSDictionary * _Nonnull))callback;
 - (UIInterfaceOrientationMask)getSupportedInterfaceOrientations;
 
 @end
