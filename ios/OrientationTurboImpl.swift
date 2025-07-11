@@ -72,16 +72,13 @@ public class OrientationTurboImpl: NSObject {
   
   @objc private func deviceOrientationDidChange() {
     let newOrientation = getOrientationFromDevice()
-    
     guard newOrientation != currentDeviceOrientation else {
       return
     }
     
     let orientationEvent: NSDictionary = [
-       "orientation": newOrientation,
-       "faceDirection": getFaceDirection(for: newOrientation),
-       "platform": "ios"
-     ]
+        "orientation": newOrientation,
+    ]
     
     currentDeviceOrientation = newOrientation
     onOrientationChange?(orientationEvent)
