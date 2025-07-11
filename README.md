@@ -128,7 +128,7 @@ unlockAllOrientations();
 
 // Get current orientation. If screen is locked - returns lock state, if not - returns current device orientation
 const currentOrientation = getCurrentOrientation();
-console.log(currentOrientation); // 'PORTRAIT' | 'LANDSCAPE_LEFT' | 'LANDSCAPE_RIGHT'
+console.log(currentOrientation); // 'PORTRAIT' | 'LANDSCAPE_LEFT' | 'LANDSCAPE_RIGHT' | 'FACE_UP' | 'FACE_DOWN'
 
 // Check if orientation is currently locked
 const locked = isLocked();
@@ -209,7 +209,7 @@ unlockAllOrientations();
 
 Returns the current device orientation.
 
-**Returns:** `'PORTRAIT'` | `'LANDSCAPE_LEFT'` | `'LANDSCAPE_RIGHT'`
+**Returns:** `'PORTRAIT'` | `'LANDSCAPE_LEFT'` | `'LANDSCAPE_RIGHT'` | `'FACE_UP'` | `'FACE_DOWN'`
 
 ```typescript
 const orientation = getCurrentOrientation();
@@ -347,6 +347,8 @@ enum Orientation {
   PORTRAIT = 'PORTRAIT',
   LANDSCAPE_LEFT = 'LANDSCAPE_LEFT',
   LANDSCAPE_RIGHT = 'LANDSCAPE_RIGHT',
+  FACE_UP = 'FACE_UP', // iOS only
+  FACE_DOWN = 'FACE_DOWN', // iOS only
 }
 ```
 

@@ -1,6 +1,6 @@
 {
   "name": "react-native-orientation-turbo",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "orientation turbo",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
@@ -39,7 +39,7 @@
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",
     "release": "release-it --no-increment",
-    "sync": "yarn && cd example && yarn pod:install"
+    "sync": "yarn && cd example && yarn pod:install && yarn android:codegen"
   },
   "keywords": [
     "react-native",
