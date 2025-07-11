@@ -8,7 +8,7 @@ PODS:
   - hermes-engine (0.80.1):
     - hermes-engine/Pre-built (= 0.80.1)
   - hermes-engine/Pre-built (0.80.1)
-  - OrientationTurbo (2.0.0):
+  - OrientationTurbo (2.1.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2392,7 +2392,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 4f07404533b808de66cf48ac4200463068d0e95a
-  OrientationTurbo: a97ac48e3a68b79580386f9066ec350d98846794
+  OrientationTurbo: 7d6af743ba6ca903ea37c9cbc76ecc3551f2bbaa
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: efa5010912100e944a7ac9a93a157e1def1988fe
   RCTRequired: bbc4cf999ddc4a4b076e076c74dd1d39d0254630
