@@ -11,6 +11,12 @@ export interface Spec extends TurboModule {
   startOrientationTracking(): void;
   stopOrientationTracking(): void;
 
+  // Android only
+  getDeviceAutoRotateStatus(): {
+    isAutoRotateEnabled: boolean;
+    canDetectOrientation: boolean;
+  } | null;
+
   readonly onLockOrientationChange: EventEmitter<{
     orientation: string | null;
     isLocked: boolean;

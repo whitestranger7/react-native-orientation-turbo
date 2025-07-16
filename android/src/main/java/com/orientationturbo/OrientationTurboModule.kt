@@ -3,9 +3,11 @@ package com.orientationturbo
 import android.content.pm.ActivityInfo
 import android.hardware.SensorManager
 import android.view.OrientationEventListener
+import android.provider.Settings
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.UiThreadUtil
+import com.facebook.react.bridge.WritableMap
 import com.facebook.react.module.annotations.ReactModule
 import com.orientationturbo.enums.LandscapeDirection
 import com.orientationturbo.enums.Orientation
@@ -155,6 +157,36 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
 
   override fun isLocked(): Boolean {
     return isOrientationLocked
+  }
+
+  override fun getDeviceAutoRotateStatus(): WritableMap {
+    val result = Arguments.createMap()
+
+    val isAutoRotateEnabled = try {
+      Settings.System.getInt(
+        reactContext.contentResolver,
+        Settings.System.ACCELEROMETER_ROTATION,
+        0
+      ) == 1
+    } catch (e: Exception) {
+      true
+    }
+
+    val canDetectOrientation = try {
+      val testListener = object : OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_NORMAL) {
+        override fun onOrientationChanged(orientation: Int) {}
+      }
+      val canDetect = testListener.canDetectOrientation()
+      testListener.disable()
+      canDetect
+    } catch (e: Exception) {
+      false
+    }
+
+    result.putBoolean("isAutoRotateEnabled", isAutoRotateEnabled)
+    result.putBoolean("canDetectOrientation", canDetectOrientation)
+
+    return result
   }
 
   companion object {

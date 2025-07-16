@@ -17,8 +17,10 @@ import {
   onLockOrientationChange,
   startOrientationTracking,
   stopOrientationTracking,
+  getDeviceAutoRotateStatus,
   type OrientationSubscription,
   type LockOrientationSubscription,
+  type DeviceAutoRotateStatus,
 } from 'react-native-orientation-turbo';
 
 export default function App() {
@@ -26,6 +28,8 @@ export default function App() {
     useState<LockOrientationSubscription | null>(null);
   const [orientation, setOrientation] =
     useState<OrientationSubscription | null>(null);
+  const [deviceStatus, setDeviceStatus] =
+    useState<DeviceAutoRotateStatus | null>(null);
   const listenerLockSubscription = useRef<EventSubscription | null>(null);
   const listenerOrientationSubscription = useRef<EventSubscription | null>(
     null
@@ -33,6 +37,8 @@ export default function App() {
 
   useEffect(() => {
     startOrientationTracking();
+    setDeviceStatus(getDeviceAutoRotateStatus());
+
     listenerLockSubscription.current = onLockOrientationChange(
       (subscription) => {
         setLockOrientation(subscription);
@@ -53,13 +59,38 @@ export default function App() {
     };
   }, []);
 
+  const handleCheckDeviceStatus = () => {
+    const status = getDeviceAutoRotateStatus();
+    setDeviceStatus(status);
+    console.log('Device Auto-Rotate Status:', status);
+  };
+
   console.log(lockOrientation);
   console.log(orientation);
 
   return (
     <View style={styles.container}>
       <Text>Result: WELCOME</Text>
+
+      {deviceStatus && (
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusTitle}>Device Status:</Text>
+          <Text>
+            Auto-Rotate:{' '}
+            {deviceStatus.isAutoRotateEnabled ? 'Enabled' : 'Disabled'}
+          </Text>
+          <Text>
+            Can Detect Orientation:{' '}
+            {deviceStatus.canDetectOrientation ? 'Yes' : 'No'}
+          </Text>
+        </View>
+      )}
+
       <View>
+        <Button
+          title="Check Device Auto-Rotate Status"
+          onPress={handleCheckDeviceStatus}
+        />
         <Button title="Lock to Portrait" onPress={() => lockToPortrait()} />
         <Button
           title="Lock to Landscape Left"
@@ -88,5 +119,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  statusContainer: {
+    marginVertical: 20,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
+  },
+  statusTitle: {
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
 });
