@@ -1,11 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  Text,
-  View,
-  StyleSheet,
-  Button,
-  type EventSubscription,
-} from 'react-native';
+import { View, StyleSheet, Button, type EventSubscription } from 'react-native';
 import {
   lockToLandscape,
   lockToPortrait,
@@ -20,7 +14,6 @@ import {
   getDeviceAutoRotateStatus,
   type OrientationSubscription,
   type LockOrientationSubscription,
-  type DeviceAutoRotateStatus,
 } from 'react-native-orientation-turbo';
 
 export default function App() {
@@ -28,8 +21,6 @@ export default function App() {
     useState<LockOrientationSubscription | null>(null);
   const [orientation, setOrientation] =
     useState<OrientationSubscription | null>(null);
-  const [deviceStatus, setDeviceStatus] =
-    useState<DeviceAutoRotateStatus | null>(null);
   const listenerLockSubscription = useRef<EventSubscription | null>(null);
   const listenerOrientationSubscription = useRef<EventSubscription | null>(
     null
@@ -37,7 +28,6 @@ export default function App() {
 
   useEffect(() => {
     startOrientationTracking();
-    setDeviceStatus(getDeviceAutoRotateStatus());
 
     listenerLockSubscription.current = onLockOrientationChange(
       (subscription) => {
@@ -59,37 +49,15 @@ export default function App() {
     };
   }, []);
 
-  const handleCheckDeviceStatus = () => {
-    const status = getDeviceAutoRotateStatus();
-    setDeviceStatus(status);
-    console.log('Device Auto-Rotate Status:', status);
-  };
-
   console.log(lockOrientation);
   console.log(orientation);
 
   return (
     <View style={styles.container}>
-      <Text>Result: WELCOME</Text>
-
-      {deviceStatus && (
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusTitle}>Device Status:</Text>
-          <Text>
-            Auto-Rotate:{' '}
-            {deviceStatus.isAutoRotateEnabled ? 'Enabled' : 'Disabled'}
-          </Text>
-          <Text>
-            Can Detect Orientation:{' '}
-            {deviceStatus.canDetectOrientation ? 'Yes' : 'No'}
-          </Text>
-        </View>
-      )}
-
       <View>
         <Button
           title="Check Device Auto-Rotate Status"
-          onPress={handleCheckDeviceStatus}
+          onPress={() => console.log(getDeviceAutoRotateStatus())}
         />
         <Button title="Lock to Portrait" onPress={() => lockToPortrait()} />
         <Button
