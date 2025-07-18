@@ -1,11 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  Text,
-  View,
-  StyleSheet,
-  Button,
-  type EventSubscription,
-} from 'react-native';
+import { View, StyleSheet, Button, type EventSubscription } from 'react-native';
 import {
   lockToLandscape,
   lockToPortrait,
@@ -17,6 +11,7 @@ import {
   onLockOrientationChange,
   startOrientationTracking,
   stopOrientationTracking,
+  getDeviceAutoRotateStatus,
   type OrientationSubscription,
   type LockOrientationSubscription,
 } from 'react-native-orientation-turbo';
@@ -33,6 +28,7 @@ export default function App() {
 
   useEffect(() => {
     startOrientationTracking();
+
     listenerLockSubscription.current = onLockOrientationChange(
       (subscription) => {
         setLockOrientation(subscription);
@@ -58,8 +54,11 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text>Result: WELCOME</Text>
       <View>
+        <Button
+          title="Check Device Auto-Rotate Status"
+          onPress={() => console.log(getDeviceAutoRotateStatus())}
+        />
         <Button title="Lock to Portrait" onPress={() => lockToPortrait()} />
         <Button
           title="Lock to Landscape Left"
@@ -88,5 +87,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  statusContainer: {
+    marginVertical: 20,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
+  },
+  statusTitle: {
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
 });

@@ -8,3 +8,8 @@ export type LockOrientationSubscription = {
 export type OrientationSubscription = {
   orientation: Orientation;
 };
+
+export type DeviceAutoRotateStatus = {
+  isAutoRotateEnabled: boolean;
+  canDetectOrientation: boolean;
+};
