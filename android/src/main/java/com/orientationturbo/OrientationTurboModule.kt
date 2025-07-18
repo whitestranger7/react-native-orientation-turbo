@@ -1,15 +1,14 @@
 package com.orientationturbo
 
-import android.content.pm.ActivityInfo
-import android.hardware.SensorManager
-import android.view.OrientationEventListener
-import com.facebook.react.bridge.Arguments
-import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.bridge.UiThreadUtil
-import com.facebook.react.module.annotations.ReactModule
-import com.orientationturbo.enums.LandscapeDirection
-import com.orientationturbo.enums.Orientation
+import com.orientationturbo.core.OrientationManager
+import com.orientationturbo.core.OrientationTracker
+import com.orientationturbo.core.OrientationStatus
+import com.orientationturbo.events.OrientationEventEmitter
 import com.orientationturbo.utils.OrientationSync
+
+import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.WritableMap
+import com.facebook.react.module.annotations.ReactModule
 
 @ReactModule(name = OrientationTurboModule.NAME)
 class OrientationTurboModule(private val reactContext: ReactApplicationContext) :
@@ -19,142 +18,55 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
     return NAME
   }
 
-  private var currentLockedOrientation: Orientation = Orientation.PORTRAIT
-  private var currentDeviceOrientation: Orientation = Orientation.PORTRAIT
-  private var isOrientationLocked: Boolean = false
-  private var orientationEventListener: OrientationEventListener? = null
-  private var isOrientationTrackingEnabled = false
+  private val orientationManager = OrientationManager(reactContext)
+
+  private val orientationStatus = OrientationStatus(reactContext)
+  private val orientationTracker = OrientationTracker(reactContext, orientationManager)
+  private val orientationEvenEmitter = OrientationEventEmitter(
+    orientationManager,
+    ::emitOnOrientationChange,
+    ::emitOnLockOrientationChange,
+  )
 
   init {
     OrientationSync.getInitialOrientationState(reactContext).let { state ->
-      currentLockedOrientation = state.orientation
-      isOrientationLocked = state.isLocked
-    }
-  }
-
-  private fun emitOnOrientationChange() {
-    val eventData = Arguments.createMap().apply {
-      putString("orientation", currentDeviceOrientation.value)
-    }
-    emitOnOrientationChange(eventData)
-  }
-
-  private fun emitOnLockOrientationChange() {
-    val eventData = Arguments.createMap().apply {
-      if (isOrientationLocked) {
-        putString("orientation", currentLockedOrientation.value)
-      } else {
-        putNull("orientation")
-      }
-      putBoolean("isLocked", isOrientationLocked)
-    }
-    emitOnLockOrientationChange(eventData)
-  }
-
-  private fun setupOrientationListener() {
-    orientationEventListener = object : OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_NORMAL) {
-      override fun onOrientationChanged(orientation: Int) {
-        if (orientation == ORIENTATION_UNKNOWN) return
-
-        val newDeviceOrientation = when (orientation) {
-          in 0..44, in 315..359 -> Orientation.PORTRAIT
-          in 45..134 -> Orientation.LANDSCAPE_RIGHT
-          in 135..224 -> Orientation.PORTRAIT
-          in 225..314 -> Orientation.LANDSCAPE_LEFT
-          else -> return
-        }
-
-        if (newDeviceOrientation != currentDeviceOrientation) {
-          currentDeviceOrientation = newDeviceOrientation
-          emitOnOrientationChange()
-        }
-      }
-    }
-
-    if (orientationEventListener?.canDetectOrientation() == true) {
-      orientationEventListener?.enable()
-    }
-  }
-
-  private fun stopOrientationListener() {
-    orientationEventListener?.disable()
-    orientationEventListener = null
-  }
-
-  private fun setOrientation(orientation: Int) {
-    UiThreadUtil.runOnUiThread {
-      val activity = reactContext.currentActivity
-      activity?.requestedOrientation = orientation
+      orientationManager.setLockedOrientation(state.orientation, state.isLocked)
     }
   }
 
   override fun startOrientationTracking() {
-    if (!isOrientationTrackingEnabled) {
-      setupOrientationListener()
-      isOrientationTrackingEnabled = true
-    }
+    orientationTracker.startOrientationTracking(orientationEvenEmitter::onOrientationChange)
   }
 
   override fun stopOrientationTracking() {
-    if (isOrientationTrackingEnabled) {
-      stopOrientationListener()
-      isOrientationTrackingEnabled = false
-    }
+    orientationTracker.stopOrientationTracking()
   }
 
   override fun lockToPortrait(direction: String?) {
-    when (direction) {
-      "UPSIDE_DOWN" -> {
-        // Note: Android rarely supports upside-down orientation
-        // Currently this type will just set Orientation to Portrait
-        currentLockedOrientation = Orientation.PORTRAIT
-      }
-      else -> {
-        setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-        currentLockedOrientation = Orientation.PORTRAIT
-      }
-    }
-    isOrientationLocked = true
-    emitOnLockOrientationChange()
+    orientationManager.lockToPortrait(direction)
+    orientationEvenEmitter.onLockOrientationChange()
   }
 
   override fun lockToLandscape(direction: String) {
-    when (direction) {
-      LandscapeDirection.LEFT.value -> {
-        setOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-        currentLockedOrientation = Orientation.LANDSCAPE_LEFT
-      }
-      LandscapeDirection.RIGHT.value -> {
-        setOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-        currentLockedOrientation = Orientation.LANDSCAPE_RIGHT
-      }
-      else -> {
-        setOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-        currentLockedOrientation = Orientation.LANDSCAPE_LEFT
-      }
-    }
-    isOrientationLocked = true
-    emitOnLockOrientationChange()
+    orientationManager.lockToLandscape(direction)
+    orientationEvenEmitter.onLockOrientationChange()
   }
 
   override fun unlockAllOrientations() {
-    setOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
-    isOrientationLocked = false
-    emitOnLockOrientationChange()
+    orientationManager.unlockAllOrientations()
+    orientationEvenEmitter.onLockOrientationChange()
   }
 
   override fun getCurrentOrientation(): String {
-    // If orientation is locked, return the locked orientation
-    return if (isOrientationLocked) {
-      currentLockedOrientation.value
-    } else {
-      // If not locked, return the current device orientation
-      currentDeviceOrientation.value
-    }
+    return orientationManager.getCurrentOrientation()
   }
 
   override fun isLocked(): Boolean {
-    return isOrientationLocked
+    return orientationManager.getIsLocked()
+  }
+
+  override fun getDeviceAutoRotateStatus(): WritableMap {
+    return orientationStatus.getDeviceAutoRotateStatus()
   }
 
   companion object {

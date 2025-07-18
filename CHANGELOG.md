@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.2] - TBD
+
+### Added
+#### Android
+- **Device Auto-Rotate Status**: `getDeviceAutoRotateStatus()` method to check device auto-rotate settings and orientation detection capabilities
+- **DeviceAutoRotateStatus Type**: New TypeScript type for auto-rotate status information
+
+### Documentation
+- **iOS Auto-Rotate Limitations Guide**: New `docs/IOS_AUTO_ROTATE_LIMITATIONS.md` explaining iOS platform restrictions for auto-rotate detection and providing alternative approaches
+
 ## [2.1.1] - 2025-07-11
 
 ### Added

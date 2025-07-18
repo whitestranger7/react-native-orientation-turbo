@@ -90,6 +90,7 @@ import {
   unlockAllOrientations,
   getCurrentOrientation,
   isLocked,
+  getDeviceAutoRotateStatus,
   onOrientationChange,
   onLockOrientationChange,
   startOrientationTracking,
@@ -99,6 +100,7 @@ import {
   LandscapeDirection,
   type OrientationSubscription,
   type LockOrientationSubscription,
+  type DeviceAutoRotateStatus,
 } from 'react-native-orientation-turbo';
 ```
 
@@ -133,6 +135,10 @@ console.log(currentOrientation); // 'PORTRAIT' | 'LANDSCAPE_LEFT' | 'LANDSCAPE_R
 // Check if orientation is currently locked
 const locked = isLocked();
 console.log(locked); // true | false
+
+// Get device auto-rotate status (Android only). iOS will return null
+const autoRotateStatus = getDeviceAutoRotateStatus();
+console.log(autoRotateStatus); // { isAutoRotateEnabled: boolean, canDetectOrientation: boolean } | null
 
 // Subscribe to lock orientation changes
 onLockOrientationChange(({ orientation, isLocked }) => {
@@ -223,6 +229,32 @@ Returns whether the orientation is currently locked.
 
 ```typescript
 const locked = isLocked();
+```
+
+#### `getDeviceAutoRotateStatus(): DeviceAutoRotateStatus | null`
+
+**Android only.** Returns information about the device's auto-rotate settings and orientation detection capabilities.
+
+**Returns:** 
+- `DeviceAutoRotateStatus` object on Android
+- `null` on iOS (not supported)
+
+> **iOS Limitation:** This method is not available on iOS due to platform restrictions. See [iOS Auto-Rotate Detection Limitations](docs/IOS_AUTO_ROTATE_LIMITATIONS.md) for detailed explanation and alternative approaches.
+
+**DeviceAutoRotateStatus Properties:**
+- `isAutoRotateEnabled`: `boolean` - Whether auto-rotate is enabled in device settings
+- `canDetectOrientation`: `boolean` - Whether the device can detect orientation changes
+
+```typescript
+import { getDeviceAutoRotateStatus } from 'react-native-orientation-turbo';
+
+const status = getDeviceAutoRotateStatus();
+if (status) {
+  console.log('Auto-rotate enabled:', status.isAutoRotateEnabled);
+  console.log('Can detect orientation:', status.canDetectOrientation);
+} else {
+  console.log('Auto-rotate status not supported on this platform');
+}
 ```
 
 ### Subscriptions
@@ -366,6 +398,15 @@ type LockOrientationSubscription = {
 ```typescript
 type OrientationSubscription = {
   orientation: Orientation;
+};
+```
+
+#### `DeviceAutoRotateStatus`
+
+```typescript
+type DeviceAutoRotateStatus = {
+  isAutoRotateEnabled: boolean;
+  canDetectOrientation: boolean;
 };
 ```
 
