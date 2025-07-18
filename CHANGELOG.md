@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.2] - TBD
+## [2.1.2] - 2025-07-18
 
 ### Added
 #### Android
@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 
 ### Documentation
 - **iOS Auto-Rotate Limitations Guide**: New `docs/IOS_AUTO_ROTATE_LIMITATIONS.md` explaining iOS platform restrictions for auto-rotate detection and providing alternative approaches
+- **API documentation improved**: Typescript annotations were added to API functions
+
+### Technical
+- **Android codebase improvements**: Codebase for Android was redesigned and improved
 
 ## [2.1.1] - 2025-07-11
 
