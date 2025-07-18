@@ -239,6 +239,8 @@ const locked = isLocked();
 - `DeviceAutoRotateStatus` object on Android
 - `null` on iOS (not supported)
 
+> **iOS Limitation:** This method is not available on iOS due to platform restrictions. See [iOS Auto-Rotate Detection Limitations](docs/IOS_AUTO_ROTATE_LIMITATIONS.md) for detailed explanation and alternative approaches.
+
 **DeviceAutoRotateStatus Properties:**
 - `isAutoRotateEnabled`: `boolean` - Whether auto-rotate is enabled in device settings
 - `canDetectOrientation`: `boolean` - Whether the device can detect orientation changes
