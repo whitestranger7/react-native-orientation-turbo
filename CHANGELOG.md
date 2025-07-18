@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [2.1.2] - 2025-07-18
 
+### Fixed
+#### Android
+- **Landscape reverse issue**: `LANDSCAPE_RIGHT` & `LANDSCAPE_LEFT` now no longer locks in reverse
+
 ### Added
 #### Android
 - **Device Auto-Rotate Status**: `getDeviceAutoRotateStatus()` method to check device auto-rotate settings and orientation detection capabilities

@@ -68,15 +68,15 @@ class OrientationManager(private val reactContext: ReactApplicationContext) {
   fun lockToLandscape(direction: String) {
     when (direction) {
       LandscapeDirection.LEFT.value -> {
-        setOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        setOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
         currentLockedOrientation = Orientation.LANDSCAPE_LEFT
       }
       LandscapeDirection.RIGHT.value -> {
-        setOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+        setOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
         currentLockedOrientation = Orientation.LANDSCAPE_RIGHT
       }
       else -> {
-        setOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        setOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
         currentLockedOrientation = Orientation.LANDSCAPE_LEFT
       }
     }
