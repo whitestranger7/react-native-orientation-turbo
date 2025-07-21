@@ -1,5 +1,3 @@
-import { Platform } from 'react-native';
-
 import OrientationTurbo from './NativeOrientationTurbo';
 import {
   LandscapeDirection,
@@ -76,11 +74,7 @@ export const isLocked = () => {
  * @returns DeviceAutoRotateStatus on Android, null on iOS
  */
 export const getDeviceAutoRotateStatus = (): DeviceAutoRotateStatus | null => {
-  if (Platform.OS === 'android') {
-    return OrientationTurbo.getDeviceAutoRotateStatus();
-  }
-
-  return null;
+  return OrientationTurbo.getDeviceAutoRotateStatus();
 };
 
 /**

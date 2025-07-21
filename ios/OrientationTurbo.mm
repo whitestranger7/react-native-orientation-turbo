@@ -71,6 +71,11 @@ RCT_EXPORT_MODULE()
   [self emitLockOrientationChangeEvent];
 }
 
+- (NSDictionary * _Nullable)getDeviceAutoRotateStatus { 
+  return nil;
+}
+
+
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params
 {
