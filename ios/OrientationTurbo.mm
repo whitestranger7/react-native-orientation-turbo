@@ -5,21 +5,21 @@
 RCT_EXPORT_MODULE()
 
 - (instancetype)init {
-    self = [super init];
-    if (self) {
-        __weak __typeof(self) weakSelf = self;
-        [[OrientationTurboImpl shared] setOnOrientationChange:^(NSDictionary *orientationEvent) {
-            __strong __typeof(weakSelf) strongSelf = weakSelf;
-            if (strongSelf) {
-                [strongSelf emitOrientationChangeEvent:orientationEvent];
-            }
-        }];
-    }
-    return self;
+  self = [super init];
+  if (self) {
+    __weak __typeof(self) weakSelf = self;
+    [[OrientationTurboImpl shared] setOnOrientationChange:^(NSDictionary *orientationEvent) {
+      __strong __typeof(weakSelf) strongSelf = weakSelf;
+      if (strongSelf) {
+        [strongSelf emitOrientationChangeEvent:orientationEvent];
+      }
+    }];
+  }
+  return self;
 }
 
 - (void)emitOrientationChangeEvent:(NSDictionary *)orientationEvent {
-    [self emitOnOrientationChange:orientationEvent];
+  [self emitOnOrientationChange:orientationEvent];
 }
 
 - (void)emitLockOrientationChangeEvent {
@@ -35,11 +35,11 @@ RCT_EXPORT_MODULE()
 }
 
 - (void)startOrientationTracking {
-    [[OrientationTurboImpl shared] startOrientationTracking];
+  [[OrientationTurboImpl shared] startOrientationTracking];
 }
 
 - (void)stopOrientationTracking {
-    [[OrientationTurboImpl shared] stopOrientationTracking];
+  [[OrientationTurboImpl shared] stopOrientationTracking];
 }
 
 - (nonnull NSString *)getCurrentOrientation {
@@ -71,15 +71,15 @@ RCT_EXPORT_MODULE()
   [self emitLockOrientationChangeEvent];
 }
 
-- (NSDictionary * _Nullable)getDeviceAutoRotateStatus { 
+- (NSDictionary * _Nullable)getDeviceAutoRotateStatus {
   return nil;
 }
 
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
-    (const facebook::react::ObjCTurboModule::InitParams &)params
+(const facebook::react::ObjCTurboModule::InitParams &)params
 {
-    return std::make_shared<facebook::react::NativeOrientationTurboSpecJSI>(params);
+  return std::make_shared<facebook::react::NativeOrientationTurboSpecJSI>(params);
 }
 
 @end

@@ -6,7 +6,7 @@ This guide covers advanced orientation control scenarios including early locking
 
 ### iOS - AppDelegate Integration
 
-You can lock orientation before React Native loads using `OrientationTurboImpl.shared` in your AppDelegate:
+You can lock orientation before React Native loads using `OrientationTurbo.shared` in your AppDelegate:
 
 ```swift
 import UIKit
@@ -21,12 +21,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     
     // Lock orientation BEFORE React Native loads (before bootsplash)
-    OrientationTurboImpl.shared.lockToPortrait()
+    OrientationTurbo.shared.lockToPortrait()
     
     // Other locking options:
-    // OrientationTurboImpl.shared.lockToLandscape("LEFT")
-    // OrientationTurboImpl.shared.lockToLandscape("RIGHT")
-    // OrientationTurboImpl.shared.unlockAllOrientations()
+    // OrientationTurbo.shared.lockToLandscape("LEFT")
+    // OrientationTurbo.shared.lockToLandscape("RIGHT")
+    // OrientationTurbo.shared.unlockAllOrientations()
     
     // Your existing React Native setup...
     factory.startReactNative(
@@ -40,12 +40,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   
   // Required for orientation control
   func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-    return OrientationTurboImpl.shared.getSupportedInterfaceOrientations()
+    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
   }
 }
 ```
 
-**State Synchronization**: When you call `OrientationTurboImpl.shared` methods in AppDelegate, the orientation state is automatically maintained in the singleton and will be accessible when your React Native JavaScript code loads.
+**State Synchronization**: When you call `OrientationTurbo.shared` methods in AppDelegate, the orientation state is automatically maintained in the singleton and will be accessible when your React Native JavaScript code loads.
 
 ### Android - MainActivity Integration
 
@@ -91,7 +91,7 @@ class MainActivity : ReactActivity() {
 #### iOS Synchronization
 ```swift
 // 1. AppDelegate calls (before React Native)
-OrientationTurboImpl.shared.lockToPortrait()
+OrientationTurbo.shared.lockToPortrait()
 
 // 2. Singleton maintains state across app lifecycle
 // 3. JavaScript calls read from the same singleton instance
@@ -222,7 +222,7 @@ OrientationTurbo.updateSharedState(newState.orientation, newState.isLocked)
 ```swift
 // iOS automatically syncs through the singleton pattern
 // Just call the methods on the shared instance
-OrientationTurboImpl.shared.lockToLandscape("LEFT")
+OrientationTurbo.shared.lockToLandscape("LEFT")
 
 // State is immediately available to JavaScript
 ```
@@ -237,7 +237,7 @@ Always keep AndroidManifest.xml flexible:
 Use programmatic locking instead of manifest locking for better device compatibility.
 
 ### 2. State Consistency
-- **iOS**: Use `OrientationTurboImpl.shared` for all orientation changes
+- **iOS**: Use `OrientationTurbo.shared` for all orientation changes
 - **Android**: Use `OrientationTurbo` static methods for early locking, JavaScript for runtime changes
 - Always check current state before making changes
 

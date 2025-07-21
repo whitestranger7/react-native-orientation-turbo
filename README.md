@@ -52,7 +52,7 @@ import OrientationTurbo
 **Add the orientation support method:**
 ```swift
 func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-  return OrientationTurboImpl.shared.getSupportedInterfaceOrientations()
+  return OrientationTurbo.shared.getSupportedInterfaceOrientations()
 }
 ```
 
@@ -70,7 +70,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   
   // Add this method
   func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-    return OrientationTurboImpl.shared.getSupportedInterfaceOrientations()
+    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
   }
 }
 ```
@@ -420,7 +420,7 @@ Lock orientation before React Native loads (useful for preventing orientation ch
 ```swift
 func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     // Lock orientation BEFORE React Native loads
-    OrientationTurboImpl.shared.lockToPortrait()
+    OrientationTurbo.shared.lockToPortrait()
     
     // Your existing setup...
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
