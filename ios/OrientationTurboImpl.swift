@@ -2,9 +2,10 @@ import UIKit
 
 @objc(OrientationTurboImpl)
 public class OrientationTurboImpl: NSObject {
+  internal static let internalShared = OrientationTurboImpl()
   
-  // MARK: - Singleton
-  @objc public static let shared = OrientationTurboImpl()
+  // MARK: - Shared Instance (Limited Public API)
+  @objc public static let shared: OrientationTurboPublicProtocol = OrientationTurboShared(implementation: OrientationTurboImpl.internalShared)
   
   // MARK: - Properties
   private let orientationManager = OrientationManager()
