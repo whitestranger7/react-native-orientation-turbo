@@ -81,6 +81,12 @@ No additional setup required for Android.
 
 > **Note**: The library automatically syncs with your `AndroidManifest.xml` orientation settings. If you have `android:screenOrientation` set in your manifest, the library will respect and sync with those settings into state on initialization.
 
+## Migration Guide
+
+If you're upgrading from a previous version, please check our [Migration Guide](docs/MIGRATION.md) for any breaking changes and upgrade instructions.
+
+**v2.2.0 Breaking Changes**: iOS native API changed from `OrientationTurboImpl.shared` to `OrientationTurbo.shared`. React Native usage remains unchanged.
+
 ## Usage
 
 ```typescript
@@ -452,6 +458,8 @@ The library automatically syncs with your Android manifest orientation settings:
 Early orientation locks are automatically synchronized with your JavaScript context when the library initializes, ensuring consistent state across native and JavaScript.
 
 For comprehensive documentation on advanced features, early orientation locking, state synchronization, and integration patterns, see **[Advanced Usage Guide](docs/ADVANCED_USAGE.md)**.
+
+For detailed information on using the library natively in iOS and Android applications, including architecture, restrictions, and best practices, see **[Native Usage Guide](docs/NATIVE_USAGE.md)**.
 
 ## Complete Example
 

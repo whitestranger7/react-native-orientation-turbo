@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - TBD
+
+### Breaking change
+#### iOS
+- **Public protocol changes**: `OrientationTurboImpl` was changed to `OrientationTurbo` public protocol for any native execution
+
+### Technical
+- **iOS codebase improvements**: Codebase for iOS was redesigned and improved
+- **iOS public protocol**: `OrientationTurbo` protocol for public native usage was created
+
+### Documentation
+- **iOS Setup Guide**: Updated native integration examples with new `OrientationTurbo.shared` API
+- **iOS Architecture Documentation**: Added guidance on modular component structure
+- **Migration Guide**: Instructions for updating from `OrientationTurboImpl.shared` to `OrientationTurbo.shared`
+
 ## [2.1.2] - 2025-07-18
 
 ### Fixed
