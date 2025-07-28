@@ -22,10 +22,10 @@ class OrientationTurboPackage : BaseReactPackage() {
       moduleInfos[OrientationTurboModule.NAME] = ReactModuleInfo(
         OrientationTurboModule.NAME,
         OrientationTurboModule.NAME,
-        false,  // canOverrideExistingModule
-        false,  // needsEagerInit
-        false,  // isCxxModule
-        true // isTurboModule
+        canOverrideExistingModule = false,
+        needsEagerInit = false,
+        isCxxModule = false,
+        isTurboModule = true
       )
       moduleInfos
     }

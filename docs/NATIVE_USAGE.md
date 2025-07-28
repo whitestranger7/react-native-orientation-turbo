@@ -229,12 +229,18 @@ func application(_ application: UIApplication, supportedInterfaceOrientationsFor
 
 ### Architecture
 
-The Android implementation uses a singleton pattern with static methods:
+The Android implementation uses a shared state pattern with a dedicated state holder:
 
 ```
 ┌─────────────────────────────────────┐
 │          OrientationTurbo           │ ← Static Methods Entry Point
-│        (Singleton Class)            │
+│        (Public API)                 │
+└─────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────┐
+│         OrientationState            │ ← Shared State Holder (Package-Private)
+│      (Single Source of Truth)       │
 └─────────────────────────────────────┘
                     │
                     ▼
@@ -264,7 +270,7 @@ class MainActivity : ReactActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         // Lock orientation BEFORE React Native loads
-        OrientationTurbo.lockToPortrait()
+        OrientationTurbo.lockToPortrait(this)
         
         // Call super AFTER orientation locking
         super.onCreate(savedInstanceState)
@@ -274,14 +280,14 @@ class MainActivity : ReactActivity() {
         super.onResume()
         
         // Optional: Lock orientation when activity resumes
-        OrientationTurbo.lockToLandscape("LEFT")
+        OrientationTurbo.lockToLandscape(this, LandscapeDirection.LEFT)
     }
     
     override fun onPause() {
         super.onPause()
         
         // Optional: Unlock when activity pauses
-        OrientationTurbo.unlockAllOrientations()
+        OrientationTurbo.unlockAllOrientations(this)
     }
 }
 ```
@@ -290,16 +296,19 @@ class MainActivity : ReactActivity() {
 
 ```kotlin
 import com.orientationturbo.OrientationTurbo
+import com.orientationturbo.enums.LandscapeDirection
 
 // Orientation locking
-OrientationTurbo.lockToPortrait()                    // Lock to portrait
-OrientationTurbo.lockToPortrait("UPSIDE_DOWN")       // Lock to upside-down (rarely supported)
-OrientationTurbo.lockToLandscape("LEFT")             // Lock to landscape left  
-OrientationTurbo.lockToLandscape("RIGHT")            // Lock to landscape right
-OrientationTurbo.unlockAllOrientations()             // Allow all orientations
+OrientationTurbo.lockToPortrait(activity)                           // Lock to portrait
+OrientationTurbo.lockToLandscape(activity, LandscapeDirection.LEFT) // Lock to landscape left  
+OrientationTurbo.lockToLandscape(activity, LandscapeDirection.RIGHT)// Lock to landscape right
+OrientationTurbo.unlockAllOrientations(activity)                    // Allow all orientations
 
-// Note: Status methods (getCurrentOrientation, isLocked) are not available 
-// in static context - use React Native bridge for these
+// Orientation status (NEW - now available in static context)
+val currentOrientation = OrientationTurbo.getCurrentOrientation()    // String
+val isLocked = OrientationTurbo.isLocked()                         // Boolean
+val lockedOrientation = OrientationTurbo.getLockedOrientation()     // Orientation enum
+val deviceOrientation = OrientationTurbo.getDeviceOrientation()     // Orientation enum
 ```
 
 #### 3. Fragment Integration
@@ -307,6 +316,7 @@ OrientationTurbo.unlockAllOrientations()             // Allow all orientations
 ```kotlin
 import androidx.fragment.app.Fragment
 import com.orientationturbo.OrientationTurbo
+import com.orientationturbo.enums.LandscapeDirection
 
 class MyFragment : Fragment() {
     
@@ -314,14 +324,25 @@ class MyFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         
         // Lock orientation for this fragment
-        OrientationTurbo.lockToPortrait()
+        requireActivity().let { activity ->
+            OrientationTurbo.lockToPortrait(activity)
+        }
     }
     
     override fun onDestroyView() {
         super.onDestroyView()
         
         // Restore orientation freedom when fragment is destroyed
-        OrientationTurbo.unlockAllOrientations()
+        requireActivity().let { activity ->
+            OrientationTurbo.unlockAllOrientations(activity)
+        }
+    }
+    
+    private fun checkOrientationStatus() {
+        val isLocked = OrientationTurbo.isLocked()
+        val currentOrientation = OrientationTurbo.getCurrentOrientation()
+        
+        Log.d("Fragment", "Orientation locked: $isLocked, Current: $currentOrientation")
     }
 }
 ```
@@ -338,15 +359,36 @@ class MyService : Service() {
         super.onCreate()
         
         // Note: Orientation locking from services has limited effect
-        // and is generally not recommended
-        OrientationTurbo.lockToPortrait()
+        // and is generally not recommended. Requires activity context.
+        
+        // Check orientation status (this works from any context)
+        val isLocked = OrientationTurbo.isLocked()
+        val orientation = OrientationTurbo.getCurrentOrientation()
+        Log.d("Service", "Current orientation: $orientation, Locked: $isLocked")
     }
 }
 ```
 
 ### Android Restrictions and Limitations
 
-#### 1. **AndroidManifest.xml Sync**
+#### 1. **Activity Context Required for Locking**
+Orientation locking methods require an Activity context:
+```kotlin
+// ✅ Correct - with Activity context
+OrientationTurbo.lockToPortrait(activity)
+
+// ❌ Incorrect - context needed
+// OrientationTurbo.lockToPortrait() // This won't work
+```
+
+#### 2. **Status Methods Available Everywhere**
+New shared state architecture provides status methods in any context:
+- ✅ `getCurrentOrientation()` - available everywhere
+- ✅ `isLocked()` - available everywhere  
+- ✅ `getLockedOrientation()` - available everywhere
+- ✅ `getDeviceOrientation()` - available everywhere
+
+#### 3. **AndroidManifest.xml Sync**
 The library automatically syncs with your manifest settings:
 
 ```xml
@@ -358,20 +400,13 @@ The library automatically syncs with your manifest settings:
 </activity>
 ```
 
-#### 2. **Static Method Limitations**
-Android native API only provides orientation locking methods:
-- ✅ `lockToPortrait()`, `lockToLandscape()`, `unlockAllOrientations()`
-- ❌ No `getCurrentOrientation()` or `isLocked()` in static context
-- ❌ No orientation change listeners in static context
+#### 4. **Shared State Persistence**
+- Orientation state persists across Activity lifecycle events
+- State is automatically synchronized between native and React Native contexts
+- No manual state management required
+- State survives app restarts and React Native reloads
 
-For status and listening, use React Native bridge or implement native Android orientation listeners.
-
-#### 3. **Activity Context Dependency**
-- Orientation changes require an active Activity context
-- Best results when called from `onCreate()` or `onResume()`
-- Limited effectiveness from Services or background contexts
-
-#### 4. **Hardware Limitations**
+#### 5. **Hardware Limitations**
 - Some Android devices don't support certain orientations
 - Upside-down orientation rarely supported on phones
 - Tablet devices generally have better orientation support
@@ -398,7 +433,7 @@ func application(_ application: UIApplication, didFinishLaunchingWithOptions lau
 ```kotlin
 override fun onCreate(savedInstanceState: Bundle?) {
     // Lock BEFORE super.onCreate() 
-    OrientationTurbo.lockToPortrait()
+    OrientationTurbo.lockToPortrait(this)
     
     // Then initialize React Native
     super.onCreate(savedInstanceState)
@@ -425,9 +460,14 @@ if OrientationTurbo.shared.isLocked() {
 
 **Android:**
 ```kotlin
-// Static methods are safe but provide limited feedback
+// Static methods are safe and now provide status feedback
 try {
-    OrientationTurbo.lockToPortrait()
+    OrientationTurbo.lockToPortrait(activity)
+    
+    // Check if operation was successful
+    if (OrientationTurbo.isLocked()) {
+        Log.d("Orientation", "Successfully locked to: ${OrientationTurbo.getCurrentOrientation()}")
+    }
 } catch (e: Exception) {
     // Handle any unexpected errors
     Log.e("Orientation", "Failed to lock orientation", e)
@@ -456,12 +496,17 @@ class OrientationTests: XCTestCase {
 ```kotlin
 @Test
 fun testOrientationLocking() {
-    // Static methods don't provide return values for testing
-    // Use React Native bridge for testable orientation status
+    // Lock orientation and verify status
+    OrientationTurbo.lockToPortrait(activity)
     
-    // Or implement custom native orientation detection
-    val currentOrientation = resources.configuration.orientation
-    assertEquals(Configuration.ORIENTATION_PORTRAIT, currentOrientation)
+    // Now we can test orientation status directly
+    assertTrue(OrientationTurbo.isLocked())
+    assertEquals("PORTRAIT", OrientationTurbo.getCurrentOrientation())
+    assertEquals(Orientation.PORTRAIT, OrientationTurbo.getLockedOrientation())
+    
+    // Test unlocking
+    OrientationTurbo.unlockAllOrientations(activity)
+    assertFalse(OrientationTurbo.isLocked())
 }
 ```
 
@@ -510,9 +555,66 @@ class CustomOrientationController {
 }
 ```
 
-### 2. **React Native Bridge Integration**
+### 2. **Android Shared State Integration**
+
+```kotlin
+class OrientationAwareActivity : AppCompatActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Lock orientation early
+        OrientationTurbo.lockToPortrait(this)
+        
+        // Set up orientation monitoring
+        setupOrientationMonitoring()
+    }
+    
+    private fun setupOrientationMonitoring() {
+        // Monitor orientation changes using standard Android APIs
+        val orientationEventListener = object : OrientationEventListener(this) {
+            override fun onOrientationChanged(orientation: Int) {
+                // Get current state from shared state
+                val currentOrientation = OrientationTurbo.getCurrentOrientation()
+                val isLocked = OrientationTurbo.isLocked()
+                
+                updateUI(currentOrientation, isLocked)
+            }
+        }
+        
+        if (orientationEventListener.canDetectOrientation()) {
+            orientationEventListener.enable()
+        }
+    }
+    
+    private fun updateUI(orientation: String, isLocked: Boolean) {
+        Log.d("Activity", "Orientation: $orientation, Locked: $isLocked")
+        // Update your UI based on orientation state
+    }
+    
+    fun toggleOrientation() {
+        if (OrientationTurbo.isLocked()) {
+            OrientationTurbo.unlockAllOrientations(this)
+        } else {
+            OrientationTurbo.lockToPortrait(this)
+        }
+        
+        // State is immediately available
+        val newState = OrientationTurbo.isLocked()
+        Log.d("Activity", "New lock state: $newState")
+    }
+}
+```
+
+### 3. **React Native Bridge Integration**
 
 Both platforms automatically integrate with React Native when the library is installed. Native orientation locks are seamlessly synchronized with the React Native context.
+
+**Key Benefits of Android Shared State Architecture:**
+- **Immediate consistency**: Changes made in native code are instantly visible to React Native
+- **No synchronization delays**: State updates happen synchronously
+- **Persistent state**: Orientation settings survive app lifecycle events and React Native reloads
+- **Thread-safe**: All state operations are thread-safe and can be called from any context
 
 ---
 
@@ -543,6 +645,6 @@ Both platforms automatically integrate with React Native when the library is ins
 The native APIs provide powerful orientation control capabilities:
 
 **iOS**: Full-featured protocol-based API with status checking and thread safety
-**Android**: Efficient static methods for orientation locking
+**Android**: Efficient static methods with shared state architecture providing both orientation control and status checking
 
-Both platforms integrate seamlessly with React Native and provide consistent orientation state management across native and JavaScript contexts. 
+Both platforms integrate seamlessly with React Native and provide consistent orientation state management across native and JavaScript contexts. The new Android shared state architecture ensures perfect synchronization between native and React Native contexts without any manual state management. 

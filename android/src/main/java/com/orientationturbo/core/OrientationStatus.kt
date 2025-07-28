@@ -7,7 +7,7 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.WritableMap
 
-class OrientationStatus(private val reactContext: ReactApplicationContext) {
+internal class OrientationStatus(private val reactContext: ReactApplicationContext) {
   fun getDeviceAutoRotateStatus(): WritableMap {
     val result = Arguments.createMap()
 

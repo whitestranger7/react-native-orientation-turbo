@@ -1,17 +1,14 @@
 package com.orientationturbo.core
 
+import com.orientationturbo.enums.LandscapeDirection
+import com.orientationturbo.enums.Orientation
+import com.orientationturbo.OrientationState
+
 import android.content.pm.ActivityInfo
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.UiThreadUtil
-import com.orientationturbo.enums.LandscapeDirection
-import com.orientationturbo.enums.Orientation
 
-class OrientationManager(private val reactContext: ReactApplicationContext) {
-
-  private var currentLockedOrientation: Orientation = Orientation.PORTRAIT
-  private var isOrientationLocked: Boolean = false
-  private var currentDeviceOrientation: Orientation = Orientation.PORTRAIT
-
+internal class OrientationManager(private val reactContext: ReactApplicationContext) {
   private fun setOrientation(orientation: Int) {
     UiThreadUtil.runOnUiThread {
       val activity = reactContext.currentActivity
@@ -20,34 +17,23 @@ class OrientationManager(private val reactContext: ReactApplicationContext) {
   }
 
   fun getCurrentDeviceOrientation(): Orientation {
-    return currentDeviceOrientation
+    return OrientationState.getCurrentDeviceOrientation()
   }
 
-  fun getCurrentOrientation(): String {
-    return if (isOrientationLocked) {
-      currentLockedOrientation.value
-    } else {
-      currentDeviceOrientation.value
-    }
+  fun getCurrentOrientation(): Orientation {
+    return OrientationState.getCurrentOrientation()
   }
 
   fun getIsLocked(): Boolean {
-    return isOrientationLocked
+    return OrientationState.isLocked()
   }
 
   fun getLockedOrientation(): Orientation {
-    return currentLockedOrientation
-  }
-
-  fun setLockedOrientation(orientation: Orientation, isLocked: Boolean?) {
-    currentLockedOrientation = orientation
-    if (isLocked != null) {
-      isOrientationLocked = isLocked
-    }
+    return OrientationState.getLockedOrientation()
   }
 
   fun setDeviceOrientation(orientation: Orientation) {
-    currentDeviceOrientation = orientation
+    OrientationState.setDeviceOrientation(orientation)
   }
 
   fun lockToPortrait(direction: String?) {
@@ -55,36 +41,34 @@ class OrientationManager(private val reactContext: ReactApplicationContext) {
       "UPSIDE_DOWN" -> {
         // Note: Android rarely supports upside-down orientation
         // Currently this type will just set Orientation to Portrait
-        currentLockedOrientation = Orientation.PORTRAIT
+        OrientationState.setState(Orientation.PORTRAIT, true)
       }
       else -> {
         setOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-        currentLockedOrientation = Orientation.PORTRAIT
+        OrientationState.setState(Orientation.PORTRAIT, true)
       }
     }
-    isOrientationLocked = true
   }
 
   fun lockToLandscape(direction: String) {
     when (direction) {
       LandscapeDirection.LEFT.value -> {
         setOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-        currentLockedOrientation = Orientation.LANDSCAPE_LEFT
+        OrientationState.setState(Orientation.LANDSCAPE_LEFT, true)
       }
       LandscapeDirection.RIGHT.value -> {
         setOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-        currentLockedOrientation = Orientation.LANDSCAPE_RIGHT
+        OrientationState.setState(Orientation.LANDSCAPE_RIGHT, true)
       }
       else -> {
         setOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-        currentLockedOrientation = Orientation.LANDSCAPE_LEFT
+        OrientationState.setState(Orientation.LANDSCAPE_LEFT, true)
       }
     }
-    isOrientationLocked = true
   }
 
   fun unlockAllOrientations() {
     setOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
-    isOrientationLocked = false
+    OrientationState.setState(Orientation.PORTRAIT, false)
   }
 }

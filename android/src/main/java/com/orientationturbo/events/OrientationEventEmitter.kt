@@ -4,7 +4,7 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableMap
 import com.orientationturbo.core.OrientationManager
 
-class OrientationEventEmitter(
+internal class OrientationEventEmitter(
   private val orientationManager: OrientationManager,
   private val emitOnOrientationChange: (ReadableMap) -> Unit,
   private val emitOnLockOrientationChange: (ReadableMap) -> Unit

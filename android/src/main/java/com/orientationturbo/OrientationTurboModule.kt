@@ -29,9 +29,7 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   )
 
   init {
-    OrientationSync.getInitialOrientationState(reactContext).let { state ->
-      orientationManager.setLockedOrientation(state.orientation, state.isLocked)
-    }
+    OrientationSync.initializeSharedState(reactContext)
   }
 
   override fun startOrientationTracking() {
@@ -58,7 +56,7 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   }
 
   override fun getCurrentOrientation(): String {
-    return orientationManager.getCurrentOrientation()
+    return orientationManager.getCurrentOrientation().value
   }
 
   override fun isLocked(): Boolean {
