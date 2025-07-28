@@ -27,16 +27,16 @@ object OrientationSync {
             OrientationState.setState(Orientation.PORTRAIT, true)
           }
           ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> {
-            OrientationState.setState(Orientation.LANDSCAPE_LEFT, true)
+            OrientationState.setState(Orientation.LANDSCAPE_RIGHT, true)
           }
           ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE -> {
-            OrientationState.setState(Orientation.LANDSCAPE_RIGHT, true)
+            OrientationState.setState(Orientation.LANDSCAPE_LEFT, true)
           }
           ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT -> {
             OrientationState.setState(Orientation.PORTRAIT, true)
           }
           ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE -> {
-            OrientationState.setState(Orientation.LANDSCAPE_LEFT, true)
+            OrientationState.setState(Orientation.LANDSCAPE_RIGHT, true)
           }
           ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED,
           ActivityInfo.SCREEN_ORIENTATION_SENSOR,
