@@ -60,6 +60,7 @@ import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 import com.orientationturbo.OrientationTurbo
+import com.orientationturbo.enums.LandscapeDirection
 
 class MainActivity : ReactActivity() {
 
@@ -68,8 +69,8 @@ class MainActivity : ReactActivity() {
         OrientationTurbo.lockToPortrait(this)
         
         // Other locking options:
-        // OrientationTurbo.lockToLandscape(this, "LEFT")
-        // OrientationTurbo.lockToLandscape(this, "RIGHT")
+        // OrientationTurbo.lockToLandscape(this, LandscapeDirection.LEFT)
+        // OrientationTurbo.lockToLandscape(this, LandscapeDirection.RIGHT)
         // OrientationTurbo.unlockAllOrientations(this)
         
         super.onCreate(savedInstanceState)
@@ -82,7 +83,7 @@ class MainActivity : ReactActivity() {
 }
 ```
 
-**State Synchronization**: When you call `OrientationTurbo` static methods in MainActivity, the state is stored in `OrientationTurbo.sharedState` and automatically synced with `OrientationTurboModule` when React Native initializes.
+**State Synchronization**: When you call `OrientationTurbo` static methods in MainActivity, the state is stored in the internal `OrientationState` singleton and automatically available to both native and React Native contexts without any synchronization overhead.
 
 ## State Synchronization Mechanisms
 
@@ -102,17 +103,16 @@ OrientationTurbo.shared.lockToPortrait()
 ```kotlin
 // 1. MainActivity calls (before React Native)
 OrientationTurbo.lockToPortrait(this)
-// Creates: OrientationTurbo.sharedState = OrientationState(PORTRAIT, true)
+// Stores state in: OrientationState.setState(Orientation.PORTRAIT, true)
 
 // 2. OrientationTurboModule initialization
 init {
-    val (orientation, isLocked) = OrientationTurbo.getInitialOrientationState(reactContext)
-    currentLockedOrientation = orientation  // PORTRAIT
-    isOrientationLocked = isLocked         // true
+    OrientationSync.initializeSharedState(reactContext)
+    // OrientationManager and all components now read from OrientationState directly
 }
 
-// 3. State cleared after sync to prevent memory leaks
-OrientationTurbo.clearSharedState()
+// 3. No state clearing needed - OrientationState persists throughout app lifecycle
+// All components (native and React Native) share the same state instance
 ```
 
 ### JavaScript Integration
@@ -127,7 +127,7 @@ import {
 } from 'react-native-orientation-turbo';
 
 useEffect(() => {
-  // State is already synced from native calls!
+  // State is immediately available from shared state!
   console.log('Is locked:', isLocked()); // true (from native)
   console.log('Orientation:', getCurrentOrientation()); // "PORTRAIT"
   
@@ -138,6 +138,34 @@ useEffect(() => {
 
   return () => subscription.remove();
 }, []);
+```
+
+### Native Status Access (Android)
+
+With the new shared state architecture, Android native code can also check status anywhere:
+
+```kotlin
+import com.orientationturbo.OrientationTurbo
+
+class AnyActivity : AppCompatActivity() {
+    
+    override fun onResume() {
+        super.onResume()
+        
+        // Check orientation status from anywhere
+        val isLocked = OrientationTurbo.isLocked()
+        val currentOrientation = OrientationTurbo.getCurrentOrientation()
+        val lockedOrientation = OrientationTurbo.getLockedOrientation()
+        val deviceOrientation = OrientationTurbo.getDeviceOrientation()
+        
+        Log.d("Activity", "Locked: $isLocked, Current: $currentOrientation")
+        
+        // Change orientation if needed
+        if (!isLocked) {
+            OrientationTurbo.lockToPortrait(this)
+        }
+    }
+}
 ```
 
 ## AndroidManifest.xml Synchronization
@@ -187,6 +215,7 @@ getCurrentOrientation() // "LANDSCAPE_LEFT"
 <activity android:screenOrientation="portrait">
 ```
 ```kotlin
+import com.orientationturbo.enums.LandscapeDirection
 
 OrientationTurbo.lockToLandscape(this, LandscapeDirection.LEFT) // Overrides manifest
 ```
@@ -196,35 +225,86 @@ isLocked() // true
 getCurrentOrientation() // "LANDSCAPE_LEFT" (from OrientationTurbo, not manifest)
 ```
 
-## Manual State Synchronization
+## Shared State Architecture
 
-### When You Might Need Manual Sync
+### How It Works
 
-In some advanced scenarios, you might want to manually sync state:
+With the new shared state architecture, manual synchronization is no longer needed:
 
-- Custom native modules that change orientation
-- Third-party libraries that affect orientation
-- Complex app flows with multiple activities
+- **Single Source of Truth**: `OrientationState.kt` (Android) and `OrientationTurbo.shared` (iOS) 
+- **Automatic Consistency**: All components read from the same state instance
+- **Real-time Updates**: State changes are immediately visible across all contexts
+- **No Sync Overhead**: No complex synchronization mechanisms or state copying
 
-### Android Manual Sync
+### Advanced State Management
+
+#### Android State Access
 
 ```kotlin
-// In your custom code, manually update the shared state
-OrientationTurbo.updateSharedState(Orientation.LANDSCAPE_LEFT, true)
+import com.orientationturbo.OrientationTurbo
+import com.orientationturbo.enums.LandscapeDirection
 
-// Or trigger a re-sync from manifest
-val newState = OrientationUtils.syncWithManifestConfiguration(reactContext)
-OrientationTurbo.updateSharedState(newState.orientation, newState.isLocked)
+class CustomOrientationManager {
+    
+    fun checkAndSetOrientation(activity: Activity) {
+        // Check current state
+        val isLocked = OrientationTurbo.isLocked()
+        val currentOrientation = OrientationTurbo.getCurrentOrientation()
+        
+        // Make decisions based on state
+        when (currentOrientation) {
+            "PORTRAIT" -> {
+                if (!isLocked) {
+                    OrientationTurbo.lockToLandscape(activity, LandscapeDirection.LEFT)
+                }
+            }
+            "LANDSCAPE_LEFT", "LANDSCAPE_RIGHT" -> {
+                OrientationTurbo.unlockAllOrientations(activity)
+            }
+        }
+        
+        // State is immediately consistent across all contexts
+        val newState = OrientationTurbo.isLocked()
+        Log.d("Manager", "New lock state: $newState")
+    }
+}
 ```
 
-### iOS Manual Sync
+### iOS State Access
 
 ```swift
 // iOS automatically syncs through the singleton pattern
 // Just call the methods on the shared instance
 OrientationTurbo.shared.lockToLandscape("LEFT")
 
-// State is immediately available to JavaScript
+// State is immediately available everywhere
+let isLocked = OrientationTurbo.shared.isLocked()
+let orientation = OrientationTurbo.shared.getCurrentOrientation()
+```
+
+### Cross-Platform Consistency
+
+Both platforms now provide immediate state consistency:
+
+```typescript
+// JavaScript
+import { lockToPortrait, isLocked } from 'react-native-orientation-turbo';
+
+// Lock from JavaScript
+lockToPortrait();
+
+// State is immediately available to native code
+// No waiting, no callbacks, no async operations needed
+```
+
+```kotlin
+// Android Native (anywhere in your app)
+val isNowLocked = OrientationTurbo.isLocked() // true immediately
+```
+
+```swift
+// iOS Native (anywhere in your app) 
+let isNowLocked = OrientationTurbo.shared.isLocked() // true immediately
 ```
 
 ## Best Practices
@@ -238,13 +318,15 @@ Use programmatic locking instead of manifest locking for better device compatibi
 
 ### 2. State Consistency
 - **iOS**: Use `OrientationTurbo.shared` for all orientation changes
-- **Android**: Use `OrientationTurbo` static methods for early locking, JavaScript for runtime changes
-- Always check current state before making changes
+- **Android**: Use `OrientationTurbo` static methods for all orientation changes (both early and runtime)
+- **Status Checking**: Use status methods (`isLocked()`, `getCurrentOrientation()`) from any context
+- Always check current state before making changes for optimal UX
 
 ### 3. Performance
-- State sync happens only once during app initialization
-- No performance impact on runtime orientation changes
-- Memory is cleaned up automatically after sync
+- **Zero sync overhead**: All components share the same state instance
+- **Immediate consistency**: No async operations or callbacks needed for state access
+- **Memory efficient**: Single state holder, no state duplication
+- **Thread-safe**: All operations are thread-safe and can be called from any context
 
 ## Troubleshooting
 
@@ -254,11 +336,13 @@ Use programmatic locking instead of manifest locking for better device compatibi
 - Verify Info.plist includes the orientations you want to support
 
 ### Android Issues  
-- Verify import: `import com.orientationturbo.OrientationTurbo`
+- Verify imports: `import com.orientationturbo.OrientationTurbo` and `import com.orientationturbo.enums.LandscapeDirection`
 - Check that MainActivity calls happen before `super.onCreate()`
+- Ensure Activity context is passed to locking methods: `OrientationTurbo.lockToPortrait(this)`
 - Ensure AndroidManifest.xml doesn't conflict with programmatic changes
 - Test on different Android versions and device types
 
-### State Sync Issues
-- Check initialization order (native calls before React Native)
-- Verify that state is properly cleared after sync
+### Shared State Issues
+- **Activity context**: Locking methods require Activity context, status methods work everywhere
+- **Method signatures**: Use `LandscapeDirection.LEFT` instead of `"LEFT"` string
+- **State consistency**: If state seems inconsistent, check that you're using the correct API methods
