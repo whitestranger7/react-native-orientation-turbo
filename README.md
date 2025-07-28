@@ -18,7 +18,7 @@ A React Native library for controlling device orientation with support for locki
 
 - React Native 0.76+ (Turbo Modules support required)
 - iOS 15.1+
-- Android API level 24+
+- Android API level 24+ (Android 7.0)
 - **New Architecture enabled** (Turbo Modules)
 
 > **Important**: This library requires the New Architecture (Turbo Modules) to be enabled. It does not support the legacy bridge.
