@@ -7,7 +7,7 @@ import android.hardware.SensorManager
 import android.view.OrientationEventListener
 import com.facebook.react.bridge.ReactApplicationContext
 
-class OrientationTracker(
+internal class OrientationTracker(
   private val reactContext: ReactApplicationContext,
   private val orientationManager: OrientationManager,
 ) {

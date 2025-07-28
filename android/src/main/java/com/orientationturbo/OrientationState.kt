@@ -12,16 +12,8 @@ internal object OrientationState {
   private var isOrientationLocked: Boolean = false
   private var currentDeviceOrientation: Orientation = Orientation.PORTRAIT
 
-  fun setLockedOrientation(orientation: Orientation) {
-    currentLockedOrientation = orientation
-  }
-
   fun getLockedOrientation(): Orientation {
     return currentLockedOrientation
-  }
-
-  fun setLocked(locked: Boolean) {
-    isOrientationLocked = locked
   }
 
   fun isLocked(): Boolean {

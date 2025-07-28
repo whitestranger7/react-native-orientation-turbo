@@ -7,7 +7,7 @@ import com.orientationturbo.enums.LandscapeDirection
 import com.orientationturbo.enums.Orientation
 
 /**
- * OrientationTurbo - Shared state manager for orientation control
+ * OrientationTurbo - Shared controller for orientation management
  * For native integration with Activity
  * Can be used before React Native loads and syncs with OrientationTurboModule
  */

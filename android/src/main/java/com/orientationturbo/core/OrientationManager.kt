@@ -8,7 +8,7 @@ import android.content.pm.ActivityInfo
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.UiThreadUtil
 
-class OrientationManager(private val reactContext: ReactApplicationContext) {
+internal class OrientationManager(private val reactContext: ReactApplicationContext) {
   private fun setOrientation(orientation: Int) {
     UiThreadUtil.runOnUiThread {
       val activity = reactContext.currentActivity
