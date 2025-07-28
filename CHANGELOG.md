@@ -4,18 +4,66 @@ All notable changes to this project will be documented in this file.
 
 ## [2.2.0] - TBD
 
-### Breaking change
-#### iOS
-- **Public protocol changes**: `OrientationTurboImpl` was changed to `OrientationTurbo` public protocol for any native execution
+### Added
+#### Android
+- **Shared State Architecture**: New `OrientationState.kt` package-private singleton for unified state management across native and React Native contexts
+- **Static Status Methods**: Added status checking methods available in static context:
+  - `getCurrentOrientation()` - Get current orientation as String
+  - `isLocked()` - Check if orientation is currently locked
+  - `getLockedOrientation()` - Get the locked orientation as Orientation enum
+  - `getDeviceOrientation()` - Get physical device orientation as Orientation enum
+- **Perfect State Synchronization**: Immediate consistency between native and React Native contexts without manual synchronization
+- **Thread-Safe Operations**: All orientation state operations are now thread-safe and can be called from any context
 
-### Technical
-- **iOS codebase improvements**: Codebase for iOS was redesigned and improved
-- **iOS public protocol**: `OrientationTurbo` protocol for public native usage was created
+### Fixed
+#### Android
+- **Wrong Landscape Direction For Manifest Sync**: After `2.1.2` fix, manifest was still returning wrong landscape type. It's fixed now
+- **State Persistence**: Orientation state now properly persists across Activity lifecycle events and React Native reloads
+- **Memory Leaks**: Eliminated potential memory leaks in state management by using singleton pattern
+
+### Breaking Changes
+#### iOS
+- **Public Protocol Changes**: `OrientationTurboImpl.shared` changed to `OrientationTurbo.shared` for native integration
+  ```swift
+  // Before
+  OrientationTurboImpl.shared.lockToPortrait()
+  
+  // After  
+  OrientationTurbo.shared.lockToPortrait()
+  ```
+
+### Technical Improvements
+#### iOS
+- **Codebase Refactoring**: Complete iOS architecture redesign with improved separation of concerns
+- **Protocol-Based API**: New `OrientationTurboPublicProtocol` for clean native integration interface
+- **Memory Management**: Enhanced memory management and lifecycle handling
+
+#### Android
+- **Shared State Pattern**: Replaced multiple state holders with single `OrientationState.kt` source of truth
+- **Simplified Architecture**: Eliminated complex synchronization logic by using unified state management
+- **Package-Private State**: `OrientationState` is internal to `com.orientationturbo` package ensuring proper encapsulation
+- **Eliminated State Duplication**: Removed redundant state properties from `OrientationManager` and other components
+- **Simplified OrientationSync**: Removed unnecessary state clearing and intermediate data classes
 
 ### Documentation
-- **iOS Setup Guide**: Updated native integration examples with new `OrientationTurbo.shared` API
-- **iOS Architecture Documentation**: Added guidance on modular component structure
-- **Migration Guide**: Instructions for updating from `OrientationTurboImpl.shared` to `OrientationTurbo.shared`
+#### Major Updates
+- **Native Usage Guide**: Comprehensive `docs/NATIVE_USAGE.md` rewrite with new Android shared state architecture
+- **Updated Code Examples**: All Android examples updated to show Activity context requirements and new status methods
+- **Architecture Diagrams**: New architectural flow diagrams showing shared state pattern
+- **Migration Instructions**: Clear migration path for breaking changes with before/after code examples
+
+#### Content Improvements
+- **Integration Patterns**: Advanced integration patterns showing real-time orientation monitoring
+- **Thread Safety**: Documentation of thread-safe operations and context requirements
+
+#### API Documentation
+- **Method Signatures**: Updated all Android method signatures with Activity context requirements
+- **Status Methods**: Complete documentation of new Android status checking capabilities
+- **Import Statements**: Updated import examples with required enum imports
+
+### Example Application
+- **Version Bump**: All dependencies updated to latest versions
+- **Demo Updates**: Example app updated to demonstrate new status methods and shared state features
 
 ## [2.1.2] - 2025-07-18
 
