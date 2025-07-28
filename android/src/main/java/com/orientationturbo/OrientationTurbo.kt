@@ -13,15 +13,6 @@ import com.orientationturbo.enums.Orientation
  */
 object OrientationTurbo {
 
-  @JvmStatic
-  var sharedState: OrientationState? = null
-    private set
-
-  data class OrientationState(
-    val orientation: Orientation,
-    val isLocked: Boolean
-  )
-
   /**
    * Locks the device to portrait orientation
    */
@@ -29,7 +20,7 @@ object OrientationTurbo {
   @JvmStatic
   fun lockToPortrait(activity: Activity) {
     activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-    sharedState = OrientationState(Orientation.PORTRAIT, true)
+    OrientationState.setState(Orientation.PORTRAIT, true)
   }
 
   /**
@@ -39,16 +30,16 @@ object OrientationTurbo {
   fun lockToLandscape(activity: Activity, direction: LandscapeDirection) {
     when (direction) {
       LandscapeDirection.LEFT -> {
-        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        sharedState = OrientationState(Orientation.LANDSCAPE_LEFT, true)
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+        OrientationState.setState(Orientation.LANDSCAPE_LEFT, true)
       }
       LandscapeDirection.RIGHT -> {
-        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-        sharedState = OrientationState(Orientation.LANDSCAPE_RIGHT, true)
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        OrientationState.setState(Orientation.LANDSCAPE_RIGHT, true)
       }
       else -> {
-        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        sharedState = OrientationState(Orientation.LANDSCAPE_LEFT, true)
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+        OrientationState.setState(Orientation.LANDSCAPE_LEFT, true)
       }
     }
   }
@@ -59,16 +50,30 @@ object OrientationTurbo {
   @JvmStatic
   fun unlockAllOrientations(activity: Activity) {
     activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-    sharedState = OrientationState(Orientation.PORTRAIT, false)
+    OrientationState.setState(Orientation.PORTRAIT, false)
   }
 
+  /**
+   * Gets the current orientation (locked orientation if locked, device orientation if unlocked)
+   */
   @JvmStatic
-  internal fun clearSharedState() {
-    sharedState = null
+  fun getCurrentOrientation(): Orientation {
+    return OrientationState.getCurrentOrientation()
   }
 
+  /**
+   * Checks if orientation is currently locked
+   */
   @JvmStatic
-  internal fun updateSharedState(orientation: Orientation, isLocked: Boolean) {
-    sharedState = OrientationState(orientation, isLocked)
+  fun isLocked(): Boolean {
+    return OrientationState.isLocked()
+  }
+
+  /**
+   * Gets the currently locked orientation
+   */
+  @JvmStatic
+  fun getLockedOrientation(): Orientation {
+    return OrientationState.getLockedOrientation()
   }
 }
