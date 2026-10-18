@@ -14,30 +14,18 @@ RCT_EXPORT_MODULE(OrientationTurbo)
   self = [super init];
   if (self) {
     __weak __typeof(self) weakSelf = self;
-    [[OrientationTurboImpl shared] setOnOrientationChange:^(NSDictionary *orientationEvent) {
-      __strong __typeof(weakSelf) strongSelf = weakSelf;
-      if (strongSelf) {
-        [strongSelf emitOrientationChangeEvent:orientationEvent];
-      }
+    [[OrientationTurboImpl shared] setOnOrientationChange:^(NSDictionary *event) {
+      [weakSelf emitOnOrientationChange:event];
+    }];
+    [[OrientationTurboImpl shared] setOnLockOrientationChange:^(NSDictionary *event) {
+      [weakSelf emitOnLockOrientationChange:event];
     }];
   }
   return self;
 }
 
-- (void)emitOrientationChangeEvent:(NSDictionary *)orientationEvent {
-  [self emitOnOrientationChange:orientationEvent];
-}
-
-- (void)emitLockOrientationChangeEvent {
-  NSString *currentOrientation = [[OrientationTurboImpl shared] getCurrentOrientation];
-  BOOL isLocked = [[OrientationTurboImpl shared] isLocked];
-  
-  NSDictionary *eventData = @{
-    @"orientation": isLocked ? currentOrientation : [NSNull null],
-    @"isLocked": @(isLocked)
-  };
-  
-  [self emitOnLockOrientationChange:eventData];
+- (void)invalidate {
+  [[OrientationTurboImpl shared] stopOrientationTracking];
 }
 
 - (void)startOrientationTracking {
@@ -59,22 +47,18 @@ RCT_EXPORT_MODULE(OrientationTurbo)
 
 - (void)lockToLandscape:(nonnull NSString *)direction {
   [[OrientationTurboImpl shared] lockToLandscape:direction];
-  [self emitLockOrientationChangeEvent];
 }
 
 - (void)lockToPortrait {
   [[OrientationTurboImpl shared] lockToPortrait];
-  [self emitLockOrientationChangeEvent];
 }
 
 - (void)lockToPortrait:(NSString *)direction {
   [[OrientationTurboImpl shared] lockToPortrait:direction];
-  [self emitLockOrientationChangeEvent];
 }
 
 - (void)unlockAllOrientations {
   [[OrientationTurboImpl shared] unlockAllOrientations];
-  [self emitLockOrientationChangeEvent];
 }
 
 - (NSDictionary * _Nullable)getDeviceAutoRotateStatus {

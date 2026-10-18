@@ -13,9 +13,12 @@ public class OrientationTurboImpl: NSObject, OrientationTurboPublicProtocol {
   @objc public var onOrientationChange: ((NSDictionary) -> Void)? {
     didSet {
       eventEmitter.onOrientationChange = onOrientationChange
-      orientationTracker.onOrientationChange = { [weak self] event in
-        self?.eventEmitter.emitOrientationChange()
-      }
+    }
+  }
+  
+  @objc public var onLockOrientationChange: ((NSDictionary) -> Void)? {
+    didSet {
+      eventEmitter.onLockOrientationChange = onLockOrientationChange
     }
   }
   
@@ -24,6 +27,10 @@ public class OrientationTurboImpl: NSObject, OrientationTurboPublicProtocol {
     self.orientationTracker = OrientationTracker(orientationManager: orientationManager)
     self.eventEmitter = OrientationEventEmitter(orientationManager: orientationManager)
     super.init()
+    
+    orientationTracker.onOrientationChange = { [weak self] in
+      self?.eventEmitter.emitOrientationChange()
+    }
   }
   
   // MARK: - AppDelegate Integration

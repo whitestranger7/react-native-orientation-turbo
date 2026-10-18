@@ -8,68 +8,67 @@
 import UIKit
 
 internal class OrientationTracker {
-  
+
   // MARK: - Properties
-  private var isOrientationTrackingEnabled: Bool = false
   private weak var orientationManager: OrientationManager?
   private let detector = OrientationDetector()
-  
-  var onOrientationChange: ((NSDictionary) -> Void)?
-  
+
+  private var observer: NSObjectProtocol?
+
+  var onOrientationChange: (() -> Void)?
+
   // MARK: - Initialization
   init(orientationManager: OrientationManager) {
     self.orientationManager = orientationManager
   }
-  
-  deinit {
-    stopOrientationTracking()
-  }
-  
+
   // MARK: - Public Methods
-  
+
   func startOrientationTracking() {
-    guard !isOrientationTrackingEnabled else { return }
-    
     DispatchQueue.main.async { [weak self] in
-      UIDevice.current.beginGeneratingDeviceOrientationNotifications()
-      NotificationCenter.default.addObserver(
-        self as Any,
-        selector: #selector(self?.deviceOrientationDidChange),
-        name: UIDevice.orientationDidChangeNotification,
-        object: nil
-      )
-      self?.isOrientationTrackingEnabled = true
+      self?.start()
     }
   }
-  
+
   func stopOrientationTracking() {
-    guard isOrientationTrackingEnabled else { return }
-    
     DispatchQueue.main.async { [weak self] in
-      NotificationCenter.default.removeObserver(
-        self as Any,
-        name: UIDevice.orientationDidChangeNotification,
-        object: nil
-      )
-      UIDevice.current.endGeneratingDeviceOrientationNotifications()
-      self?.isOrientationTrackingEnabled = false
+      self?.stop()
     }
   }
-  
+
   // MARK: - Private Methods
-  
-  @objc private func deviceOrientationDidChange() {
+
+  private func start() {
+    guard observer == nil else { return }
+
+    UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+    orientationManager?.setCurrentDeviceOrientation(detector.getOrientationFromDevice())
+
+    observer = NotificationCenter.default.addObserver(
+      forName: UIDevice.orientationDidChangeNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.deviceOrientationDidChange()
+    }
+  }
+
+  private func stop() {
+    guard let observer = observer else { return }
+
+    NotificationCenter.default.removeObserver(observer)
+    self.observer = nil
+    UIDevice.current.endGeneratingDeviceOrientationNotifications()
+  }
+
+  private func deviceOrientationDidChange() {
     let newOrientation = detector.getOrientationFromDevice()
     guard let orientationManager = orientationManager,
           newOrientation != orientationManager.getCurrentDeviceOrientation() else {
       return
     }
-    
-    let orientationEvent: NSDictionary = [
-      "orientation": newOrientation,
-    ]
-    
+
     orientationManager.setCurrentDeviceOrientation(newOrientation)
-    onOrientationChange?(orientationEvent)
+    onOrientationChange?()
   }
 }

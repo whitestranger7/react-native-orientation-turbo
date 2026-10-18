@@ -46,6 +46,7 @@ Start every run from a fresh launch. Use **Clear log** between test cases so the
 | **T11** | Delayed lock | Tap **Landscape right in 1s**; after it rotates, tap **Unlock all**; rotate the device | The UI rotates once after ~1 s. **Unlock all** unlocks right away (`isLocked=false`) and the UI follows the device again. |
 | **T12** | Background and return | Lock to landscape; send the app to the background; bring it back | The lock is still applied; Live state unchanged. |
 | **T13** | Large screens / windowed | On D3 and D5, run T3 and T4 | Write down what happens. iPadOS windowed mode and Android 16+ (targetSdk 36) large screens can ignore orientation locks; the library should report that instead of claiming the lock applied. |
+| **T14** | Native-side lock reaches JS (iOS) | Run from Xcode; **Debug → Pause**; in the debugger console run `expr -l swift -- import OrientationTurbo; OrientationTurbo.shared.lockToLandscape("LEFT")`; **Continue** | The UI rotates, and the log shows exactly **one** `onLockOrientationChange` with `isLocked=true, orientation=LANDSCAPE_LEFT`. |
 
 ## What to run on which device
 
@@ -66,6 +67,7 @@ Start every run from a fresh launch. Use **Clear log** between test cases so the
 | T11 Delayed lock | ✅ | ✅ | — | ✅ | — |
 | T12 Background and return | ✅ | ✅ | — | ✅ | — |
 | T13 Large screens / windowed | — | — | ✅ | — | ✅ |
+| T14 Native-side lock reaches JS | ✅ | ✅ | — | — | — |
 
 For a small change, run the affected tests on D1 and D4 at least. Before a release, run the whole matrix.
 
