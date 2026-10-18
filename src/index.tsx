@@ -70,8 +70,9 @@ export const isLocked = () => {
 
 /**
  * Checks whether the OS will apply orientation locks for this app
- * Returns false where the system ignores locks, e.g. on iPad when the app supports
- * resizing (no `UIRequiresFullScreen` in Info.plist)
+ * Returns false where the system ignores locks: on iPad when the app supports resizing
+ * (no `UIRequiresFullScreen` in Info.plist), and on Android 16+ large screens
+ * (smallest width >= 600dp) for apps targeting API 36+
  * @platform iOS and Android
  * @returns boolean
  */

@@ -3,6 +3,7 @@ package com.orientationturbo
 import android.annotation.SuppressLint
 import android.app.Activity
 import com.orientationturbo.core.OrientationController
+import com.orientationturbo.core.OrientationLockSupport
 import com.orientationturbo.enums.LandscapeDirection
 import com.orientationturbo.enums.Orientation
 import com.orientationturbo.enums.PortraitDirection
@@ -62,6 +63,15 @@ object OrientationTurbo {
   @JvmStatic
   fun isLocked(): Boolean {
     return OrientationState.isLocked()
+  }
+
+  /**
+   * Checks whether the system applies orientation locks for this app
+   * (false on Android 16+ large screens for apps targeting API 36+)
+   */
+  @JvmStatic
+  fun canLockOrientation(activity: Activity): Boolean {
+    return OrientationLockSupport.canLockOrientation(activity, activity)
   }
 
   /**

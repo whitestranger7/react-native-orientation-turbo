@@ -145,6 +145,24 @@ No additional setup required for Android.
 
 > **Note**: The library automatically syncs with your `AndroidManifest.xml` orientation settings. If you have `android:screenOrientation` set in your manifest, the library will respect and sync with those settings into state on initialization.
 
+#### Android 16+ large screens
+
+For apps that **target Android 16 (API 36) or higher**, Android **ignores orientation locks on displays with a smallest width of 600dp or more** (tablets, unfolded foldables): `android:screenOrientation` and `setRequestedOrientation()` have no effect there. Phones and folded foldables are not affected. See [Android 16 behavior changes](https://developer.android.com/about/versions/16/behavior-changes-16).
+
+Locks still apply on those screens when:
+
+- the app is a game (`android:appCategory="game"` in the manifest), or
+- the app opts out with the `PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY` property. This opt-out is **temporary**: it stops working once the app targets API 37.
+
+```xml
+<application ...>
+  <property android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+            android:value="true" />
+</application>
+```
+
+`canLockOrientation()` returns `false` when locks won't apply. It can't detect users who switched the app back to its default behaviour in the device's aspect-ratio settings; for them, locks apply even though it returns `false`.
+
 ## Migration Guide
 
 If you're upgrading from a previous version, please check our [Migration Guide](docs/MIGRATION.md) for any breaking changes and upgrade instructions.
@@ -305,7 +323,7 @@ const locked = isLocked();
 
 Returns whether the OS will apply orientation locks for this app.
 
-**Returns:** `false` where the system ignores locks: on iPad when the app supports resizing (no `UIRequiresFullScreen`, see [iPad](#ipad)). `true` otherwise.
+**Returns:** `false` where the system ignores locks: on iPad when the app supports resizing (no `UIRequiresFullScreen`, see [iPad](#ipad)), and on Android 16+ large screens for apps targeting API 36+ (see [Android 16+ large screens](#android-16-large-screens)). `true` otherwise.
 
 ```typescript
 if (!canLockOrientation()) {

@@ -9,9 +9,8 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.WritableMap
 
 internal class OrientationStatus(private val reactContext: ReactApplicationContext) {
-  // Android 16+ large screens are handled in the next change
   fun canLockOrientation(): Boolean {
-    return true
+    return OrientationLockSupport.canLockOrientation(reactContext, reactContext.currentActivity)
   }
 
   fun getDeviceAutoRotateStatus(): WritableMap {

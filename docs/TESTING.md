@@ -21,7 +21,7 @@ The example app opens a **test screen** that exercises the whole API. Its `Info.
 | **D2** | iPad, full screen | iPad Pro 13-inch simulator (check its iPadOS version: the M4 one may be on 18.x) | `yarn example ios --simulator "iPad Pro 13-inch (M4)"` |
 | **D3** | iPad, windowed (iPadOS 26+) | same simulator, app resized into a window | as D2, then resize the window |
 | **D4** | Android phone | Pixel emulator, API 36+ | `yarn example android` |
-| **D5** | Android tablet or foldable (smallest width ≥ 600dp) | Pixel Tablet / Pixel Fold emulator, API 36+ | `yarn example android` |
+| **D5** | Android tablet or foldable (smallest width ≥ 600dp) | Pixel Tablet / Pixel Fold emulator, API 36+ (create one in Android Studio's Device Manager) | `yarn example android` |
 
 **Rotating the device**
 - iOS simulator: **⌘←** / **⌘→**, or **Device → Rotate Left / Right**
@@ -40,12 +40,12 @@ Start every run from a fresh launch. Use **Clear log** between test cases so the
 | **T5** | Lock to portrait upside down | Tap **Portrait upside down** | iPad: the UI rotates upside down. Face ID iPhones don't support upside down (iOS rule), and the library must not report a lock it can't apply. |
 | **T6** | Lock events | Tap every lock button, then **Unlock all** | Exactly **one** `onLockOrientationChange` per tap, with matching `isLocked` / `orientation`. Live state matches the last event. |
 | **T7** | Tracking on/off | **Unlock all**; **Stop tracking**; rotate; **Start tracking**; rotate | No `onOrientationChange` events while stopped; events again after starting. |
-| **T8** | Queries | Tap each button in **Queries** | Results in the log match Live state. `getDeviceAutoRotateStatus()`: an object on Android, `null` on iOS. On Android, toggling system auto-rotate changes `isAutoRotateEnabled`. `canLockOrientation()`: `true` on every device in the example (it sets `UIRequiresFullScreen`); in an iPad app without that key it must be `false`. |
+| **T8** | Queries | Tap each button in **Queries** | Results in the log match Live state. `getDeviceAutoRotateStatus()`: an object on Android, `null` on iOS. On Android, toggling system auto-rotate changes `isAutoRotateEnabled`. `canLockOrientation()`: `true` on iPhone, iPad (the example sets `UIRequiresFullScreen`) and Android phones; `false` on an Android 16+ tablet / unfolded foldable (the example targets API 36). |
 | **T9** | Lock inside a Modal | **Open Modal (all orientations)**; tap each lock button once | Each **first** tap rotates the UI. Then repeat with **Open Modal (default orientations)** (the RN default is portrait-only on iOS). |
 | **T10** | Open a Modal while locked | Tap **Landscape right**; **Open Modal (default orientations)**; close it; repeat with **Open Modal (all orientations)** | The app **doesn't crash**. The Modal opens; the lock state is unchanged after closing. |
 | **T11** | Delayed lock | Tap **Landscape right in 1s**; after it rotates, tap **Unlock all**; rotate the device | The UI rotates once after ~1 s. **Unlock all** unlocks right away (`isLocked=false`) and the UI follows the device again. |
 | **T12** | Background and return | Lock to landscape; send the app to the background; bring it back. Then **Unlock all**, background the app, rotate the device, bring it back, rotate again | The lock is still applied; Live state unchanged. No `onOrientationChange` events while in the background (Android pauses the sensor); events arrive again after returning. |
-| **T13** | Large screens / windowed | On D3 and D5, run T3 and T4 | Write down what happens. On iPadOS 26 the example opens as a window shaped like the lock instead of rotating the screen. Android 16+ (targetSdk 36) large screens can ignore locks; `canLockOrientation()` should report that. |
+| **T13** | Large screens / windowed | On D3 and D5, run T3 and T4 | Write down what happens. On iPadOS 26 the example opens as a window shaped like the lock instead of rotating the screen. On an Android 16+ large screen locks are ignored (the example targets API 36) and `canLockOrientation()` is `false`; on a folded foldable both work. |
 | **T14** | Native-side lock reaches JS (iOS) | Run from Xcode; **Debug → Pause**; in the debugger console run `expr -l swift -- import OrientationTurbo; OrientationTurbo.shared.lockToLandscape("LEFT")`; **Continue** | The UI rotates, and the log shows exactly **one** `onLockOrientationChange` with `isLocked=true, orientation=LANDSCAPE_LEFT`. |
 
 ## What to run on which device
