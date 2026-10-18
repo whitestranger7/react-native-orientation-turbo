@@ -4,9 +4,7 @@
   "description": "orientation turbo",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
-  "bin": {
-    "react-native-orientation-turbo": "./bin/react-native-orientation-turbo.js"
-  },
+  "bin": "./bin/react-native-orientation-turbo.js",
   "exports": {
     ".": {
       "react-native-orientation-turbo-source": "./src/index.tsx",
