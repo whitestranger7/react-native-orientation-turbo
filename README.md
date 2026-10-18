@@ -427,6 +427,8 @@ Subscribes to orientation changes and receives real-time updates.
 **Parameters:**
 - `callback`: Function called when device physical orientation changes, receives `OrientationSubscription` object
 
+On Android the orientation comes from the accelerometer. To avoid flicker, a change is only reported when the device is clearly in the new orientation (within 30° of it) and has stayed there for about 200 ms; small tilts and shaking don't produce events.
+
 **Returns:** Subscription object with `remove()` method to unsubscribe
 
 ```typescript

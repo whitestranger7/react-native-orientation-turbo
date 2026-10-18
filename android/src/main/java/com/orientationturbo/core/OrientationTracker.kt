@@ -1,27 +1,34 @@
 package com.orientationturbo.core
 
 import com.orientationturbo.enums.Orientation
-import com.orientationturbo.constants.AngleRanges
 
 import android.hardware.SensorManager
+import android.os.Handler
+import android.os.Looper
 import android.view.OrientationEventListener
 import com.facebook.react.bridge.ReactApplicationContext
 
 /**
- * Tracks device orientation while JS asked for it and the app is in the foreground
+ * Tracks device orientation while JS asked for it and the app is in the foreground.
+ * A new orientation is only reported after it stayed stable for [SETTLE_DELAY_MS].
  */
 internal class OrientationTracker(
   private val reactContext: ReactApplicationContext,
   private val orientationManager: OrientationManager,
 ) {
+  private val handler = Handler(Looper.getMainLooper())
   private var orientationEventListener: OrientationEventListener? = null
+  private var emitOnChange: (() -> Unit)? = null
   private var isPaused = false
+  private var pendingOrientation: Orientation? = null
+  private val commitPendingOrientation = Runnable { commitPendingOrientation() }
 
   @Synchronized
   fun startOrientationTracking(emitOnChange: () -> Unit) {
     if (orientationEventListener != null) return
 
-    orientationEventListener = createOrientationListener(emitOnChange)
+    this.emitOnChange = emitOnChange
+    orientationEventListener = createOrientationListener()
     if (!isPaused) {
       enableListener()
     }
@@ -31,6 +38,8 @@ internal class OrientationTracker(
   fun stopOrientationTracking() {
     orientationEventListener?.disable()
     orientationEventListener = null
+    emitOnChange = null
+    cancelPendingOrientation()
   }
 
   /** App went to the background: stop reading the sensor */
@@ -38,6 +47,7 @@ internal class OrientationTracker(
   fun pause() {
     isPaused = true
     orientationEventListener?.disable()
+    cancelPendingOrientation()
   }
 
   /** App is in the foreground again: resume if tracking was started */
@@ -54,27 +64,46 @@ internal class OrientationTracker(
     }
   }
 
-  private fun createOrientationListener(emitOnChange: () -> Unit): OrientationEventListener {
+  @Synchronized
+  private fun onAngleChanged(angle: Int) {
+    val candidate = OrientationAngles.zoneFor(angle) ?: return
+
+    if (candidate == orientationManager.getCurrentDeviceOrientation()) {
+      cancelPendingOrientation()
+      return
+    }
+    if (candidate != pendingOrientation) {
+      pendingOrientation = candidate
+      handler.removeCallbacks(commitPendingOrientation)
+      handler.postDelayed(commitPendingOrientation, SETTLE_DELAY_MS)
+    }
+  }
+
+  @Synchronized
+  private fun commitPendingOrientation() {
+    val newOrientation = pendingOrientation ?: return
+    pendingOrientation = null
+
+    if (newOrientation != orientationManager.getCurrentDeviceOrientation()) {
+      orientationManager.setDeviceOrientation(newOrientation)
+      emitOnChange?.invoke()
+    }
+  }
+
+  private fun cancelPendingOrientation() {
+    pendingOrientation = null
+    handler.removeCallbacks(commitPendingOrientation)
+  }
+
+  private fun createOrientationListener(): OrientationEventListener {
     return object : OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_NORMAL) {
       override fun onOrientationChanged(orientation: Int) {
-        if (orientation == ORIENTATION_UNKNOWN) return
-
-        val newDeviceOrientation = when (orientation) {
-          in AngleRanges.PORTRAIT_PRIMARY_START..AngleRanges.PORTRAIT_PRIMARY_END,
-          in AngleRanges.PORTRAIT_SECONDARY_START..AngleRanges.PORTRAIT_SECONDARY_END -> Orientation.PORTRAIT
-
-          in AngleRanges.LANDSCAPE_RIGHT_START..AngleRanges.LANDSCAPE_RIGHT_END -> Orientation.LANDSCAPE_RIGHT
-          in AngleRanges.PORTRAIT_INVERTED_START..AngleRanges.PORTRAIT_INVERTED_END -> Orientation.PORTRAIT_UPSIDE_DOWN
-          in AngleRanges.LANDSCAPE_LEFT_START..AngleRanges.LANDSCAPE_LEFT_END -> Orientation.LANDSCAPE_LEFT
-          else -> return
-        }
-
-        val currentDeviceOrientation = orientationManager.getCurrentDeviceOrientation()
-        if (newDeviceOrientation != currentDeviceOrientation) {
-          orientationManager.setDeviceOrientation(newDeviceOrientation)
-          emitOnChange()
-        }
+        onAngleChanged(orientation)
       }
     }
+  }
+
+  private companion object {
+    const val SETTLE_DELAY_MS = 200L
   }
 }

@@ -47,6 +47,7 @@ Start every run from a fresh launch. Use **Clear log** between test cases so the
 | **T12** | Background and return | Lock to landscape; send the app to the background; bring it back. Then **Unlock all**, background the app, rotate the device, bring it back, rotate again | The lock is still applied; Live state unchanged. No `onOrientationChange` events while in the background (Android pauses the sensor); events arrive again after returning. |
 | **T13** | Large screens / windowed | On D3 and D5, run T3 and T4 | Write down what happens. On iPadOS 26 the example opens as a window shaped like the lock instead of rotating the screen. On an Android 16+ large screen locks are ignored (the example targets API 36) and `canLockOrientation()` is `false`; on a folded foldable both work. |
 | **T14** | Native-side lock reaches JS (iOS) | Run from Xcode; **Debug → Pause**; in the debugger console run `expr -l swift -- import OrientationTurbo; OrientationTurbo.shared.lockToLandscape("LEFT")`; **Continue** | The UI rotates, and the log shows exactly **one** `onLockOrientationChange` with `isLocked=true, orientation=LANDSCAPE_LEFT`. |
+| **T15** | Stable orientation events (Android) | **Unlock all**, hold the device in landscape, then: tilt it ~20° towards portrait and back; shake it; rotate it slowly to portrait | Tilting and shaking produce **no** `onOrientationChange` events. Rotating to portrait gives **one** event, about 200 ms after the device is clearly upright. On the emulator use **Extended controls → Virtual sensors** to set the angles. |
 
 ## What to run on which device
 
@@ -68,6 +69,7 @@ Start every run from a fresh launch. Use **Clear log** between test cases so the
 | T12 Background and return | ✅ | ✅ | — | ✅ | — |
 | T13 Large screens / windowed | — | — | ✅ | — | ✅ |
 | T14 Native-side lock reaches JS | ✅ | ✅ | — | — | — |
+| T15 Stable orientation events | — | — | — | ✅ | ✅ |
 
 For a small change, run the affected tests on D1 and D4 at least. Before a release, run the whole matrix.
 
