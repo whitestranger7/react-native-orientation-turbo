@@ -1,0 +1,122 @@
+name: Compatibility
+
+# Builds fresh React Native apps with the packed library (scripts/compat-test.sh),
+# for the oldest and newest supported React Native versions and a few in between.
+on:
+  # Runs on v3 pushes too: schedule and workflow_dispatch only work once the workflow is on main
+  push:
+    branches:
+      - v3
+    paths:
+      - 'ios/**'
+      - 'android/**'
+      - 'bin/**'
+      - 'src/NativeOrientationTurbo.ts'
+      - '*.podspec'
+      - 'package.json'
+      - 'scripts/compat-test.sh'
+      - '.github/workflows/compat.yml'
+  pull_request:
+    branches:
+      - main
+      - v3
+    paths:
+      - 'ios/**'
+      - 'android/**'
+      - 'bin/**'
+      - 'src/NativeOrientationTurbo.ts'
+      - '*.podspec'
+      - 'package.json'
+      - 'scripts/compat-test.sh'
+      - '.github/workflows/compat.yml'
+  workflow_dispatch:
+  schedule:
+    # Mondays: catches breakage from new runner images or tool releases
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    name: android (RN ${{ matrix.react-native }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        react-native: ['0.80.0', '0.82.0', '0.84.0', '0.88.0']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      # JDK 17 runs Gradle for every React Native version in the supported range
+      - name: Install JDK
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Finalize Android SDK
+        run: |
+          /bin/bash -c "yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null"
+
+      - name: Compatibility test
+        run: scripts/compat-test.sh ${{ matrix.react-native }} --skip-ios --work-dir "$RUNNER_TEMP/compat"
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: compat-android-rn-${{ matrix.react-native }}
+          path: ${{ runner.temp }}/compat/logs
+
+  ios:
+    name: ios (RN ${{ matrix.react-native }}${{ matrix.frameworks && format(', frameworks {0}', matrix.frameworks) || '' }})
+    runs-on: macos-26
+    timeout-minutes: 90
+
+    strategy:
+      fail-fast: false
+      matrix:
+        react-native: ['0.80.0', '0.82.0', '0.84.0', '0.88.0']
+        frameworks: ['']
+        include:
+          - react-native: '0.80.0'
+            frameworks: 'static'
+          - react-native: '0.88.0'
+            frameworks: 'static'
+
+    env:
+      XCODE_VERSION: '26.6'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Use appropriate Xcode version
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Compatibility test
+        run: |
+          scripts/compat-test.sh ${{ matrix.react-native }} --skip-android \
+            ${{ matrix.frameworks && format('--frameworks {0}', matrix.frameworks) || '' }} \
+            --work-dir "$RUNNER_TEMP/compat"
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: compat-ios-rn-${{ matrix.react-native }}${{ matrix.frameworks && format('-frameworks-{0}', matrix.frameworks) || '' }}
+          path: ${{ runner.temp }}/compat/logs
