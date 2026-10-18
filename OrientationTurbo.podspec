@@ -14,6 +14,7 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/whitestranger7/react-native-orientation-turbo.git", :tag => "#{s.version}" }
 
   s.source_files = "ios/**/*.{h,m,mm,cpp,swift}"
+  s.exclude_files = "ios/Tests/**/*"
   s.private_header_files = "ios/**/*.h"
 
   s.swift_version = "5.9"
@@ -23,6 +24,10 @@ Pod::Spec.new do |s|
     'DEFINES_MODULE' => 'YES',
     'SWIFT_OBJC_INTERFACE_HEADER_NAME' => 'OrientationTurbo-Swift.h'
   }
+
+  s.test_spec "Tests" do |test_spec|
+    test_spec.source_files = "ios/Tests/**/*.swift"
+  end
 
   install_modules_dependencies(s)
 end

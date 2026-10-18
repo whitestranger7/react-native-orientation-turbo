@@ -136,6 +136,18 @@ Remember to add tests for your change if possible. Run the unit tests by:
 yarn test
 ```
 
+The native code has unit tests too (orientation mapping, angle zones, direction parsing):
+
+```sh
+# Android (JUnit, no emulator needed)
+cd example/android && ./gradlew :react-native-orientation-turbo:testDebugUnitTest
+
+# iOS (XCTest; the example's Podfile installs the library's `Tests` test spec)
+cd example/ios && bundle exec pod install
+xcodebuild test -workspace OrientationTurboExample.xcworkspace -scheme OrientationTurbo-Unit-Tests \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+```
+
 ### Manual testing
 
 The example app opens a test screen that exercises the whole API. Changes to native code, the build setup or the public API must be tested by hand on real devices or simulators, following the device and test matrix in **[docs/TESTING.md](docs/TESTING.md)**.

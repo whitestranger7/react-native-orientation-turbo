@@ -118,6 +118,10 @@ jobs:
         run: |
           yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
+      - name: Android unit tests
+        working-directory: example/android
+        run: ./gradlew :react-native-orientation-turbo:testDebugUnitTest --console=plain
+
   build-ios:
     name: build-ios (Xcode ${{ matrix.xcode }})
     runs-on: ${{ matrix.runner }}
@@ -179,3 +183,10 @@ jobs:
       - name: Build example for iOS
         run: |
           yarn turbo run build:ios --cache-dir="${{ env.TURBO_CACHE_DIR }}"
+
+      - name: iOS unit tests
+        if: env.turbo_cache_hit != 1
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available | grep -m1 -E '^\s+iPhone' | grep -oE '[0-9A-F-]{36}')
+          xcodebuild test -workspace example/ios/OrientationTurboExample.xcworkspace -scheme OrientationTurbo-Unit-Tests \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID"

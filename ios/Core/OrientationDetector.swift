@@ -48,9 +48,12 @@ internal class OrientationDetector {
     case .faceUp: return Orientation.faceUp.rawValue
     case .faceDown: return Orientation.faceDown.rawValue
     default:
-      let interfaceOrientation = UIInterfaceOrientation(rawValue: deviceOrientation.rawValue) ?? .unknown
-      return getOrientation(from: interfaceOrientation) ?? Orientation.portrait.rawValue
+      return getOrientation(from: OrientationDetector.interfaceOrientation(for: deviceOrientation)) ?? Orientation.portrait.rawValue
     }
+  }
+
+  static func interfaceOrientation(for deviceOrientation: UIDeviceOrientation) -> UIInterfaceOrientation {
+    return UIInterfaceOrientation(rawValue: deviceOrientation.rawValue) ?? .unknown
   }
   
   // MARK: - Private Methods
@@ -60,7 +63,7 @@ internal class OrientationDetector {
   }
   
   /// The single mapping from UIKit to the library's orientations; names match one to one
-  private func getOrientation(from interfaceOrientation: UIInterfaceOrientation) -> String? {
+  func getOrientation(from interfaceOrientation: UIInterfaceOrientation) -> String? {
     switch interfaceOrientation {
     case .portrait: return Orientation.portrait.rawValue
     case .portraitUpsideDown: return Orientation.portraitUpsideDown.rawValue

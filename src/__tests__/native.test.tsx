@@ -15,6 +15,8 @@ describe('Native Module should be bound to the TurboModuleRegistry', () => {
       unlockAllOrientations: jest.fn(),
       getCurrentOrientation: jest.fn(),
       isLocked: jest.fn(),
+      canLockOrientation: jest.fn(),
+      getDeviceAutoRotateStatus: jest.fn(),
       onLockOrientationChange: jest.fn(),
       startOrientationTracking: jest.fn(),
       stopOrientationTracking: jest.fn(),
@@ -38,6 +40,8 @@ describe('Native Module should be bound to the TurboModuleRegistry', () => {
       unlockAllOrientations: jest.fn(),
       getCurrentOrientation: jest.fn(),
       isLocked: jest.fn(),
+      canLockOrientation: jest.fn(),
+      getDeviceAutoRotateStatus: jest.fn(),
       onLockOrientationChange: jest.fn(),
       startOrientationTracking: jest.fn(),
       stopOrientationTracking: jest.fn(),
@@ -53,6 +57,8 @@ describe('Native Module should be bound to the TurboModuleRegistry', () => {
     expect(typeof OrientationTurbo.unlockAllOrientations).toBe('function');
     expect(typeof OrientationTurbo.getCurrentOrientation).toBe('function');
     expect(typeof OrientationTurbo.isLocked).toBe('function');
+    expect(typeof OrientationTurbo.canLockOrientation).toBe('function');
+    expect(typeof OrientationTurbo.getDeviceAutoRotateStatus).toBe('function');
     expect(typeof OrientationTurbo.onLockOrientationChange).toBe('function');
     expect(typeof OrientationTurbo.startOrientationTracking).toBe('function');
     expect(typeof OrientationTurbo.stopOrientationTracking).toBe('function');

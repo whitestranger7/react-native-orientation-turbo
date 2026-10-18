@@ -37,9 +37,11 @@ internal enum OrientationLockSupport {
     let padOrientations = UIDevice.current.userInterfaceIdiom == .pad
       ? bundle.object(forInfoDictionaryKey: "UISupportedInterfaceOrientations~ipad") as? [String]
       : nil
-    guard let names = padOrientations ?? bundle.object(forInfoDictionaryKey: "UISupportedInterfaceOrientations") as? [String] else {
-      return .all
-    }
+    return orientations(fromInfoPlistNames: padOrientations ?? bundle.object(forInfoDictionaryKey: "UISupportedInterfaceOrientations") as? [String])
+  }
+
+  static func orientations(fromInfoPlistNames names: [String]?) -> UIInterfaceOrientationMask {
+    guard let names = names else { return .all }
 
     var orientations: UIInterfaceOrientationMask = []
     for name in names {
@@ -57,10 +59,12 @@ internal enum OrientationLockSupport {
   /// iPhones with a Home button that run iOS 15+: 6s / 6s Plus / SE, 7, 8 / 8 Plus, SE (2nd and 3rd generation)
   private static func isIPhoneWithoutHomeButton() -> Bool {
     guard UIDevice.current.userInterfaceIdiom == .phone else { return false }
+    return !hasHomeButton(model: modelIdentifier())
+  }
+
+  static func hasHomeButton(model: String) -> Bool {
     let homeButtonModels: Set<String> = ["iPhone10,1", "iPhone10,2", "iPhone10,4", "iPhone10,5", "iPhone12,8", "iPhone14,6"]
-    let model = modelIdentifier()
-    if model.hasPrefix("iPhone8,") || model.hasPrefix("iPhone9,") { return false }
-    return !homeButtonModels.contains(model)
+    return model.hasPrefix("iPhone8,") || model.hasPrefix("iPhone9,") || homeButtonModels.contains(model)
   }
 
   private static func modelIdentifier() -> String {
