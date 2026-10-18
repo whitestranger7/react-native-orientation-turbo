@@ -133,6 +133,7 @@ orientationController.unlockAllOrientations()             // Allow all orientati
 // Orientation status
 let currentOrientation = orientationController.getCurrentOrientation()  // String
 let isLocked = orientationController.isLocked()                        // Bool
+let canLock = orientationController.canLockOrientation()               // false on resizable iPad apps
 
 // Supported orientations (for AppDelegate)
 let supportedMask = orientationController.getSupportedInterfaceOrientations()  // UIInterfaceOrientationMask
@@ -347,11 +348,12 @@ OrientationTurbo.lockToLandscape(activity, LandscapeDirection.LEFT) // Lock to l
 OrientationTurbo.lockToLandscape(activity, LandscapeDirection.RIGHT)// Lock to landscape right
 OrientationTurbo.unlockAllOrientations(activity)                    // Allow all orientations
 
-// Orientation status (NEW - now available in static context)
-val currentOrientation = OrientationTurbo.getCurrentOrientation()    // String
-val isLocked = OrientationTurbo.isLocked()                         // Boolean
-val lockedOrientation = OrientationTurbo.getLockedOrientation()     // Orientation enum
-val deviceOrientation = OrientationTurbo.getDeviceOrientation()     // Orientation enum
+// Orientation status
+val currentOrientation = OrientationTurbo.getCurrentOrientation(activity) // Orientation enum, what the screen shows
+val storedOrientation = OrientationTurbo.getCurrentOrientation()         // Orientation enum, lock if locked, else last tracked
+val isLocked = OrientationTurbo.isLocked()                               // Boolean
+val lockedOrientation = OrientationTurbo.getLockedOrientation()          // Orientation enum (PORTRAIT when unlocked)
+val canLock = OrientationTurbo.canLockOrientation(activity)              // false on Android 16+ large screens
 ```
 
 #### 3. Fragment Integration
@@ -429,7 +431,6 @@ New shared state architecture provides status methods in any context:
 - ✅ `getCurrentOrientation()` - available everywhere
 - ✅ `isLocked()` - available everywhere  
 - ✅ `getLockedOrientation()` - available everywhere
-- ✅ `getDeviceOrientation()` - available everywhere
 
 #### 3. **AndroidManifest.xml Sync**
 The library automatically syncs with your manifest settings:

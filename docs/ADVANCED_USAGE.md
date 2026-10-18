@@ -156,7 +156,6 @@ class AnyActivity : AppCompatActivity() {
         val isLocked = OrientationTurbo.isLocked()
         val currentOrientation = OrientationTurbo.getCurrentOrientation()
         val lockedOrientation = OrientationTurbo.getLockedOrientation()
-        val deviceOrientation = OrientationTurbo.getDeviceOrientation()
         
         Log.d("Activity", "Locked: $isLocked, Current: $currentOrientation")
         

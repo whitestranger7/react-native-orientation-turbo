@@ -18,16 +18,32 @@ A React Native library for controlling device orientation with support for locki
 
 What your app needs to use this library:
 
-| | Requirement |
-|---|---|
-| React Native | **0.80 or newer** (supported range: 0.80 – 0.88) |
-| Architecture | **New Architecture** (Turbo Modules) |
-| iOS | 15.1+ |
-| Android | API level 24+ (Android 7.0) |
-| Build tools | Whatever your React Native version requires (Xcode, JDK 17+, Gradle, CocoaPods). The library doesn't add requirements of its own. |
+|              | Requirement                                                                                                                       |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| React Native | **0.80 or newer** (supported range: 0.80 – 0.88)                                                                                  |
+| Architecture | **New Architecture** (Turbo Modules)                                                                                              |
+| iOS          | 15.1+                                                                                                                             |
+| Android      | API level 24+ (Android 7.0)                                                                                                       |
+| Build tools  | Whatever your React Native version requires (Xcode, JDK 17+, Gradle, CocoaPods). The library doesn't add requirements of its own. |
 
 > **Important**: This library requires the New Architecture (Turbo Modules). It does not support the legacy bridge.
 > The New Architecture is always on from React Native 0.82. On 0.80 and 0.81 it's the default; don't turn it off (`newArchEnabled=false` / `RCT_NEW_ARCH_ENABLED=0`).
+
+### Compatibility
+
+| React Native | Library | Notes                                                                                               |
+| ------------ | ------- | --------------------------------------------------------------------------------------------------- |
+| 0.80 – 0.88  | **3.x** | Tested in CI on 0.80, 0.82, 0.84 and 0.88 (iOS and Android; iOS static frameworks on 0.80 and 0.88) |
+
+Known limitations:
+
+- **iPad**: locks only apply when the app sets `UIRequiresFullScreen` ([iPad](#ipad)).
+- **Android 16+ large screens** (600dp and wider): the system ignores locks for apps targeting API 36+ ([details](#android-16-large-screens)).
+- **Upside-down**: iPhones without a Home button never rotate upside-down; some Android phones don't either.
+- **`<Modal>` on iOS**: a lock is suspended while a portrait-only modal is shown ([details](#using-modal-with-a-lock-ios)).
+- **Swift Package Manager**: not supported yet; use CocoaPods.
+
+Use `canLockOrientation()` to check at runtime whether locks are applied.
 
 Want to contribute? The development toolchain is described in the [contributing guide](CONTRIBUTING.md#prerequisites).
 
@@ -70,6 +86,7 @@ Then install pods (`cd ios && bundle exec pod install`) and rebuild the app.
 These are the manual steps. You don't need them if the automatic setup succeeded.
 
 1. Install pods:
+
 ```sh
 cd ios && bundle exec pod install
 ```
@@ -161,11 +178,11 @@ iPadOS **ignores orientation locks for apps that support resizing**, which is th
 
 Apple has deprecated this key and recommends supporting all orientations instead ([TN3192](https://developer.apple.com/documentation/technotes/tn3192-migrating-your-app-from-the-deprecated-uirequiresfullscreen-key)). What we measured with a lock applied at launch:
 
-| iPadOS | Without `UIRequiresFullScreen` | With `UIRequiresFullScreen` |
-|---|---|---|
-| 18 | lock ignored | lock applied |
-| 26 | lock ignored | app opens in a window with the locked shape; the screen doesn't rotate |
-| 27 | lock ignored | lock applied |
+| iPadOS | Without `UIRequiresFullScreen` | With `UIRequiresFullScreen`                                            |
+| ------ | ------------------------------ | ---------------------------------------------------------------------- |
+| 18     | lock ignored                   | lock applied                                                           |
+| 26     | lock ignored                   | app opens in a window with the locked shape; the screen doesn't rotate |
+| 27     | lock ignored                   | lock applied                                                           |
 
 Use [`canLockOrientation()`](#canlockorientation-boolean) to find out at runtime whether locks will apply. Also note that iPhones without a Home button never support portrait upside-down.
 
@@ -209,7 +226,7 @@ Locks still apply on those screens when:
 
 If you're upgrading from a previous version, please check our [Migration Guide](docs/MIGRATION.md) for any breaking changes and upgrade instructions.
 
-**v2.2.0 Breaking Changes**: iOS native API changed from `OrientationTurboImpl.shared` to `OrientationTurbo.shared`. React Native usage remains unchanged.
+**Upgrading to 3.0**: requires React Native 0.80+. `LANDSCAPE_LEFT` / `LANDSCAPE_RIGHT` in `onOrientationChange` now match the locks (swapped compared to 2.x), and `getCurrentOrientation()` returns what the screen shows. See [2.x → 3.0](docs/MIGRATION.md#migrating-from-2x-to-30) for the full list.
 
 ## Usage
 
@@ -252,7 +269,7 @@ lockToPortrait(PortraitDirection.UPSIDE_DOWN);
 // Lock to landscape left
 lockToLandscape(LandscapeDirection.LEFT);
 
-// Lock to landscape right  
+// Lock to landscape right
 lockToLandscape(LandscapeDirection.RIGHT);
 
 // Unlock all orientations (allow rotation)
@@ -273,12 +290,12 @@ console.log(autoRotateStatus); // { isAutoRotateEnabled: boolean, canDetectOrien
 // Subscribe to lock orientation changes
 onLockOrientationChange(({ orientation, isLocked }) => {
   // Your code there
-})
+});
 
 // Subscribe to device orientation changes
 onOrientationChange(({ orientation }) => {
   // Your code there
-})
+});
 ```
 
 ## API Reference
@@ -289,7 +306,7 @@ onOrientationChange(({ orientation }) => {
 
 Starts using native sensors to track device orientation changes.
 When device is physically rotates - sensors are detecting changes and expose it via `onOrientationChange` subscription.
-Drains battery faster and uses device power resources. 
+Drains battery faster and uses device power resources.
 Recommended to use only when sensors are needed and remove when not needed remove sensors tracking by using `stopOrientationTracking`.
 
 ```typescript
@@ -309,6 +326,7 @@ stopOrientationTracking();
 Locks the device orientation to portrait mode.
 
 **Parameters:**
+
 - `direction?`: `PortraitDirection.UP` or `PortraitDirection.UPSIDE_DOWN` or `undefined`
 
 ```typescript
@@ -326,6 +344,7 @@ lockToPortrait(PortraitDirection.UPSIDE_DOWN);
 Locks the device orientation to landscape mode in the specified direction.
 
 **Parameters:**
+
 - `direction`: `LandscapeDirection.LEFT` (bottom edge of the device on the left) or `LandscapeDirection.RIGHT` (bottom edge on the right)
 
 Any other value is ignored: the lock doesn't change, no event is sent, and a warning is logged. The same applies to `lockToPortrait` with a direction other than `UP` / `UPSIDE_DOWN`.
@@ -381,13 +400,15 @@ if (!canLockOrientation()) {
 
 **Android only.** Returns information about the device's auto-rotate settings and orientation detection capabilities.
 
-**Returns:** 
+**Returns:**
+
 - `DeviceAutoRotateStatus` object on Android
 - `null` on iOS (not supported)
 
 > **iOS Limitation:** This method is not available on iOS due to platform restrictions. See [iOS Auto-Rotate Detection Limitations](docs/IOS_AUTO_ROTATE_LIMITATIONS.md) for detailed explanation and alternative approaches.
 
 **DeviceAutoRotateStatus Properties:**
+
 - `isAutoRotateEnabled`: `boolean` - Whether auto-rotate is enabled in device settings
 - `canDetectOrientation`: `boolean` - Whether the device can detect orientation changes
 
@@ -410,6 +431,7 @@ if (status) {
 Subscribes to orientation changes and receives real-time updates.
 
 **Parameters:**
+
 - `callback`: Function called when lock state orientation changes, receives `LockOrientationSubscription` object
 
 **Returns:** Subscription object with `remove()` method to unsubscribe
@@ -427,6 +449,7 @@ subscription.remove();
 ```
 
 **React Hook Example:**
+
 ```typescript
 import { useEffect, useRef } from 'react';
 import type { EventSubscription } from 'react-native';
@@ -457,6 +480,7 @@ const MyComponent = () => {
 Subscribes to orientation changes and receives real-time updates.
 
 **Parameters:**
+
 - `callback`: Function called when device physical orientation changes, receives `OrientationSubscription` object
 
 On Android the orientation comes from the accelerometer. To avoid flicker, a change is only reported when the device is clearly in the new orientation (within 30° of it) and has stayed there for about 200 ms; small tilts and shaking don't produce events.
@@ -475,6 +499,7 @@ subscription.remove();
 ```
 
 **React Hook Example:**
+
 ```typescript
 import { useEffect, useRef } from 'react';
 import type { EventSubscription } from 'react-native';
@@ -569,6 +594,7 @@ type DeviceAutoRotateStatus = {
 Lock orientation before React Native loads (useful for preventing orientation changes during app initialization/bootsplash):
 
 **iOS - AppDelegate-only apps (`AppDelegate.swift`):**
+
 ```swift
 func application(
   _ application: UIApplication,
@@ -583,6 +609,7 @@ func application(
 ```
 
 **iOS - SceneDelegate apps (`SceneDelegate.swift`):**
+
 ```swift
 func scene(
   _ scene: UIScene,
@@ -603,11 +630,12 @@ func scene(
 ```
 
 **Android - MainActivity.kt:**
+
 ```kotlin
 override fun onCreate(savedInstanceState: Bundle?) {
     // Lock orientation BEFORE React Native loads
     OrientationTurbo.lockToPortrait(this)
-    
+
     super.onCreate(savedInstanceState)
 }
 ```
