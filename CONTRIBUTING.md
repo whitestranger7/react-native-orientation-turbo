@@ -10,8 +10,8 @@ This is the toolchain the repository is developed and tested with. It's what you
 
 | Tool | Version | Notes |
 |---|---|---|
-| Node.js | v24.19.0 (see [`.nvmrc`](./.nvmrc)) | Any `^22.13`, `^24.3` or `>=26` works (required by React Native 0.88). With [nvm](https://github.com/nvm-sh/nvm): `nvm use` |
-| Yarn | 4.x (pinned in `packageManager`) | Enable it with `corepack enable`; don't install Yarn globally |
+| Node.js | v24.19.0 (see [`.nvmrc`](./.nvmrc)) | Any `^22.13`, `^24.3` or `>=26` works for development (required by React Native 0.88); releasing with `yarn release` needs `^22.22.2`, `^24.15` or `>=26` (release-it 21). With [nvm](https://github.com/nvm-sh/nvm): `nvm use` |
+| Yarn | 4.18.1 (pinned in `packageManager`) | Enable it with `corepack enable`; don't install Yarn globally |
 | Ruby + Bundler | Ruby ≥ 2.6 (tested with 3.3), Bundler 2.6 | Used to run the pinned CocoaPods version |
 | CocoaPods | 1.17.0 (pinned in [`example/Gemfile.lock`](./example/Gemfile.lock)) | Always run it through Bundler: `bundle exec pod …` |
 | Xcode | 26 or newer (tested with 27.1) | Plus iPhone **and** iPad simulators |
