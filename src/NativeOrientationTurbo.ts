@@ -1,5 +1,8 @@
-import { TurboModuleRegistry, type TurboModule } from 'react-native';
-import type { EventEmitter } from 'react-native/Libraries/Types/CodegenTypes';
+import {
+  TurboModuleRegistry,
+  type CodegenTypes,
+  type TurboModule,
+} from 'react-native';
 
 export interface Spec extends TurboModule {
   lockToPortrait(direction?: string): void;
@@ -17,12 +20,12 @@ export interface Spec extends TurboModule {
     canDetectOrientation: boolean;
   } | null;
 
-  readonly onLockOrientationChange: EventEmitter<{
+  readonly onLockOrientationChange: CodegenTypes.EventEmitter<{
     orientation: string | null;
     isLocked: boolean;
   }>;
 
-  readonly onOrientationChange: EventEmitter<{
+  readonly onOrientationChange: CodegenTypes.EventEmitter<{
     orientation: string;
   }>;
 }
