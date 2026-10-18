@@ -71,6 +71,15 @@ Start every run from a fresh launch. Use **Clear log** between test cases so the
 
 For a small change, run the affected tests on D1 and D4 at least. Before a release, run the whole matrix.
 
+### Multi-window (manual)
+
+- **Android:** open the example, open **Recents**, long-press the app icon → **Split screen**, pick a second app. Lock and unlock in the example and note what happens (Android ignores orientation requests for apps in split screen).
+- **iPad (iPadOS 26+):** turn on **Settings → Multitasking & Gestures → Windowed Apps**, open the example next to another app, run T3 / T4 and note the result.
+
+### Build checks
+
+- **16 KB page size (Android):** build the release APK (`cd example/android && ./gradlew app:assembleRelease`), then check every native library's `LOAD` alignment is `0x4000` or more with the NDK's `llvm-readelf -lW lib/arm64-v8a/*.so`, and run `zipalign -c -P 16 -v 4 app-release.apk`. The `google_apis_playstore_ps16k` system images use 16 KB pages.
+
 ## Known issues (being fixed for 3.0.0)
 
 These currently fail. Remove each row when its fix lands.
@@ -78,6 +87,7 @@ These currently fail. Remove each row when its fix lands.
 | Test | Platform | Current behaviour |
 |---|---|---|
 | T4 | iOS / Android | LEFT and RIGHT may not rotate to the same physical side on both platforms; on iOS, `getCurrentOrientation()` and `onOrientationChange` can disagree in landscape. |
+| T13 | Android large screen (D5) | The lock is ignored (expected, `canLockOrientation()` is `false`), but `getCurrentOrientation()` still reports the locked orientation and `isLocked()` is `true`. |
 | T5 | iPhone (D1) | Shows portrait, but the library reports `isLocked: true` / `PORTRAIT_UPSIDE_DOWN`. |
 | T5 | Android | Reports `PORTRAIT` without changing the lock. |
 | T9 | iOS | The first lock inside a Modal is reported but not applied; the second tap works. |
