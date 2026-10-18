@@ -35,7 +35,7 @@ if (project.extensions.findByName("kotlin") == null) {
 apply plugin: "com.facebook.react"
 
 android {
-  namespace "com.orientationturbo"
+  namespace = "com.orientationturbo"
 
   compileSdkVersion getExtOrDefault("compileSdkVersion")
 

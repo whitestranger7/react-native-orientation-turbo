@@ -44,6 +44,8 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) yarn example android
 
 An `Unsupported class file major version` error means Gradle is running on a JDK it doesn't support.
 
+On the first build, Gradle may also download a JDK 17 toolchain into `~/.gradle/jdks`, because React Native's Gradle setup asks for one. That's expected; you don't need to install it yourself.
+
 ### Android SDK packages
 
 Install them from Android Studio (**Settings → Languages & Frameworks → Android SDK**) or with `sdkmanager`:
