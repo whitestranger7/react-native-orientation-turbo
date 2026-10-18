@@ -50,6 +50,8 @@ yarn add react-native-orientation-turbo
 cd ios && bundle exec pod install
 ```
 
+> **React Native 0.80 – 0.83 with Xcode 26.4 or newer:** React Native's own `fmt` dependency fails to compile (`call to consteval function ... is not a constant expression`). This isn't caused by this library; follow the workaround in React Native's issue tracker, or use React Native 0.84+, which ships prebuilt dependencies.
+
 2. Add the orientation support method to your `AppDelegate.swift`. This is required in **every** app, whether or not it uses a `SceneDelegate`:
 
 ```swift

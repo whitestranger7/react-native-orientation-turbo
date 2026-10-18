@@ -151,6 +151,18 @@ The library is built by each app with *that app's* React Native version and tool
 
 Every pull request also updates the **example app** for its change: a control for new or changed API, or a way to reproduce the scenario a fix is about.
 
+### Compatibility testing
+
+The example app only covers the React Native version in this repo. To check the published package in a fresh app on another React Native version, run:
+
+```sh
+scripts/compat-test.sh 0.80.0                        # oldest supported version
+scripts/compat-test.sh 0.88.0 --frameworks static    # USE_FRAMEWORKS=static (or dynamic)
+scripts/compat-test.sh 0.84.0 --skip-ios             # Android only
+```
+
+It packs the library with `npm pack`, creates an app from the React Native template in a temporary directory, installs the tarball, applies the README setup, and runs `tsc`, an Android debug build and an iOS simulator build. It prints a pass/fail summary with a log file per step. Run it for the oldest and newest supported versions before a release, and whenever native code, the build files or the codegen spec change.
+
 ### Commit message convention
 
 We follow the [conventional commits specification](https://www.conventionalcommits.org/en) for our commit messages:
