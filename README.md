@@ -120,6 +120,10 @@ The [example app](example/ios/OrientationTurboExample) uses the SceneDelegate se
 
 3. Make sure your `Info.plist` lists every orientation you want to lock to (`UISupportedInterfaceOrientations`, and `UISupportedInterfaceOrientations~ipad` for iPad). The library can only lock to orientations the app declares: a lock to any other orientation is ignored (the state doesn't change, no event is sent, and a warning is logged).
 
+#### Swift Package Manager
+
+Install the library with **CocoaPods** (step 1 above), which is still React Native's default. React Native 0.88's experimental SwiftPM mode (`npx react-native spm`) doesn't support this library yet: the library mixes Swift and Objective-C++ sources, which React Native's SwiftPM autolinking can't build. SwiftPM support is planned for a 3.x release, once React Native's SwiftPM contract for libraries is stable.
+
 #### iPad
 
 iPadOS **ignores orientation locks for apps that support resizing**, which is the default. To lock orientation on iPad, the app has to opt out of resizing with `UIRequiresFullScreen`:
