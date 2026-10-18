@@ -16,6 +16,8 @@ internal class OrientationManager {
 
   private let versionHandler = OrientationVersionHandler()
   private let detector = OrientationDetector()
+  /// Main thread only. True while a presented controller can't show the locked orientation
+  private var isLockSuspended = false
 
   // MARK: - Initialization
   init() {
@@ -26,8 +28,33 @@ internal class OrientationManager {
 
   // MARK: - Public Methods
 
+  /// A presented controller (e.g. an RN Modal) that supports none of the locked orientations would make UIKit
+  /// throw `UIApplicationInvalidInterfaceOrientation`. While it's shown, the lock is suspended; it's re-applied after.
   func getSupportedInterfaceOrientations() -> UIInterfaceOrientationMask {
-    return lockedOrientation.get() ?? .all
+    let supportedOrientations = lockedOrientation.get() ?? .all
+    guard Thread.isMainThread else { return supportedOrientations }
+    
+    if supportedOrientations != .all,
+       let presented = WindowSceneProvider.topmostPresentedViewController(),
+       presented.supportedInterfaceOrientations.intersection(supportedOrientations).isEmpty {
+      if !isLockSuspended {
+        isLockSuspended = true
+        OrientationLogger.warning(
+          "\(type(of: presented)) doesn't support the locked orientation; the lock is suspended while it's shown. " +
+          "For an RN <Modal>, set supportedOrientations to include the locked orientation."
+        )
+      }
+      return presented.supportedInterfaceOrientations
+    }
+    
+    if isLockSuspended {
+      isLockSuspended = false
+      DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
+        self.versionHandler.apply(self.lockedOrientation.get() ?? .all)
+      }
+    }
+    return supportedOrientations
   }
 
   func lockToPortrait(_ direction: String? = nil) {

@@ -31,6 +31,24 @@ internal enum WindowSceneProvider {
     return windowScene.keyWindow ?? windowScene.windows.first
   }
 
+  /// The root view controller and every controller presented on top of it (e.g. an RN Modal)
+  static func viewControllerChain(of windowScene: UIWindowScene) -> [UIViewController] {
+    var chain: [UIViewController] = []
+    var current = mainWindow(of: windowScene)?.rootViewController
+    while let viewController = current {
+      chain.append(viewController)
+      current = viewController.presentedViewController
+    }
+    return chain
+  }
+
+  /// The controller presented on top of the active scene's root, ignoring one that is being dismissed
+  static func topmostPresentedViewController() -> UIViewController? {
+    guard let windowScene = activeWindowScene() else { return nil }
+    let presented = viewControllerChain(of: windowScene).dropFirst().filter { !$0.isBeingDismissed }
+    return presented.last
+  }
+
   private static func allWindowScenes() -> [UIWindowScene] {
     return UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
   }

@@ -145,6 +145,18 @@ No additional setup required for Android.
 
 > **Note**: The library automatically syncs with your `AndroidManifest.xml` orientation settings. If you have `android:screenOrientation` set in your manifest, the library will respect and sync with those settings into state on initialization.
 
+#### Using `<Modal>` with a lock (iOS)
+
+React Native's `<Modal>` only supports portrait on iOS unless you set `supportedOrientations`. If the app is locked to landscape and you show a portrait-only Modal, UIKit would throw `UIApplicationInvalidInterfaceOrientation`. The library prevents the crash: while such a Modal is shown, the lock is suspended (the Modal appears in portrait and a warning is logged), and it's re-applied when the Modal closes.
+
+To keep the locked orientation while the Modal is open, list it in `supportedOrientations`:
+
+```tsx
+<Modal supportedOrientations={['landscape-left', 'landscape-right']}>
+  {/* ... */}
+</Modal>
+```
+
 #### Android 16+ large screens
 
 For apps that **target Android 16 (API 36) or higher**, Android **ignores orientation locks on displays with a smallest width of 600dp or more** (tablets, unfolded foldables): `android:screenOrientation` and `setRequestedOrientation()` have no effect there. Phones and folded foldables are not affected. See [Android 16 behavior changes](https://developer.android.com/about/versions/16/behavior-changes-16).

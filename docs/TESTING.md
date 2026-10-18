@@ -42,7 +42,7 @@ Start every run from a fresh launch. Use **Clear log** between test cases so the
 | **T7** | Tracking on/off | **Unlock all**; **Stop tracking**; rotate; **Start tracking**; rotate | No `onOrientationChange` events while stopped; events again after starting. |
 | **T8** | Queries | Tap each button in **Queries** | Results in the log match Live state. `getDeviceAutoRotateStatus()`: an object on Android, `null` on iOS. On Android, toggling system auto-rotate changes `isAutoRotateEnabled`. `canLockOrientation()`: `true` on iPhone, iPad (the example sets `UIRequiresFullScreen`) and Android phones; `false` on an Android 16+ tablet / unfolded foldable (the example targets API 36). |
 | **T9** | Lock inside a Modal | **Open Modal (all orientations)**; tap each lock button once | Each **first** tap rotates the UI. Then repeat with **Open Modal (default orientations)** (the RN default is portrait-only on iOS). |
-| **T10** | Open a Modal while locked | Tap **Landscape right**; **Open Modal (default orientations)**; close it; repeat with **Open Modal (all orientations)** | The app **doesn't crash**. The Modal opens; the lock state is unchanged after closing. |
+| **T10** | Open a Modal while locked | Tap **Landscape right**; **Open Modal (default orientations)**; close it; repeat with **Open Modal (all orientations)** | The app **doesn't crash**. iOS: the default Modal (portrait-only) is shown in portrait while the lock is suspended, and the app rotates back to landscape after closing it; the all-orientations Modal stays in landscape. `isLocked()` stays `true` throughout. |
 | **T11** | Delayed lock | Tap **Landscape right in 1s**; after it rotates, tap **Unlock all**; rotate the device | The UI rotates once after ~1 s. **Unlock all** unlocks right away (`isLocked=false`) and the UI follows the device again. |
 | **T12** | Background and return | Lock to landscape; send the app to the background; bring it back. Then **Unlock all**, background the app, rotate the device, bring it back, rotate again | The lock is still applied; Live state unchanged. No `onOrientationChange` events while in the background (Android pauses the sensor); events arrive again after returning. |
 | **T13** | Large screens / windowed | On D3 and D5, run T3 and T4 | Write down what happens. On iPadOS 26 the example opens as a window shaped like the lock instead of rotating the screen. On an Android 16+ large screen locks are ignored (the example targets API 36) and `canLockOrientation()` is `false`; on a folded foldable both work. |
@@ -90,8 +90,6 @@ These currently fail. Remove each row when its fix lands.
 | T13 | Android large screen (D5) | The lock is ignored (expected, `canLockOrientation()` is `false`), but `getCurrentOrientation()` still reports the locked orientation and `isLocked()` is `true`. |
 | T5 | iPhone (D1) | Shows portrait, but the library reports `isLocked: true` / `PORTRAIT_UPSIDE_DOWN`. |
 | T5 | Android | Reports `PORTRAIT` without changing the lock. |
-| T9 | iOS | The first lock inside a Modal is reported but not applied; the second tap works. |
-| T10 | iOS | Opening the **default** Modal while locked to landscape crashes the app ([#19](https://github.com/whitestranger7/react-native-orientation-turbo/issues/19)). |
 | T2, T7 | Android | Orientation events can flicker or arrive early around the 45° boundaries ([#20](https://github.com/whitestranger7/react-native-orientation-turbo/issues/20)). |
 
 ## Reporting a problem

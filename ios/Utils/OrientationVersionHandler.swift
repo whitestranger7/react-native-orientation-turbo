@@ -32,7 +32,9 @@ internal class OrientationVersionHandler {
 
         let geometryPreferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: supportedOrientations)
         for windowScene in windowScenes {
-            WindowSceneProvider.mainWindow(of: windowScene)?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+            for viewController in WindowSceneProvider.viewControllerChain(of: windowScene) {
+                viewController.setNeedsUpdateOfSupportedInterfaceOrientations()
+            }
 
             windowScene.requestGeometryUpdate(geometryPreferences) { error in
                 OrientationLogger.error("Orientation change failed: \(error.localizedDescription)")
