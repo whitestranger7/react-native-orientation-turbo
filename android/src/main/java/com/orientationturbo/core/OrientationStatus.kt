@@ -1,8 +1,9 @@
 package com.orientationturbo.core
 
+import android.content.Context
+import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.provider.Settings
-import android.view.OrientationEventListener
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.WritableMap
@@ -21,13 +22,10 @@ internal class OrientationStatus(private val reactContext: ReactApplicationConte
       true
     }
 
+    // Same check as OrientationEventListener.canDetectOrientation()
     val canDetectOrientation = try {
-      val testListener = object : OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_NORMAL) {
-        override fun onOrientationChanged(orientation: Int) {}
-      }
-      val canDetect = testListener.canDetectOrientation()
-      testListener.disable()
-      canDetect
+      val sensorManager = reactContext.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+      sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null
     } catch (e: Exception) {
       false
     }

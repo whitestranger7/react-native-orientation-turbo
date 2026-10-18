@@ -7,17 +7,14 @@ import com.orientationturbo.core.OrientationStatus
 import com.orientationturbo.events.OrientationEventEmitter
 import com.orientationturbo.utils.OrientationSync
 
+import com.facebook.react.bridge.LifecycleEventListener
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.module.annotations.ReactModule
 
 @ReactModule(name = OrientationTurboModule.NAME)
 class OrientationTurboModule(private val reactContext: ReactApplicationContext) :
-  NativeOrientationTurboSpec(reactContext) {
-
-  override fun getName(): String {
-    return NAME
-  }
+  NativeOrientationTurboSpec(reactContext), LifecycleEventListener {
 
   private val orientationManager = OrientationManager(reactContext)
 
@@ -30,12 +27,40 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   )
   private val onLockChange: () -> Unit = orientationEventEmitter::onLockOrientationChange
 
+  @Volatile
+  private var isManifestSyncPending = false
+
   init {
-    OrientationSync.initializeSharedState(reactContext)
     OrientationController.onLockChange = onLockChange
+    reactContext.addLifecycleEventListener(this)
+
+    // The manifest can only be read once an activity exists
+    if (reactContext.currentActivity != null) {
+      OrientationSync.initializeSharedState(reactContext)
+    } else {
+      isManifestSyncPending = true
+    }
+  }
+
+  override fun onHostResume() {
+    if (isManifestSyncPending) {
+      isManifestSyncPending = false
+      OrientationSync.initializeSharedState(reactContext)
+    }
+    orientationTracker.resume()
+  }
+
+  override fun onHostPause() {
+    orientationTracker.pause()
+  }
+
+  override fun onHostDestroy() {
+    orientationTracker.pause()
   }
 
   override fun invalidate() {
+    orientationTracker.stopOrientationTracking()
+    reactContext.removeLifecycleEventListener(this)
     if (OrientationController.onLockChange === onLockChange) {
       OrientationController.onLockChange = null
     }
