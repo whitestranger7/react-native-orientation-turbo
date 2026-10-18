@@ -3,6 +3,7 @@ package com.orientationturbo.core
 import com.orientationturbo.OrientationState
 import com.orientationturbo.enums.LandscapeDirection
 import com.orientationturbo.enums.Orientation
+import com.orientationturbo.enums.PortraitDirection
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
@@ -14,7 +15,6 @@ import com.facebook.react.bridge.UiThreadUtil
  */
 internal object OrientationController {
   private const val TAG = "OrientationTurbo"
-  private const val UPSIDE_DOWN = "UPSIDE_DOWN"
 
   /** Called after every lock change, whether it comes from JS or from native code */
   @Volatile
@@ -33,7 +33,14 @@ internal object OrientationController {
   }
 
   fun portraitOrientation(direction: String?): Orientation {
-    return if (direction == UPSIDE_DOWN) Orientation.PORTRAIT_UPSIDE_DOWN else Orientation.PORTRAIT
+    return if (direction == PortraitDirection.UPSIDE_DOWN.value) Orientation.PORTRAIT_UPSIDE_DOWN else Orientation.PORTRAIT
+  }
+
+  fun portraitOrientation(direction: PortraitDirection): Orientation {
+    return when (direction) {
+      PortraitDirection.UP -> Orientation.PORTRAIT
+      PortraitDirection.UPSIDE_DOWN -> Orientation.PORTRAIT_UPSIDE_DOWN
+    }
   }
 
   fun landscapeOrientation(direction: String?): Orientation {

@@ -12,9 +12,22 @@ import UIKit
 @objc public protocol OrientationTurboPublicProtocol {
   func getSupportedInterfaceOrientations() -> UIInterfaceOrientationMask
   func lockToPortrait()
+  @available(swift, deprecated: 1.0, message: "Use lockToPortrait(_: PortraitDirection) instead")
   func lockToPortrait(_ direction: String?)
+  @available(swift, deprecated: 1.0, message: "Use lockToLandscape(_: LandscapeDirection) instead")
   func lockToLandscape(_ direction: String)
   func unlockAllOrientations()
   func getCurrentOrientation() -> String
   func isLocked() -> Bool
+}
+
+// Typed variants for Swift. Objective-C keeps the string methods.
+public extension OrientationTurboPublicProtocol {
+  func lockToPortrait(_ direction: PortraitDirection) {
+    (self as? OrientationTurboImpl)?.lockToPortrait(direction.rawValue)
+  }
+
+  func lockToLandscape(_ direction: LandscapeDirection) {
+    (self as? OrientationTurboImpl)?.lockToLandscape(direction.rawValue)
+  }
 }

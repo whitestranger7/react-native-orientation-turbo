@@ -78,10 +78,13 @@ let orientationController = OrientationTurbo.shared
 
 // Orientation locking
 orientationController.lockToPortrait()                    // Lock to portrait
-orientationController.lockToPortrait("UPSIDE_DOWN")       // Lock to upside-down portrait (iPad)
-orientationController.lockToLandscape("LEFT")             // Lock to landscape left
-orientationController.lockToLandscape("RIGHT")            // Lock to landscape right
+orientationController.lockToPortrait(.upsideDown)         // Lock to upside-down portrait (not on iPhones with Face ID)
+orientationController.lockToLandscape(.left)              // Lock to landscape left
+orientationController.lockToLandscape(.right)             // Lock to landscape right
 orientationController.unlockAllOrientations()             // Allow all orientations
+
+// The string variants (lockToLandscape("LEFT"), lockToPortrait("UPSIDE_DOWN")) still work,
+// but are deprecated in Swift. Objective-C code keeps using them.
 
 // Orientation status
 let currentOrientation = orientationController.getCurrentOrientation()  // String
@@ -110,7 +113,7 @@ class MyViewController: UIViewController {
         super.viewWillAppear(animated)
         
         // Optional: Lock orientation for this specific view
-        OrientationTurbo.shared.lockToLandscape("LEFT")
+        OrientationTurbo.shared.lockToLandscape(.left)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -291,9 +294,11 @@ class MainActivity : ReactActivity() {
 ```kotlin
 import com.orientationturbo.OrientationTurbo
 import com.orientationturbo.enums.LandscapeDirection
+import com.orientationturbo.enums.PortraitDirection
 
 // Orientation locking
 OrientationTurbo.lockToPortrait(activity)                           // Lock to portrait
+OrientationTurbo.lockToPortrait(activity, PortraitDirection.UPSIDE_DOWN) // Lock to upside-down portrait
 OrientationTurbo.lockToLandscape(activity, LandscapeDirection.LEFT) // Lock to landscape left  
 OrientationTurbo.lockToLandscape(activity, LandscapeDirection.RIGHT)// Lock to landscape right
 OrientationTurbo.unlockAllOrientations(activity)                    // Allow all orientations

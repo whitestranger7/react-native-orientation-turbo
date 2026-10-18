@@ -5,6 +5,7 @@ import android.app.Activity
 import com.orientationturbo.core.OrientationController
 import com.orientationturbo.enums.LandscapeDirection
 import com.orientationturbo.enums.Orientation
+import com.orientationturbo.enums.PortraitDirection
 
 /**
  * OrientationTurbo - Shared controller for orientation management
@@ -20,6 +21,15 @@ object OrientationTurbo {
   @JvmStatic
   fun lockToPortrait(activity: Activity) {
     OrientationController.lock(activity, Orientation.PORTRAIT)
+  }
+
+  /**
+   * Locks the device to portrait orientation in the given direction
+   */
+  @SuppressLint("SourceLockedOrientationActivity")
+  @JvmStatic
+  fun lockToPortrait(activity: Activity, direction: PortraitDirection) {
+    OrientationController.lock(activity, OrientationController.portraitOrientation(direction))
   }
 
   /**

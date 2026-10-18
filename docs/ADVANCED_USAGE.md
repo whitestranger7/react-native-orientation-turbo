@@ -24,8 +24,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     OrientationTurbo.shared.lockToPortrait()
     
     // Other locking options:
-    // OrientationTurbo.shared.lockToLandscape("LEFT")
-    // OrientationTurbo.shared.lockToLandscape("RIGHT")
+    // OrientationTurbo.shared.lockToLandscape(.left)
+    // OrientationTurbo.shared.lockToLandscape(.right)
     // OrientationTurbo.shared.unlockAllOrientations()
     
     // Your existing React Native setup...
@@ -275,7 +275,7 @@ class CustomOrientationManager {
 ```swift
 // iOS automatically syncs through the singleton pattern
 // Just call the methods on the shared instance
-OrientationTurbo.shared.lockToLandscape("LEFT")
+OrientationTurbo.shared.lockToLandscape(.left)
 
 // State is immediately available everywhere
 let isLocked = OrientationTurbo.shared.isLocked()
