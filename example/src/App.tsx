@@ -1,101 +1,99 @@
-import { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Button, type EventSubscription } from 'react-native';
+import { useState } from 'react';
 import {
-  lockToLandscape,
-  lockToPortrait,
-  unlockAllOrientations,
-  LandscapeDirection,
-  getCurrentOrientation,
-  isLocked,
-  onOrientationChange,
-  onLockOrientationChange,
-  startOrientationTracking,
-  stopOrientationTracking,
-  getDeviceAutoRotateStatus,
-  type OrientationSubscription,
-  type LockOrientationSubscription,
-} from 'react-native-orientation-turbo';
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
+import { LockTestModal } from './components/LockTestModal';
+import { useEventLog } from './hooks/useEventLog';
+import { useOrientationTester } from './hooks/useOrientationTester';
+import { EventLogSection } from './sections/EventLogSection';
+import { LiveStateSection } from './sections/LiveStateSection';
+import { LockSection } from './sections/LockSection';
+import { QueriesSection } from './sections/QueriesSection';
+import { ScenariosSection } from './sections/ScenariosSection';
+import { TrackingSection } from './sections/TrackingSection';
+import { colors } from './theme';
+import type { ModalVariant } from './types';
+import { getPlatformLabel } from './utils/platform';
 
 export default function App() {
-  const [lockOrientation, setLockOrientation] =
-    useState<LockOrientationSubscription | null>(null);
-  const [orientation, setOrientation] =
-    useState<OrientationSubscription | null>(null);
-  const listenerLockSubscription = useRef<EventSubscription | null>(null);
-  const listenerOrientationSubscription = useRef<EventSubscription | null>(
-    null
-  );
+  const { entries, addLog, clearLog } = useEventLog();
+  const { state, run, refresh, startTracking, stopTracking } =
+    useOrientationTester(addLog);
+  const [modalVariant, setModalVariant] = useState<ModalVariant | null>(null);
 
-  useEffect(() => {
-    startOrientationTracking();
+  const openModal = (variant: ModalVariant) => {
+    addLog('action', `open Modal (${variant} orientations)`);
+    setModalVariant(variant);
+  };
 
-    listenerLockSubscription.current = onLockOrientationChange(
-      (subscription) => {
-        setLockOrientation(subscription);
-      }
-    );
-    listenerOrientationSubscription.current = onOrientationChange(
-      (subscription) => {
-        setOrientation(subscription);
-      }
-    );
-
-    return () => {
-      listenerOrientationSubscription.current?.remove();
-      listenerOrientationSubscription.current?.remove();
-      listenerOrientationSubscription.current = null;
-      listenerLockSubscription.current = null;
-      stopOrientationTracking();
-    };
-  }, []);
-
-  console.log(lockOrientation);
-  console.log(orientation);
+  const closeModal = () => {
+    addLog('action', 'close Modal');
+    setModalVariant(null);
+  };
 
   return (
-    <View style={styles.container}>
-      <View>
-        <Button
-          title="Check Device Auto-Rotate Status"
-          onPress={() => console.log(getDeviceAutoRotateStatus())}
+    <View style={styles.screen}>
+      <StatusBar barStyle="dark-content" />
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.content}
+      >
+        <Text style={styles.title}>OrientationTurbo test screen</Text>
+        <Text style={styles.subtitle}>{getPlatformLabel()}</Text>
+
+        <LiveStateSection
+          state={state}
+          onRefresh={() => {
+            addLog('action', 'refresh readouts');
+            refresh();
+          }}
         />
-        <Button title="Lock to Portrait" onPress={() => lockToPortrait()} />
-        <Button
-          title="Lock to Landscape Left"
-          onPress={() => lockToLandscape(LandscapeDirection.LEFT)}
+        <LockSection run={run} />
+        <TrackingSection
+          isTracking={state.isTracking}
+          onStart={startTracking}
+          onStop={stopTracking}
         />
-        <Button
-          title="Lock to Landscape Right"
-          onPress={() => lockToLandscape(LandscapeDirection.RIGHT)}
-        />
-        <Button
-          title="Unlock All Orientations"
-          onPress={unlockAllOrientations}
-        />
-        <Button
-          title="Get Current Orientation"
-          onPress={() => console.log(getCurrentOrientation())}
-        />
-        <Button title="Is Locked" onPress={() => console.log(isLocked())} />
-      </View>
+        <QueriesSection run={run} />
+        <ScenariosSection run={run} addLog={addLog} onOpenModal={openModal} />
+        <EventLogSection entries={entries} onClear={clearLog} />
+      </ScrollView>
+
+      <LockTestModal
+        variant={modalVariant}
+        currentOrientation={state.currentOrientation}
+        isLocked={state.isLocked}
+        run={run}
+        onClose={closeModal}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.background,
+    // Android draws edge-to-edge, keep content below the status bar
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
-  statusContainer: {
-    marginVertical: 20,
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
+  content: {
+    padding: 16,
+    paddingBottom: 48,
   },
-  statusTitle: {
-    fontWeight: 'bold',
-    marginBottom: 5,
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  subtitle: {
+    marginTop: 2,
+    color: colors.textMuted,
   },
 });
