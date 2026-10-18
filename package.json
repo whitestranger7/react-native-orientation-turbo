@@ -6,7 +6,7 @@
   "types": "./lib/typescript/src/index.d.ts",
   "exports": {
     ".": {
-      "source": "./src/index.tsx",
+      "react-native-orientation-turbo-source": "./src/index.tsx",
       "types": "./lib/typescript/src/index.d.ts",
       "default": "./lib/module/index.js"
     },
@@ -103,6 +103,13 @@
   "packageManager": "yarn@4.9.2",
   "jest": {
     "preset": "@react-native/jest-preset",
+    "testEnvironmentOptions": {
+      "customExportConditions": [
+        "require",
+        "react-native",
+        "react-native-orientation-turbo-source"
+      ]
+    },
     "modulePathIgnorePatterns": [
       "<rootDir>/example/node_modules",
       "<rootDir>/lib/"
