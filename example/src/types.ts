@@ -15,7 +15,4 @@ export type RunAction = (label: string, call: () => unknown) => void;
 export type ModalVariant = 'default' | 'all';
 
 export type ModalOrientation =
-  | 'portrait'
-  | 'portrait-upside-down'
-  | 'landscape-left'
-  | 'landscape-right';
+  'portrait' | 'portrait-upside-down' | 'landscape-left' | 'landscape-right';
