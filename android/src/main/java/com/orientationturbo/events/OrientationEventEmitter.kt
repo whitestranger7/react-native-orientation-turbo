@@ -18,14 +18,13 @@ internal class OrientationEventEmitter(
 
   fun onLockOrientationChange() {
     val eventData = Arguments.createMap().apply {
-      val isOrientationLocked = orientationManager.getIsLocked()
-      val currentLockedOrientation = orientationManager.getLockedOrientation()
-      if (isOrientationLocked) {
-        putString("orientation", currentLockedOrientation.value)
+      val lockedOrientation = orientationManager.getLockedOrientation()
+      if (lockedOrientation != null) {
+        putString("orientation", lockedOrientation.value)
       } else {
         putNull("orientation")
       }
-      putBoolean("isLocked", isOrientationLocked)
+      putBoolean("isLocked", lockedOrientation != null)
     }
     emitOnLockOrientationChange(eventData)
   }

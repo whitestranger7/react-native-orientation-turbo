@@ -419,7 +419,7 @@ enum LandscapeDirection {
 ```typescript
 enum PortraitDirection {
   UP = 'UP',
-  UPSIDE_DOWN = 'UPSIDE_DOWN', // iOS only
+  UPSIDE_DOWN = 'UPSIDE_DOWN', // not supported on iPhones with Face ID
 }
 ```
 
@@ -428,6 +428,7 @@ enum PortraitDirection {
 ```typescript
 enum Orientation {
   PORTRAIT = 'PORTRAIT',
+  PORTRAIT_UPSIDE_DOWN = 'PORTRAIT_UPSIDE_DOWN',
   LANDSCAPE_LEFT = 'LANDSCAPE_LEFT',
   LANDSCAPE_RIGHT = 'LANDSCAPE_RIGHT',
   FACE_UP = 'FACE_UP', // iOS only

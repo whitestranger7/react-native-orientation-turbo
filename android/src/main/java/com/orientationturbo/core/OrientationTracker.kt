@@ -25,7 +25,7 @@ internal class OrientationTracker(
             in AngleRanges.PORTRAIT_SECONDARY_START..AngleRanges.PORTRAIT_SECONDARY_END -> Orientation.PORTRAIT
 
             in AngleRanges.LANDSCAPE_RIGHT_START..AngleRanges.LANDSCAPE_RIGHT_END -> Orientation.LANDSCAPE_RIGHT
-            in AngleRanges.PORTRAIT_INVERTED_START..AngleRanges.PORTRAIT_INVERTED_END -> Orientation.PORTRAIT
+            in AngleRanges.PORTRAIT_INVERTED_START..AngleRanges.PORTRAIT_INVERTED_END -> Orientation.PORTRAIT_UPSIDE_DOWN
             in AngleRanges.LANDSCAPE_LEFT_START..AngleRanges.LANDSCAPE_LEFT_END -> Orientation.LANDSCAPE_LEFT
             else -> return
           }

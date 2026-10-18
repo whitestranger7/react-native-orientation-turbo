@@ -2,7 +2,7 @@ package com.orientationturbo
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.pm.ActivityInfo
+import com.orientationturbo.core.OrientationController
 import com.orientationturbo.enums.LandscapeDirection
 import com.orientationturbo.enums.Orientation
 
@@ -19,8 +19,7 @@ object OrientationTurbo {
   @SuppressLint("SourceLockedOrientationActivity")
   @JvmStatic
   fun lockToPortrait(activity: Activity) {
-    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-    OrientationState.setState(Orientation.PORTRAIT, true)
+    OrientationController.lock(activity, Orientation.PORTRAIT)
   }
 
   /**
@@ -28,20 +27,7 @@ object OrientationTurbo {
    */
   @JvmStatic
   fun lockToLandscape(activity: Activity, direction: LandscapeDirection) {
-    when (direction) {
-      LandscapeDirection.LEFT -> {
-        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-        OrientationState.setState(Orientation.LANDSCAPE_LEFT, true)
-      }
-      LandscapeDirection.RIGHT -> {
-        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        OrientationState.setState(Orientation.LANDSCAPE_RIGHT, true)
-      }
-      else -> {
-        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-        OrientationState.setState(Orientation.LANDSCAPE_LEFT, true)
-      }
-    }
+    OrientationController.lock(activity, OrientationController.landscapeOrientation(direction))
   }
 
   /**
@@ -49,8 +35,7 @@ object OrientationTurbo {
    */
   @JvmStatic
   fun unlockAllOrientations(activity: Activity) {
-    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-    OrientationState.setState(Orientation.PORTRAIT, false)
+    OrientationController.unlock(activity)
   }
 
   /**
@@ -70,10 +55,10 @@ object OrientationTurbo {
   }
 
   /**
-   * Gets the currently locked orientation
+   * Gets the currently locked orientation (PORTRAIT when unlocked)
    */
   @JvmStatic
   fun getLockedOrientation(): Orientation {
-    return OrientationState.getLockedOrientation()
+    return OrientationState.getLockedOrientation() ?: Orientation.PORTRAIT
   }
 }

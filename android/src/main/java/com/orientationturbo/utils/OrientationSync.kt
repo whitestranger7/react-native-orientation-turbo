@@ -21,45 +21,43 @@ object OrientationSync {
 
         when (activityInfo.screenOrientation) {
           ActivityInfo.SCREEN_ORIENTATION_PORTRAIT -> {
-            OrientationState.setState(Orientation.PORTRAIT, true)
+            OrientationState.setLockedOrientation(Orientation.PORTRAIT)
           }
           ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT -> {
-            OrientationState.setState(Orientation.PORTRAIT, true)
+            OrientationState.setLockedOrientation(Orientation.PORTRAIT_UPSIDE_DOWN)
           }
           ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> {
-            OrientationState.setState(Orientation.LANDSCAPE_RIGHT, true)
+            OrientationState.setLockedOrientation(Orientation.LANDSCAPE_RIGHT)
           }
           ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE -> {
-            OrientationState.setState(Orientation.LANDSCAPE_LEFT, true)
+            OrientationState.setLockedOrientation(Orientation.LANDSCAPE_LEFT)
           }
           ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT -> {
-            OrientationState.setState(Orientation.PORTRAIT, true)
+            OrientationState.setLockedOrientation(Orientation.PORTRAIT)
           }
           ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE -> {
-            OrientationState.setState(Orientation.LANDSCAPE_RIGHT, true)
+            OrientationState.setLockedOrientation(Orientation.LANDSCAPE_RIGHT)
           }
           ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED,
           ActivityInfo.SCREEN_ORIENTATION_SENSOR,
           ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR,
           ActivityInfo.SCREEN_ORIENTATION_USER -> {
-            OrientationState.setState(Orientation.PORTRAIT, false)
+            OrientationState.setLockedOrientation(null)
           }
           else -> {
-            OrientationState.setState(Orientation.PORTRAIT, false)
+            OrientationState.setLockedOrientation(null)
           }
         }
       } else {
-        OrientationState.setState(Orientation.PORTRAIT, false)
+        OrientationState.setLockedOrientation(null)
       }
     } catch (e: Exception) {
-      OrientationState.setState(Orientation.PORTRAIT, false)
+      OrientationState.setLockedOrientation(null)
     }
   }
 
   fun initializeSharedState(reactContext: ReactApplicationContext) {
-    val (currentOrientation, isLocked, _) = OrientationState.getState()
-
-    if (isLocked || currentOrientation != Orientation.PORTRAIT) {
+    if (OrientationState.isLocked()) {
       return
     }
 

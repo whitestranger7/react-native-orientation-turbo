@@ -62,7 +62,7 @@ describe('Native Module functions', () => {
       );
     });
 
-    it('should call native lockToPortrait with UPSIDE_DOWN direction (iOS only)', () => {
+    it('should call native lockToPortrait with UPSIDE_DOWN direction', () => {
       lockToPortrait(PortraitDirection.UPSIDE_DOWN);
       expect(OrientationTurbo.lockToPortrait).toHaveBeenCalledWith(
         PortraitDirection.UPSIDE_DOWN

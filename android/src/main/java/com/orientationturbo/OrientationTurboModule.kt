@@ -1,5 +1,6 @@
 package com.orientationturbo
 
+import com.orientationturbo.core.OrientationController
 import com.orientationturbo.core.OrientationManager
 import com.orientationturbo.core.OrientationTracker
 import com.orientationturbo.core.OrientationStatus
@@ -22,18 +23,27 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
 
   private val orientationStatus = OrientationStatus(reactContext)
   private val orientationTracker = OrientationTracker(reactContext, orientationManager)
-  private val orientationEvenEmitter = OrientationEventEmitter(
+  private val orientationEventEmitter = OrientationEventEmitter(
     orientationManager,
     ::emitOnOrientationChange,
     ::emitOnLockOrientationChange,
   )
+  private val onLockChange: () -> Unit = orientationEventEmitter::onLockOrientationChange
 
   init {
     OrientationSync.initializeSharedState(reactContext)
+    OrientationController.onLockChange = onLockChange
+  }
+
+  override fun invalidate() {
+    if (OrientationController.onLockChange === onLockChange) {
+      OrientationController.onLockChange = null
+    }
+    super.invalidate()
   }
 
   override fun startOrientationTracking() {
-    orientationTracker.startOrientationTracking(orientationEvenEmitter::onOrientationChange)
+    orientationTracker.startOrientationTracking(orientationEventEmitter::onOrientationChange)
   }
 
   override fun stopOrientationTracking() {
@@ -42,17 +52,14 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
 
   override fun lockToPortrait(direction: String?) {
     orientationManager.lockToPortrait(direction)
-    orientationEvenEmitter.onLockOrientationChange()
   }
 
   override fun lockToLandscape(direction: String) {
     orientationManager.lockToLandscape(direction)
-    orientationEvenEmitter.onLockOrientationChange()
   }
 
   override fun unlockAllOrientations() {
     orientationManager.unlockAllOrientations()
-    orientationEvenEmitter.onLockOrientationChange()
   }
 
   override fun getCurrentOrientation(): String {
