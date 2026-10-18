@@ -60,13 +60,19 @@ internal class OrientationManager {
   /// Returns `false` (and keeps the current state) when the orientation can't be shown on this device / app
   @discardableResult
   func lockToPortrait(_ direction: String? = nil) -> Bool {
-    let orientation: UIInterfaceOrientationMask = (direction == "UPSIDE_DOWN") ? .portraitUpsideDown : .portrait
-    return lock(to: orientation)
+    guard let portraitDirection = direction.map({ PortraitDirection(rawValue: $0) }) ?? .up else {
+      OrientationLogger.warning("lockToPortrait ignored: invalid direction \"\(direction ?? "")\" (expected UP or UPSIDE_DOWN)")
+      return false
+    }
+    return lock(to: portraitDirection.interfaceOrientationMask)
   }
 
   @discardableResult
   func lockToLandscape(_ direction: String) -> Bool {
-    let landscapeDirection = LandscapeDirection(rawValue: direction) ?? .right
+    guard let landscapeDirection = LandscapeDirection(rawValue: direction) else {
+      OrientationLogger.warning("lockToLandscape ignored: invalid direction \"\(direction)\" (expected LEFT or RIGHT)")
+      return false
+    }
     return lock(to: landscapeDirection.interfaceOrientationMask)
   }
 

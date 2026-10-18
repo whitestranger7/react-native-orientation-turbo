@@ -32,8 +32,13 @@ internal object OrientationController {
     onLockChange?.invoke()
   }
 
-  fun portraitOrientation(direction: String?): Orientation {
-    return if (direction == PortraitDirection.UPSIDE_DOWN.value) Orientation.PORTRAIT_UPSIDE_DOWN else Orientation.PORTRAIT
+  /** `null` for an invalid direction */
+  fun portraitOrientation(direction: String?): Orientation? {
+    return when (direction) {
+      null, PortraitDirection.UP.value -> Orientation.PORTRAIT
+      PortraitDirection.UPSIDE_DOWN.value -> Orientation.PORTRAIT_UPSIDE_DOWN
+      else -> null
+    }
   }
 
   fun portraitOrientation(direction: PortraitDirection): Orientation {
@@ -43,10 +48,12 @@ internal object OrientationController {
     }
   }
 
-  fun landscapeOrientation(direction: String?): Orientation {
+  /** `null` for an invalid direction */
+  fun landscapeOrientation(direction: String?): Orientation? {
     return when (direction) {
+      LandscapeDirection.LEFT.value -> Orientation.LANDSCAPE_LEFT
       LandscapeDirection.RIGHT.value -> Orientation.LANDSCAPE_RIGHT
-      else -> Orientation.LANDSCAPE_LEFT
+      else -> null
     }
   }
 

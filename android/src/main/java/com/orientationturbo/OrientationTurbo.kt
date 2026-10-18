@@ -2,6 +2,7 @@ package com.orientationturbo
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import com.orientationturbo.core.DisplayOrientation
 import com.orientationturbo.core.OrientationController
 import com.orientationturbo.core.OrientationLockSupport
 import com.orientationturbo.enums.LandscapeDirection
@@ -50,7 +51,16 @@ object OrientationTurbo {
   }
 
   /**
-   * Gets the current orientation (locked orientation if locked, device orientation if unlocked)
+   * Gets the orientation the screen currently shows
+   */
+  @JvmStatic
+  fun getCurrentOrientation(activity: Activity): Orientation {
+    return DisplayOrientation.currentOrientation(activity, activity) ?: OrientationState.getCurrentOrientation()
+  }
+
+  /**
+   * Gets the current orientation from the stored state (locked orientation if locked, device orientation if unlocked).
+   * Prefer getCurrentOrientation(activity), which returns what the screen shows.
    */
   @JvmStatic
   fun getCurrentOrientation(): Orientation {

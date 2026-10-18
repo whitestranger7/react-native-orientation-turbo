@@ -88,7 +88,7 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   }
 
   override fun getCurrentOrientation(): String {
-    return orientationManager.getCurrentOrientation().value
+    return orientationManager.getUiOrientation().value
   }
 
   override fun isLocked(): Boolean {

@@ -177,11 +177,11 @@ The library automatically detects and syncs with AndroidManifest.xml orientation
 ```xml
 <!-- Locked orientations (detected as locked=true) -->
 <activity android:screenOrientation="portrait">          <!-- → PORTRAIT, locked -->
-<activity android:screenOrientation="landscape">         <!-- → LANDSCAPE_LEFT, locked -->
-<activity android:screenOrientation="reversePortrait">   <!-- → PORTRAIT, locked -->
-<activity android:screenOrientation="reverseLandscape">  <!-- → LANDSCAPE_RIGHT, locked -->
+<activity android:screenOrientation="landscape">         <!-- → LANDSCAPE_RIGHT, locked -->
+<activity android:screenOrientation="reversePortrait">   <!-- → PORTRAIT_UPSIDE_DOWN, locked -->
+<activity android:screenOrientation="reverseLandscape">  <!-- → LANDSCAPE_LEFT, locked -->
 <activity android:screenOrientation="sensorPortrait">    <!-- → PORTRAIT, locked -->
-<activity android:screenOrientation="sensorLandscape">   <!-- → LANDSCAPE_LEFT, locked -->
+<activity android:screenOrientation="sensorLandscape">   <!-- → LANDSCAPE_RIGHT, locked -->
 
 <!-- Unlocked orientations (detected as locked=false) -->
 <activity android:screenOrientation="unspecified">       <!-- → unlocked -->
@@ -207,7 +207,7 @@ The Android synchronization follows this priority order:
 ```typescript
 // JavaScript will show:
 isLocked() // true
-getCurrentOrientation() // "LANDSCAPE_LEFT"
+getCurrentOrientation() // "LANDSCAPE_RIGHT" (android:screenOrientation="landscape" = bottom edge on the right)
 ```
 
 **Scenario 2: Manifest + OrientationTurbo Override**
@@ -222,7 +222,7 @@ OrientationTurbo.lockToLandscape(this, LandscapeDirection.LEFT) // Overrides man
 ```typescript
 // JavaScript will show:
 isLocked() // true  
-getCurrentOrientation() // "LANDSCAPE_LEFT" (from OrientationTurbo, not manifest)
+getCurrentOrientation() // "LANDSCAPE_LEFT" (what the screen shows after the OrientationTurbo lock)
 ```
 
 ## Shared State Architecture

@@ -296,7 +296,9 @@ lockToPortrait(PortraitDirection.UPSIDE_DOWN);
 Locks the device orientation to landscape mode in the specified direction.
 
 **Parameters:**
-- `direction`: `LandscapeDirection.LEFT` or `LandscapeDirection.RIGHT`
+- `direction`: `LandscapeDirection.LEFT` (bottom edge of the device on the left) or `LandscapeDirection.RIGHT` (bottom edge on the right)
+
+Any other value is ignored: the lock doesn't change, no event is sent, and a warning is logged. The same applies to `lockToPortrait` with a direction other than `UP` / `UPSIDE_DOWN`.
 
 ```typescript
 import { LandscapeDirection } from 'react-native-orientation-turbo';
@@ -315,9 +317,9 @@ unlockAllOrientations();
 
 #### `getCurrentOrientation(): string`
 
-Returns the current device orientation.
+Returns the orientation the **screen currently shows** (the UI orientation), on both platforms. This is not necessarily the locked orientation: for example, on Android 16+ large screens the system ignores locks, and this returns what is actually on screen. Use `isLocked()` to find out whether a lock was requested.
 
-**Returns:** `'PORTRAIT'` | `'LANDSCAPE_LEFT'` | `'LANDSCAPE_RIGHT'` | `'FACE_UP'` | `'FACE_DOWN'`
+**Returns:** `'PORTRAIT'` | `'PORTRAIT_UPSIDE_DOWN'` | `'LANDSCAPE_LEFT'` | `'LANDSCAPE_RIGHT'` (see [Orientation](#orientation) for what left and right mean)
 
 ```typescript
 const orientation = getCurrentOrientation();
@@ -474,10 +476,13 @@ const MyComponent = () => {
 
 ```typescript
 enum LandscapeDirection {
-  LEFT = 'LEFT',
-  RIGHT = 'RIGHT',
+  LEFT = 'LEFT', // bottom edge (home indicator / navigation bar side) on the left: device turned 90° clockwise
+  RIGHT = 'RIGHT', // bottom edge on the right: device turned 90° counter-clockwise
 }
 ```
+
+Left and right mean the same physical position on iOS and Android, for locks, `getCurrentOrientation()` and `onOrientationChange` alike.
+On iOS this is `UIInterfaceOrientation.landscapeLeft` / `landscapeRight`; on Android `SCREEN_ORIENTATION_REVERSE_LANDSCAPE` / `SCREEN_ORIENTATION_LANDSCAPE`.
 
 #### `PortraitDirection`
 

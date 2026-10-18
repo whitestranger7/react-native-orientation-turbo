@@ -21,6 +21,7 @@ internal class OrientationTracker(
   private var emitOnChange: (() -> Unit)? = null
   private var isPaused = false
   private var pendingOrientation: Orientation? = null
+  private var isNaturalPortrait = true
   private val commitPendingOrientation = Runnable { commitPendingOrientation() }
 
   @Synchronized
@@ -28,6 +29,7 @@ internal class OrientationTracker(
     if (orientationEventListener != null) return
 
     this.emitOnChange = emitOnChange
+    isNaturalPortrait = DisplayOrientation.isNaturalPortrait(reactContext, reactContext.currentActivity)
     orientationEventListener = createOrientationListener()
     if (!isPaused) {
       enableListener()
@@ -66,7 +68,7 @@ internal class OrientationTracker(
 
   @Synchronized
   private fun onAngleChanged(angle: Int) {
-    val candidate = OrientationAngles.zoneFor(angle) ?: return
+    val candidate = OrientationAngles.zoneFor(angle, isNaturalPortrait) ?: return
 
     if (candidate == orientationManager.getCurrentDeviceOrientation()) {
       cancelPendingOrientation()

@@ -39,23 +39,29 @@ internal class OrientationDetector {
     return orientation
   }
 
+  /// The device orientation, expressed as the interface orientation that shows it.
+  /// UIKit defines each UIInterfaceOrientation as the matching UIDeviceOrientation (UIOrientation.h:
+  /// `UIInterfaceOrientationLandscapeLeft = UIDeviceOrientationLandscapeRight`), so the raw values convert directly.
   func getOrientationFromDevice() -> String {
-    switch UIDevice.current.orientation {
-    case .portrait: return Orientation.portrait.rawValue
-    case .portraitUpsideDown: return Orientation.portraitUpsideDown.rawValue
-    case .landscapeLeft: return Orientation.landscapeLeft.rawValue
-    case .landscapeRight: return Orientation.landscapeRight.rawValue
+    let deviceOrientation = UIDevice.current.orientation
+    switch deviceOrientation {
     case .faceUp: return Orientation.faceUp.rawValue
     case .faceDown: return Orientation.faceDown.rawValue
-    case .unknown: return Orientation.portrait.rawValue
-    @unknown default: return Orientation.portrait.rawValue
+    default:
+      let interfaceOrientation = UIInterfaceOrientation(rawValue: deviceOrientation.rawValue) ?? .unknown
+      return getOrientation(from: interfaceOrientation) ?? Orientation.portrait.rawValue
     }
   }
-
+  
   // MARK: - Private Methods
 
   private func getOrientation(from windowScene: UIWindowScene) -> String? {
-    switch windowScene.interfaceOrientation {
+    return getOrientation(from: windowScene.interfaceOrientation)
+  }
+  
+  /// The single mapping from UIKit to the library's orientations; names match one to one
+  private func getOrientation(from interfaceOrientation: UIInterfaceOrientation) -> String? {
+    switch interfaceOrientation {
     case .portrait: return Orientation.portrait.rawValue
     case .portraitUpsideDown: return Orientation.portraitUpsideDown.rawValue
     case .landscapeLeft: return Orientation.landscapeLeft.rawValue
