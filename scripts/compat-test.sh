@@ -165,6 +165,47 @@ export default function App() {
 }
 `);
 console.log('test screen written');
+
+// Jest: the library's mock via setupFiles, plus a test using the mock's helpers
+const jestConfigPath = path.join(appDir, 'jest.config.js');
+const jestConfig = fs.readFileSync(jestConfigPath, 'utf8');
+const withSetup = jestConfig.replace(
+  /(preset:\s*['"][^'"]+['"],?)/,
+  "$1\n  setupFiles: ['react-native-orientation-turbo/jest/setup'],"
+);
+if (withSetup === jestConfig) {
+  throw new Error('jest.config.js: no preset found to add setupFiles after');
+}
+fs.writeFileSync(jestConfigPath, withSetup.replace("'],,", "'],"));
+fs.mkdirSync(path.join(appDir, '__tests__'), { recursive: true });
+fs.writeFileSync(path.join(appDir, '__tests__', 'Orientation.test.tsx'), `import {
+  LandscapeDirection,
+  getCurrentOrientation,
+  isLocked,
+  lockToLandscape,
+  onOrientationChange,
+  startOrientationTracking,
+} from 'react-native-orientation-turbo';
+import { __reset, __setDeviceOrientation } from 'react-native-orientation-turbo/jest/mock';
+
+beforeEach(() => __reset());
+
+test('locks through the mock', () => {
+  lockToLandscape(LandscapeDirection.LEFT);
+  expect(isLocked()).toBe(true);
+  expect(getCurrentOrientation()).toBe('LANDSCAPE_LEFT');
+  expect(lockToLandscape).toHaveBeenCalledWith('LEFT');
+});
+
+test('simulated rotation reaches listeners', () => {
+  const listener = jest.fn();
+  onOrientationChange(listener);
+  startOrientationTracking();
+  __setDeviceOrientation('LANDSCAPE_RIGHT');
+  expect(listener).toHaveBeenCalledWith({ orientation: 'LANDSCAPE_RIGHT' });
+});
+`);
+console.log('jest setup written');
 NODE
   # Native setup through the package's own setup command, as consumers would run it
   npx react-native-orientation-turbo setup --lock portrait
@@ -175,6 +216,12 @@ run_step "apply setup" apply_setup || exit 1
 # 4. TypeScript: the library's .d.ts against this RN version's types
 # ---------------------------------------------------------------------------
 run_step "typescript" bash -c "cd '$APP_DIR' && npx tsc --noEmit"
+
+# ---------------------------------------------------------------------------
+# 4b. Jest: the app's tests (incl. the template's App.test.tsx) with the library's mock
+# ---------------------------------------------------------------------------
+run_step "jest" bash -c "cd '$APP_DIR' && npx jest --ci"
+
 
 # ---------------------------------------------------------------------------
 # 5. Android

@@ -13,12 +13,18 @@
       "types": "./lib/typescript/src/index.d.ts",
       "default": "./lib/module/index.js"
     },
+    "./jest/mock": {
+      "types": "./jest/mock.d.ts",
+      "default": "./jest/mock.js"
+    },
+    "./jest/setup": "./jest/setup.js",
     "./package.json": "./package.json"
   },
   "files": [
     "src",
     "lib",
     "bin",
+    "jest",
     "android",
     "ios",
     "cpp",

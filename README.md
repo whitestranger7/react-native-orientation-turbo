@@ -630,6 +630,62 @@ For comprehensive documentation on advanced features, early orientation locking,
 
 For detailed information on using the library natively in iOS and Android applications, including architecture, restrictions, and best practices, see **[Native Usage Guide](docs/NATIVE_USAGE.md)**.
 
+## Testing with Jest
+
+The library is a native module, so it can't run inside Jest. Use the bundled mock, which needs no extra Jest configuration (no `transformIgnorePatterns`):
+
+```js
+// jest.config.js
+module.exports = {
+  preset: '@react-native/jest-preset',
+  setupFiles: ['react-native-orientation-turbo/jest/setup'],
+};
+```
+
+Or mock it in a single test file:
+
+```ts
+jest.mock('react-native-orientation-turbo', () =>
+  require('react-native-orientation-turbo/jest/mock')
+);
+```
+
+Every function is a `jest.fn()`, and the mock keeps state like the native code: it starts unlocked in portrait, locks change `isLocked()` / `getCurrentOrientation()` and notify `onLockOrientationChange` listeners, and invalid directions are ignored. Test helpers:
+
+```ts
+import {
+  lockToLandscape,
+  LandscapeDirection,
+  onOrientationChange,
+  startOrientationTracking,
+} from 'react-native-orientation-turbo';
+import {
+  __reset,
+  __setDeviceOrientation,
+  __setCanLockOrientation,
+} from 'react-native-orientation-turbo/jest/mock';
+
+beforeEach(() => __reset()); // state, listeners and recorded calls
+
+test('locks to landscape', () => {
+  lockToLandscape(LandscapeDirection.LEFT);
+  expect(lockToLandscape).toHaveBeenCalledWith('LEFT');
+});
+
+test('reacts to rotation', () => {
+  const listener = jest.fn();
+  onOrientationChange(listener);
+  startOrientationTracking();
+  __setDeviceOrientation('LANDSCAPE_RIGHT'); // only reaches listeners while tracking is on
+  expect(listener).toHaveBeenCalledWith({ orientation: 'LANDSCAPE_RIGHT' });
+});
+
+test('handles devices that ignore locks', () => {
+  __setCanLockOrientation(false); // e.g. iPad or Android large screen
+  // ...
+});
+```
+
 ## Complete Example
 
 Please visit `example` folder on github page.
