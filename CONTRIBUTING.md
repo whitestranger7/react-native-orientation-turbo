@@ -140,6 +140,17 @@ yarn test
 
 The example app opens a test screen that exercises the whole API. Changes to native code, the build setup or the public API must be tested by hand on real devices or simulators, following the device and test matrix in **[docs/TESTING.md](docs/TESTING.md)**.
 
+### Compatibility
+
+The library is built by each app with *that app's* React Native version and toolchain, not with the versions in this repo. Every change must work across the whole supported range, **React Native 0.80 – 0.88**, not only in the example app (which uses 0.88):
+
+- **JavaScript / TypeScript:** only use `react-native` APIs and types that exist in 0.80, and no deep imports (`react-native/Libraries/...`). The codegen spec (`src/NativeOrientationTurbo.ts`) is parsed by the app's codegen, so it may only use syntax that 0.80's codegen understands.
+- **Android:** the library is compiled with the app's `compileSdk` (35 on React Native 0.80). Don't reference newer Android SDK symbols directly; check `Build.VERSION.SDK_INT` and use literal values. Kotlin code must compile with Kotlin 2.1.20, and `android/build.gradle` must work with AGP 8.9 – 9.x.
+- **iOS:** keep the iOS 15.1 deployment target. Guard newer iOS APIs with `if #available(...)`, and APIs from the newest SDK additionally with `#if compiler(...)`, so the code still builds with older Xcode versions. Support both app setups: **AppDelegate-only** (React Native templates up to 0.87) and **SceneDelegate** (0.88+).
+- **New Architecture only:** don't add code paths for the legacy architecture.
+
+Every pull request also updates the **example app** for its change: a control for new or changed API, or a way to reproduce the scenario a fix is about.
+
 ### Commit message convention
 
 We follow the [conventional commits specification](https://www.conventionalcommits.org/en) for our commit messages:
@@ -193,5 +204,5 @@ When you're sending a pull request:
 - Prefer small pull requests focused on one change.
 - Verify that linters and tests are passing.
 - Review the documentation to make sure it looks good.
-- Follow the pull request template when opening a pull request.
+- Follow the [pull request template](.github/pull_request_template.md) when opening a pull request. It includes the example app and [compatibility](#compatibility) checklists.
 - For pull requests that change the API or implementation, discuss with maintainers first by opening an issue.
