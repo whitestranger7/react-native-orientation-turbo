@@ -3,19 +3,26 @@ on:
   push:
     branches:
       - main
+      - v3
   pull_request:
     branches:
       - main
+      - v3
   merge_group:
     types:
       - checks_requested
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup
         uses: ./.github/actions/setup
@@ -28,9 +35,10 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup
         uses: ./.github/actions/setup
@@ -40,9 +48,10 @@ jobs:
 
   build-library:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup
         uses: ./.github/actions/setup
@@ -52,17 +61,19 @@ jobs:
 
   build-android:
     runs-on: ubuntu-latest
+
     env:
       TURBO_CACHE_DIR: .turbo/android
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup
         uses: ./.github/actions/setup
 
       - name: Cache turborepo for Android
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.TURBO_CACHE_DIR }}
           key: ${{ runner.os }}-turborepo-android-${{ hashFiles('yarn.lock') }}
@@ -77,70 +88,72 @@ jobs:
             echo "turbo_cache_hit=1" >> $GITHUB_ENV
           fi
 
-      - name: Setup JDK 17
+      - name: Install JDK
         if: env.turbo_cache_hit != 1
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Android SDK
-        if: env.turbo_cache_hit != 1
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 8512546
-
-      - name: Set Android environment variables
+      - name: Finalize Android SDK
         if: env.turbo_cache_hit != 1
         run: |
-          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
-          echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin:/usr/local/lib/android/sdk/platform-tools" >> $GITHUB_PATH
-
-      - name: Create local.properties
-        if: env.turbo_cache_hit != 1
-        run: |
-          mkdir -p example/android
-          echo "sdk.dir=$ANDROID_HOME" > example/android/local.properties
-          echo "ANDROID_HOME is set to: $ANDROID_HOME"
-          ls -la $ANDROID_HOME || echo "ANDROID_HOME directory not found"
+          /bin/bash -c "yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null"
 
       - name: Cache Gradle
         if: env.turbo_cache_hit != 1
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.gradle/wrapper
             ~/.gradle/caches
+            ~/.gradle/jdks
           key: ${{ runner.os }}-gradle-${{ hashFiles('example/android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
       - name: Build example for Android
         env:
-          JAVA_OPTS: "-XX:MaxHeapSize=6g"
+          JAVA_OPTS: '-XX:MaxHeapSize=6g'
         run: |
           yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
   build-ios:
-    runs-on: macos-latest
+    name: build-ios (Xcode ${{ matrix.xcode }})
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-26
+            xcode: '26.6'
+            experimental: false
+          - runner: xcode-27
+            xcode: '27.1'
+            experimental: true
+
     env:
-      XCODE_VERSION: 16.2
-      TURBO_CACHE_DIR: .turbo/ios
+      XCODE_VERSION: ${{ matrix.xcode }}
+      TURBO_CACHE_DIR: .turbo/ios-${{ matrix.xcode }}
+      RCT_USE_RN_DEP: 1
+      RCT_USE_PREBUILT_RNCORE: 1
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup
         uses: ./.github/actions/setup
 
       - name: Cache turborepo for iOS
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.TURBO_CACHE_DIR }}
-          key: ${{ runner.os }}-turborepo-ios-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-turborepo-ios-${{ matrix.xcode }}-${{ hashFiles('yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-turborepo-ios-
+            ${{ runner.os }}-turborepo-ios-${{ matrix.xcode }}-
 
       - name: Check turborepo cache for iOS
         run: |
@@ -152,16 +165,15 @@ jobs:
 
       - name: Use appropriate Xcode version
         if: env.turbo_cache_hit != 1
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
-      - name: Install cocoapods
-        if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
+      - name: Install CocoaPods dependencies
+        if: env.turbo_cache_hit != 1
+        working-directory: example
         run: |
-          cd example
           bundle install
-          bundle exec pod repo update --verbose
           bundle exec pod install --project-directory=ios
 
       - name: Build example for iOS
