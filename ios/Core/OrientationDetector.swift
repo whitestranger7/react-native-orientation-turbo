@@ -31,7 +31,7 @@ internal class OrientationDetector {
   /// Main thread only
   @discardableResult
   func refreshInterfaceOrientation() -> String {
-    let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+    let windowScene = WindowSceneProvider.activeWindowScene()
     observeGeometryChanges(of: windowScene)
 
     let orientation = windowScene.flatMap { getOrientation(from: $0) } ?? getOrientationFromDevice()

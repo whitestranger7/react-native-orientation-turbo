@@ -24,19 +24,22 @@ internal class OrientationVersionHandler {
     
     @available(iOS 16.0, *)
     private func applyModern(_ supportedOrientations: UIInterfaceOrientationMask) {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
+        let windowScenes = WindowSceneProvider.targetWindowScenes()
+        guard !windowScenes.isEmpty else {
             OrientationLogger.warning("Orientation change skipped: no window scene available")
             return
         }
-        
-        windowScene.windows.first?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
-        
+
         let geometryPreferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: supportedOrientations)
-        windowScene.requestGeometryUpdate(geometryPreferences) { error in
-            OrientationLogger.error("Orientation change failed: \(error.localizedDescription)")
+        for windowScene in windowScenes {
+            WindowSceneProvider.mainWindow(of: windowScene)?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+
+            windowScene.requestGeometryUpdate(geometryPreferences) { error in
+                OrientationLogger.error("Orientation change failed: \(error.localizedDescription)")
+            }
         }
     }
-    
+
     // MARK: - iOS 15 Implementation
     
     private func applyLegacy(_ supportedOrientations: UIInterfaceOrientationMask) {

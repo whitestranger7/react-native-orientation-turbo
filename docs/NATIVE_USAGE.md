@@ -42,7 +42,14 @@ The iOS implementation provides a clean, protocol-based API that separates conce
 
 #### 1. AppDelegate Integration (Required)
 
-**Import and setup in `AppDelegate.swift`:**
+The `supportedInterfaceOrientationsFor` method always goes in `AppDelegate.swift`. Where you put the optional early lock depends on how your app starts React Native:
+
+- **AppDelegate-only apps** (React Native templates up to 0.87): React Native starts in `AppDelegate.swift`, so lock there (below).
+- **SceneDelegate apps** (React Native template from 0.88, and apps that adopted the UIScene lifecycle): React Native starts in `SceneDelegate.swift`, so lock there (see the next example).
+
+The library works with both: it applies locks to the window scenes that are in the foreground, and reads the orientation from the active one.
+
+**AppDelegate-only app, `AppDelegate.swift`:**
 
 ```swift
 import UIKit
@@ -69,6 +76,43 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   }
 }
 ```
+
+**SceneDelegate app, `AppDelegate.swift` + `SceneDelegate.swift`:**
+
+```swift
+// AppDelegate.swift
+import UIKit
+import OrientationTurbo
+
+@main
+class AppDelegate: UIResponder, UIApplicationDelegate {
+  // REQUIRED, also in SceneDelegate apps
+  func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
+  }
+}
+
+// SceneDelegate.swift
+import UIKit
+import OrientationTurbo
+
+class SceneDelegate: RCTDefaultReactNativeFactoryDelegate, UIWindowSceneDelegate {
+  func scene(
+    _ scene: UIScene,
+    willConnectTo session: UISceneSession,
+    options connectionOptions: UIScene.ConnectionOptions
+  ) {
+    // ... create the window and the React Native factory ...
+
+    // Optional: Lock orientation before React Native loads
+    OrientationTurbo.shared.lockToPortrait()
+
+    // ... reactNativeFactory?.startReactNative(withModuleName:in:connectionOptions:) ...
+  }
+}
+```
+
+See the [example app](../example/ios/OrientationTurboExample) for a complete SceneDelegate setup.
 
 #### 2. Available iOS Native Methods
 
