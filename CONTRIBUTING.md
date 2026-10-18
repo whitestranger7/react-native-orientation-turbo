@@ -134,6 +134,10 @@ Remember to add tests for your change if possible. Run the unit tests by:
 yarn test
 ```
 
+### Manual testing
+
+The example app opens a test screen that exercises the whole API. Changes to native code, the build setup or the public API must be tested by hand on real devices or simulators, following the device and test matrix in **[docs/TESTING.md](docs/TESTING.md)**.
+
 ### Commit message convention
 
 We follow the [conventional commits specification](https://www.conventionalcommits.org/en) for our commit messages:
