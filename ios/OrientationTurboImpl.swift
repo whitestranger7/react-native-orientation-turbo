@@ -57,13 +57,15 @@ public class OrientationTurboImpl: NSObject, OrientationTurboPublicProtocol {
   }
   
   @objc public func lockToPortrait(_ direction: String?) {
-    orientationManager.lockToPortrait(direction)
-    eventEmitter.emitLockOrientationChange()
+    if orientationManager.lockToPortrait(direction) {
+      eventEmitter.emitLockOrientationChange()
+    }
   }
   
   @objc public func lockToLandscape(_ direction: String) {
-    orientationManager.lockToLandscape(direction)
-    eventEmitter.emitLockOrientationChange()
+    if orientationManager.lockToLandscape(direction) {
+      eventEmitter.emitLockOrientationChange()
+    }
   }
   
   @objc public func unlockAllOrientations() {

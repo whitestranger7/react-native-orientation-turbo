@@ -28,6 +28,8 @@ export const stopOrientationTracking = () => {
 
 /**
  * Locks to portrait
+ * On iOS the lock is ignored (no state change, no event) when the orientation can't be shown:
+ * `UPSIDE_DOWN` on iPhones without a Home button, or an orientation missing from Info.plist
  * @platform iOS and Android
  */
 export const lockToPortrait = (direction?: PortraitDirection) => {

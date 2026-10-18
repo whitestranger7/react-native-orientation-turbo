@@ -57,14 +57,17 @@ internal class OrientationManager {
     return supportedOrientations
   }
 
-  func lockToPortrait(_ direction: String? = nil) {
+  /// Returns `false` (and keeps the current state) when the orientation can't be shown on this device / app
+  @discardableResult
+  func lockToPortrait(_ direction: String? = nil) -> Bool {
     let orientation: UIInterfaceOrientationMask = (direction == "UPSIDE_DOWN") ? .portraitUpsideDown : .portrait
-    setLockedOrientation(orientation)
+    return lock(to: orientation)
   }
 
-  func lockToLandscape(_ direction: String) {
+  @discardableResult
+  func lockToLandscape(_ direction: String) -> Bool {
     let landscapeDirection = LandscapeDirection(rawValue: direction) ?? .right
-    setLockedOrientation(landscapeDirection.interfaceOrientationMask)
+    return lock(to: landscapeDirection.interfaceOrientationMask)
   }
 
   func unlockAllOrientations() {
@@ -95,6 +98,18 @@ internal class OrientationManager {
   // MARK: - Private Methods
 
   /// The state changes right away; UIKit applies it on the main queue, in call order
+  private func lock(to orientation: UIInterfaceOrientationMask) -> Bool {
+    guard OrientationLockSupport.canApply(orientation) else {
+      OrientationLogger.warning(
+        "Lock to \(getOrientationString(from: orientation)) ignored: this device or the app's Info.plist doesn't support it " +
+        "(iPhones without a Home button don't support portrait upside-down)"
+      )
+      return false
+    }
+    setLockedOrientation(orientation)
+    return true
+  }
+  
   private func setLockedOrientation(_ orientation: UIInterfaceOrientationMask?) {
     lockedOrientation.set(orientation)
 

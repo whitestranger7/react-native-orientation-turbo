@@ -18,6 +18,62 @@ internal enum OrientationLockSupport {
     return requiresFullScreen()
   }()
 
+  /// Orientations a lock can be applied to: those the app declares in Info.plist, minus portrait upside-down
+  /// on iPhones without a Home button (the system excludes it there, see TN3192)
+  static let applicableOrientations: UIInterfaceOrientationMask = {
+    var orientations = declaredOrientations()
+    if isIPhoneWithoutHomeButton() {
+      orientations.remove(.portraitUpsideDown)
+    }
+    return orientations
+  }()
+
+  static func canApply(_ orientations: UIInterfaceOrientationMask) -> Bool {
+    return !orientations.intersection(applicableOrientations).isEmpty
+  }
+
+  private static func declaredOrientations() -> UIInterfaceOrientationMask {
+    let bundle = Bundle.main
+    let padOrientations = UIDevice.current.userInterfaceIdiom == .pad
+      ? bundle.object(forInfoDictionaryKey: "UISupportedInterfaceOrientations~ipad") as? [String]
+      : nil
+    guard let names = padOrientations ?? bundle.object(forInfoDictionaryKey: "UISupportedInterfaceOrientations") as? [String] else {
+      return .all
+    }
+
+    var orientations: UIInterfaceOrientationMask = []
+    for name in names {
+      switch name {
+      case "UIInterfaceOrientationPortrait": orientations.insert(.portrait)
+      case "UIInterfaceOrientationPortraitUpsideDown": orientations.insert(.portraitUpsideDown)
+      case "UIInterfaceOrientationLandscapeLeft": orientations.insert(.landscapeLeft)
+      case "UIInterfaceOrientationLandscapeRight": orientations.insert(.landscapeRight)
+      default: break
+      }
+    }
+    return orientations.isEmpty ? .all : orientations
+  }
+
+  /// iPhones with a Home button that run iOS 15+: 6s / 6s Plus / SE, 7, 8 / 8 Plus, SE (2nd and 3rd generation)
+  private static func isIPhoneWithoutHomeButton() -> Bool {
+    guard UIDevice.current.userInterfaceIdiom == .phone else { return false }
+    let homeButtonModels: Set<String> = ["iPhone10,1", "iPhone10,2", "iPhone10,4", "iPhone10,5", "iPhone12,8", "iPhone14,6"]
+    let model = modelIdentifier()
+    if model.hasPrefix("iPhone8,") || model.hasPrefix("iPhone9,") { return false }
+    return !homeButtonModels.contains(model)
+  }
+
+  private static func modelIdentifier() -> String {
+    if let simulatorModel = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
+      return simulatorModel
+    }
+    var systemInfo = utsname()
+    uname(&systemInfo)
+    return withUnsafeBytes(of: &systemInfo.machine) { buffer in
+      String(decoding: buffer.prefix { $0 != 0 }, as: UTF8.self)
+    }
+  }
+
   private static func requiresFullScreen() -> Bool {
     let bundle = Bundle.main
     let requiresFullScreen = boolValue(bundle.object(forInfoDictionaryKey: "UIRequiresFullScreen~ipad"))

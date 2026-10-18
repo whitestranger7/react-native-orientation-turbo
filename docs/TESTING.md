@@ -37,7 +37,7 @@ Start every run from a fresh launch. Use **Clear log** between test cases so the
 | **T2** | Unlock and rotate | **Unlock all**; rotate the device to each side | `onLockOrientationChange` with `isLocked=false`. The UI follows the device; each rotation logs `onOrientationChange` with the new orientation. |
 | **T3** | Lock to portrait | Rotate the device to landscape; tap **Portrait** | The UI rotates to portrait and stays there when rotating the device. Lock event `isLocked=true, orientation=PORTRAIT`. |
 | **T4** | Lock to landscape | Tap **Landscape left**, then **Landscape right** | The UI rotates to each side and stays there. Lock events carry `LANDSCAPE_LEFT` / `LANDSCAPE_RIGHT`. The same button must rotate to the **same physical side** on iOS and Android. |
-| **T5** | Lock to portrait upside down | Tap **Portrait upside down** | iPad: the UI rotates upside down. Face ID iPhones don't support upside down (iOS rule), and the library must not report a lock it can't apply. |
+| **T5** | Lock to portrait upside down | **Unlock all**, then tap **Portrait upside down** | iPad, Android, iPhones with a Home button: the UI turns upside down, lock event `PORTRAIT_UPSIDE_DOWN`. iPhones without a Home button (iOS rule): nothing happens, `isLocked()` stays `false`, no lock event, a warning in the Xcode console. |
 | **T6** | Lock events | Tap every lock button, then **Unlock all** | Exactly **one** `onLockOrientationChange` per tap, with matching `isLocked` / `orientation`. Live state matches the last event. |
 | **T7** | Tracking on/off | **Unlock all**; **Stop tracking**; rotate; **Start tracking**; rotate | No `onOrientationChange` events while stopped; events again after starting. |
 | **T8** | Queries | Tap each button in **Queries** | Results in the log match Live state. `getDeviceAutoRotateStatus()`: an object on Android, `null` on iOS. On Android, toggling system auto-rotate changes `isAutoRotateEnabled`. `canLockOrientation()`: `true` on iPhone, iPad (the example sets `UIRequiresFullScreen`) and Android phones; `false` on an Android 16+ tablet / unfolded foldable (the example targets API 36). |
@@ -88,7 +88,6 @@ These currently fail. Remove each row when its fix lands.
 |---|---|---|
 | T4 | iOS / Android | LEFT and RIGHT may not rotate to the same physical side on both platforms; on iOS, `getCurrentOrientation()` and `onOrientationChange` can disagree in landscape. |
 | T13 | Android large screen (D5) | The lock is ignored (expected, `canLockOrientation()` is `false`), but `getCurrentOrientation()` still reports the locked orientation and `isLocked()` is `true`. |
-| T5 | iPhone (D1) | Shows portrait, but the library reports `isLocked: true` / `PORTRAIT_UPSIDE_DOWN`. |
 | T5 | Android | Reports `PORTRAIT` without changing the lock. |
 | T2, T7 | Android | Orientation events can flicker or arrive early around the 45° boundaries ([#20](https://github.com/whitestranger7/react-native-orientation-turbo/issues/20)). |
 

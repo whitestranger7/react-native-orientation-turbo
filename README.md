@@ -118,7 +118,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 The [example app](example/ios/OrientationTurboExample) uses the SceneDelegate setup.
 
-3. Make sure your `Info.plist` lists every orientation you want to lock to (`UISupportedInterfaceOrientations`, and `UISupportedInterfaceOrientations~ipad` for iPad). The library can only lock to orientations the app declares.
+3. Make sure your `Info.plist` lists every orientation you want to lock to (`UISupportedInterfaceOrientations`, and `UISupportedInterfaceOrientations~ipad` for iPad). The library can only lock to orientations the app declares: a lock to any other orientation is ignored (the state doesn't change, no event is sent, and a warning is logged).
 
 #### iPad
 
@@ -288,6 +288,8 @@ lockToPortrait(); // same as lockToPortrait(PortraitDirection.UP)
 lockToPortrait(PortraitDirection.UP);
 lockToPortrait(PortraitDirection.UPSIDE_DOWN);
 ```
+
+> **Note:** iPhones without a Home button don't support portrait upside-down. On those devices `lockToPortrait(PortraitDirection.UPSIDE_DOWN)` is ignored: `isLocked()` and the current lock stay as they were, and no lock event is sent.
 
 #### `lockToLandscape(direction: LandscapeDirection): void`
 
