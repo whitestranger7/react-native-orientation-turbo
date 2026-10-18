@@ -27,20 +27,14 @@ The iOS implementation provides a clean, protocol-based API that separates conce
                     │
                     ▼
 ┌─────────────────────────────────────┐
-│        OrientationTurboPublic       │ ← Clean Protocol Interface  
-│              Protocol               │
+│        OrientationTurboPublic       │ ← Clean Protocol Interface
+│              Protocol               │   (the type of OrientationTurbo.shared)
 └─────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────┐
-│       OrientationTurboShared        │ ← Protocol Implementation for native integration
-│                                     │
-└─────────────────────────────────────┘
-                    │
+                    │ implemented by
                     ▼
 ┌─────────────────────────────────────┐
 │       OrientationTurboImpl          │ ← Internal Implementation
-│        (Full Features)              │
+│        (Full Features)              │   (also used by the React Native module)
 └─────────────────────────────────────┘
 ```
 

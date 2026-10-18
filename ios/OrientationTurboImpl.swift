@@ -1,7 +1,7 @@
 import UIKit
 
 @objc(OrientationTurboImpl)
-public class OrientationTurboImpl: NSObject {
+public class OrientationTurboImpl: NSObject, OrientationTurboPublicProtocol {
   // MARK: - Singleton
   @objc public static let shared = OrientationTurboImpl()
   
