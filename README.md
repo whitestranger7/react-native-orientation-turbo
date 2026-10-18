@@ -16,12 +16,20 @@ A React Native library for controlling device orientation with support for locki
 
 ## Requirements
 
-- React Native 0.76+ (Turbo Modules support required)
-- iOS 15.1+
-- Android API level 24+ (Android 7.0)
-- **New Architecture enabled** (Turbo Modules)
+What your app needs to use this library:
 
-> **Important**: This library requires the New Architecture (Turbo Modules) to be enabled. It does not support the legacy bridge.
+| | Requirement |
+|---|---|
+| React Native | **0.80 or newer** (supported range: 0.80 – 0.88) |
+| Architecture | **New Architecture** (Turbo Modules) |
+| iOS | 15.1+ |
+| Android | API level 24+ (Android 7.0) |
+| Build tools | Whatever your React Native version requires (Xcode, JDK 17+, Gradle, CocoaPods). The library doesn't add requirements of its own. |
+
+> **Important**: This library requires the New Architecture (Turbo Modules). It does not support the legacy bridge.
+> The New Architecture is always on from React Native 0.82. On 0.80 and 0.81 it's the default; don't turn it off (`newArchEnabled=false` / `RCT_NEW_ARCH_ENABLED=0`).
+
+Want to contribute? The development toolchain is described in the [contributing guide](CONTRIBUTING.md#prerequisites).
 
 ## Installation
 
@@ -39,24 +47,24 @@ yarn add react-native-orientation-turbo
 
 1. Install pods:
 ```sh
-cd ios && pod install
+cd ios && bundle exec pod install
 ```
 
-2. Modify your `AppDelegate.swift` file:
+2. Add the orientation support method to your `AppDelegate.swift`. This is required in **every** app, whether or not it uses a `SceneDelegate`:
 
-**Add the import statement:**
 ```swift
-import OrientationTurbo
-```
+import OrientationTurbo  // Add this import
 
-**Add the orientation support method:**
-```swift
+// Inside your AppDelegate class:
 func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
   return OrientationTurbo.shared.getSupportedInterfaceOrientations()
 }
 ```
 
-Your `AppDelegate.swift` should look like this:
+Where React Native starts depends on your app's setup. Both are supported:
+
+**AppDelegate-only apps** (the React Native template up to 0.87). React Native starts in `AppDelegate.swift`:
+
 ```swift
 import UIKit
 import React
@@ -66,14 +74,51 @@ import OrientationTurbo  // Add this import
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-  // ... other code ...
-  
+  var window: UIWindow?
+
+  var reactNativeDelegate: ReactNativeDelegate?
+  var reactNativeFactory: RCTReactNativeFactory?
+
+  func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+  ) -> Bool {
+    // ... your existing React Native setup ...
+    return true
+  }
+
   // Add this method
   func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
     return OrientationTurbo.shared.getSupportedInterfaceOrientations()
   }
 }
 ```
+
+**SceneDelegate apps** (the React Native template from 0.88). React Native starts in `SceneDelegate.swift`, but the orientation method still goes in `AppDelegate.swift`:
+
+```swift
+import UIKit
+import OrientationTurbo  // Add this import
+
+@main
+class AppDelegate: UIResponder, UIApplicationDelegate {
+  func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+  ) -> Bool {
+    true
+  }
+
+  // Add this method
+  func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
+  }
+}
+```
+
+The [example app](example/ios/OrientationTurboExample) uses the SceneDelegate setup.
+
+3. Make sure your `Info.plist` lists every orientation you want to lock to (`UISupportedInterfaceOrientations`, and `UISupportedInterfaceOrientations~ipad` for iPad). The library can only lock to orientations the app declares.
 
 ### Android Setup
 
@@ -422,14 +467,37 @@ type DeviceAutoRotateStatus = {
 
 Lock orientation before React Native loads (useful for preventing orientation changes during app initialization/bootsplash):
 
-**iOS - AppDelegate.swift:**
+**iOS - AppDelegate-only apps (`AppDelegate.swift`):**
 ```swift
-func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-    // Lock orientation BEFORE React Native loads
-    OrientationTurbo.shared.lockToPortrait()
-    
-    // Your existing setup...
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+func application(
+  _ application: UIApplication,
+  didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+) -> Bool {
+  // Lock orientation BEFORE React Native loads
+  OrientationTurbo.shared.lockToPortrait()
+
+  // ... your existing React Native setup (factory.startReactNative(...)) ...
+  return true
+}
+```
+
+**iOS - SceneDelegate apps (`SceneDelegate.swift`):**
+```swift
+func scene(
+  _ scene: UIScene,
+  willConnectTo session: UISceneSession,
+  options connectionOptions: UIScene.ConnectionOptions
+) {
+  // ... create the window and the React Native factory ...
+
+  // Lock orientation BEFORE React Native loads
+  OrientationTurbo.shared.lockToPortrait()
+
+  reactNativeFactory?.startReactNative(
+    withModuleName: "YourAppName",
+    in: window,
+    connectionOptions: connectionOptions
+  )
 }
 ```
 
@@ -467,7 +535,7 @@ Please visit `example` folder on github page.
 
 ## Enabling New Architecture
 
-This library requires React Native's New Architecture (Turbo Modules). Please refer to React Native docs on how to enable it.
+This library requires React Native's New Architecture (Turbo Modules). It's always enabled from React Native 0.82, and enabled by default on 0.80 and 0.81. If you turned it off there, please refer to the React Native docs on how to enable it again.
 
 ## Contributing
 

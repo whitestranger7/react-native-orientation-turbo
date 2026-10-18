@@ -4,6 +4,54 @@ Contributions are always welcome, no matter how large or small!
 
 We want this community to be friendly and respectful to each other. Please follow it in all your interactions with the project. Before contributing, please read the [code of conduct](./CODE_OF_CONDUCT.md).
 
+## Prerequisites
+
+This is the toolchain the repository is developed and tested with. It's what you need to work on the library and run the example app. Apps that *use* the library have different (smaller) requirements, see [Requirements](./README.md#requirements) in the README.
+
+| Tool | Version | Notes |
+|---|---|---|
+| Node.js | v24.19.0 (see [`.nvmrc`](./.nvmrc)) | Any `^22.13`, `^24.3` or `>=26` works (required by React Native 0.88). With [nvm](https://github.com/nvm-sh/nvm): `nvm use` |
+| Yarn | 4.x (pinned in `packageManager`) | Enable it with `corepack enable`; don't install Yarn globally |
+| Ruby + Bundler | Ruby ≥ 2.6 (tested with 3.3), Bundler 2.6 | Used to run the pinned CocoaPods version |
+| CocoaPods | 1.17.0 (pinned in [`example/Gemfile.lock`](./example/Gemfile.lock)) | Always run it through Bundler: `bundle exec pod …` |
+| Xcode | 26 or newer (tested with 27.1) | Plus iPhone **and** iPad simulators |
+| Java | JDK 17 or newer | Android Studio's bundled JDK (JBR, Java 25) works |
+| Android SDK | Platform 37, Build-Tools 37.0.0, NDK 27.1.12297006 | Plus emulator images for a phone and a tablet or foldable (API 36+) |
+
+### Check your setup
+
+```sh
+node -v                                  # v24.19.0
+corepack enable && yarn -v               # 4.x
+cd example && bundle install && bundle exec pod --version && cd ..   # 1.17.0
+xcodebuild -version
+java -version                            # 17 or newer
+```
+
+### Java: point Gradle at a supported JDK
+
+Gradle uses `JAVA_HOME`. The simplest option is Android Studio's bundled JDK:
+
+```sh
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+```
+
+If Android Studio is installed in `~/Applications`, use that path instead. To use a separately installed JDK 17 just for one build:
+
+```sh
+JAVA_HOME=$(/usr/libexec/java_home -v 17) yarn example android
+```
+
+An `Unsupported class file major version` error means Gradle is running on a JDK it doesn't support.
+
+### Android SDK packages
+
+Install them from Android Studio (**Settings → Languages & Frameworks → Android SDK**) or with `sdkmanager`:
+
+```sh
+sdkmanager "platforms;android-37" "build-tools;37.0.0" "ndk;27.1.12297006"
+```
+
 ## Development workflow
 
 This project is a monorepo managed using [Yarn workspaces](https://yarnpkg.com/features/workspaces). It contains the following packages:
@@ -45,6 +93,18 @@ To run the example app on iOS:
 
 ```sh
 yarn example ios
+```
+
+To run it on an iPad simulator (pick a name from `xcrun simctl list devices available`):
+
+```sh
+yarn example ios --simulator "iPad Pro 13-inch (M4)"
+```
+
+After changing native dependencies, reinstall pods and regenerate the Android codegen output:
+
+```sh
+yarn sync
 ```
 
 To confirm that the app is running with the new architecture, you can check the Metro logs for a message like this:
@@ -116,6 +176,7 @@ The `package.json` file contains various scripts for common tasks:
 - `yarn example start`: start the Metro server for the example app.
 - `yarn example android`: run the example app on Android.
 - `yarn example ios`: run the example app on iOS.
+- `yarn sync`: install dependencies, reinstall pods (pinned CocoaPods via Bundler) and regenerate the Android codegen output.
 
 ### Sending a pull request
 
