@@ -120,6 +120,25 @@ The [example app](example/ios/OrientationTurboExample) uses the SceneDelegate se
 
 3. Make sure your `Info.plist` lists every orientation you want to lock to (`UISupportedInterfaceOrientations`, and `UISupportedInterfaceOrientations~ipad` for iPad). The library can only lock to orientations the app declares.
 
+#### iPad
+
+iPadOS **ignores orientation locks for apps that support resizing**, which is the default. To lock orientation on iPad, the app has to opt out of resizing with `UIRequiresFullScreen`:
+
+```xml
+<key>UIRequiresFullScreen</key>
+<true/>
+```
+
+Apple has deprecated this key and recommends supporting all orientations instead ([TN3192](https://developer.apple.com/documentation/technotes/tn3192-migrating-your-app-from-the-deprecated-uirequiresfullscreen-key)). What we measured with a lock applied at launch:
+
+| iPadOS | Without `UIRequiresFullScreen` | With `UIRequiresFullScreen` |
+|---|---|---|
+| 18 | lock ignored | lock applied |
+| 26 | lock ignored | app opens in a window with the locked shape; the screen doesn't rotate |
+| 27 | lock ignored | lock applied |
+
+Use [`canLockOrientation()`](#canlockorientation-boolean) to find out at runtime whether locks will apply. Also note that iPhones without a Home button never support portrait upside-down.
+
 ### Android Setup
 
 No additional setup required for Android.
@@ -280,6 +299,18 @@ Returns whether the orientation is currently locked.
 
 ```typescript
 const locked = isLocked();
+```
+
+#### `canLockOrientation(): boolean`
+
+Returns whether the OS will apply orientation locks for this app.
+
+**Returns:** `false` where the system ignores locks: on iPad when the app supports resizing (no `UIRequiresFullScreen`, see [iPad](#ipad)). `true` otherwise.
+
+```typescript
+if (!canLockOrientation()) {
+  // Lay the UI out for any orientation instead of relying on a lock
+}
 ```
 
 #### `getDeviceAutoRotateStatus(): DeviceAutoRotateStatus | null`

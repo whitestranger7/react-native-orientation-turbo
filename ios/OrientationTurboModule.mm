@@ -45,6 +45,10 @@ RCT_EXPORT_MODULE(OrientationTurbo)
   return @(locked);
 }
 
+- (nonnull NSNumber *)canLockOrientation {
+  return @([[OrientationTurboImpl shared] canLockOrientation]);
+}
+
 - (void)lockToLandscape:(nonnull NSString *)direction {
   [[OrientationTurboImpl shared] lockToLandscape:direction];
 }

@@ -95,6 +95,10 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
     return orientationManager.getIsLocked()
   }
 
+  override fun canLockOrientation(): Boolean {
+    return orientationStatus.canLockOrientation()
+  }
+
   override fun getDeviceAutoRotateStatus(): WritableMap {
     return orientationStatus.getDeviceAutoRotateStatus()
   }

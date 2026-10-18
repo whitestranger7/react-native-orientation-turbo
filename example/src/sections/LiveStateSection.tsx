@@ -18,6 +18,7 @@ export function LiveStateSection({ state, onRefresh }: Props) {
         value={state.currentOrientation}
       />
       <Readout label="isLocked()" value={state.isLocked} />
+      <Readout label="canLockOrientation()" value={state.canLockOrientation} />
       <Readout
         label="getDeviceAutoRotateStatus()"
         value={

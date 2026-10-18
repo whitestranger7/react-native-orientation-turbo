@@ -5,6 +5,7 @@ import {
   unlockAllOrientations,
   getCurrentOrientation,
   isLocked,
+  canLockOrientation,
   onLockOrientationChange,
   onOrientationChange,
   startOrientationTracking,
@@ -25,6 +26,7 @@ jest.mock('../NativeOrientationTurbo', () => ({
     unlockAllOrientations: jest.fn(),
     getCurrentOrientation: jest.fn(),
     isLocked: jest.fn(),
+    canLockOrientation: jest.fn(),
     onLockOrientationChange: jest.fn(),
     onOrientationChange: jest.fn(),
   },
@@ -143,6 +145,25 @@ describe('Native Module functions', () => {
       (OrientationTurbo.isLocked as jest.Mock).mockReturnValue(false);
 
       const result = isLocked();
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('canLockOrientation function', () => {
+    it('should return true when the OS applies orientation locks', () => {
+      (OrientationTurbo.canLockOrientation as jest.Mock).mockReturnValue(true);
+
+      const result = canLockOrientation();
+
+      expect(OrientationTurbo.canLockOrientation).toHaveBeenCalledTimes(1);
+      expect(result).toBe(true);
+    });
+
+    it('should return false when the OS ignores orientation locks', () => {
+      (OrientationTurbo.canLockOrientation as jest.Mock).mockReturnValue(false);
+
+      const result = canLockOrientation();
 
       expect(result).toBe(false);
     });

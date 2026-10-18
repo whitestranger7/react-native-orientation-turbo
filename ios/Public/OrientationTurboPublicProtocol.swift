@@ -19,6 +19,7 @@ import UIKit
   func unlockAllOrientations()
   func getCurrentOrientation() -> String
   func isLocked() -> Bool
+  func canLockOrientation() -> Bool
 }
 
 // Typed variants for Swift. Objective-C keeps the string methods.

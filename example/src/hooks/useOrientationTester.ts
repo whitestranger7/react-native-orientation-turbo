@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  canLockOrientation,
   getCurrentOrientation,
   getDeviceAutoRotateStatus,
   isLocked,
@@ -19,6 +20,7 @@ import { formatValue } from '../utils/format';
 export type OrientationState = {
   currentOrientation: Orientation | null;
   isLocked: boolean | null;
+  canLockOrientation: boolean | null;
   // undefined = not read yet, null = not available on this platform (iOS)
   autoRotateStatus: DeviceAutoRotateStatus | null | undefined;
   lastOrientationEvent: Orientation | null;
@@ -31,6 +33,7 @@ export function useOrientationTester(addLog: AddLog) {
   const [currentOrientation, setCurrentOrientation] =
     useState<Orientation | null>(null);
   const [locked, setLocked] = useState<boolean | null>(null);
+  const [canLock, setCanLock] = useState<boolean | null>(null);
   const [autoRotateStatus, setAutoRotateStatus] = useState<
     DeviceAutoRotateStatus | null | undefined
   >(undefined);
@@ -46,6 +49,7 @@ export function useOrientationTester(addLog: AddLog) {
     try {
       setCurrentOrientation(getCurrentOrientation());
       setLocked(isLocked());
+      setCanLock(canLockOrientation());
       setAutoRotateStatus(getDeviceAutoRotateStatus());
     } catch (error) {
       addLog('error', `refresh failed: ${String(error)}`);
@@ -119,6 +123,7 @@ export function useOrientationTester(addLog: AddLog) {
   const state: OrientationState = {
     currentOrientation,
     isLocked: locked,
+    canLockOrientation: canLock,
     autoRotateStatus,
     lastOrientationEvent,
     lastLockEvent,

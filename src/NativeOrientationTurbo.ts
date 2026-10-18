@@ -10,6 +10,7 @@ export interface Spec extends TurboModule {
   unlockAllOrientations(): void;
   getCurrentOrientation(): string;
   isLocked(): boolean;
+  canLockOrientation(): boolean;
 
   startOrientationTracking(): void;
   stopOrientationTracking(): void;

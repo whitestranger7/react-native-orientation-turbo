@@ -69,6 +69,17 @@ export const isLocked = () => {
 };
 
 /**
+ * Checks whether the OS will apply orientation locks for this app
+ * Returns false where the system ignores locks, e.g. on iPad when the app supports
+ * resizing (no `UIRequiresFullScreen` in Info.plist)
+ * @platform iOS and Android
+ * @returns boolean
+ */
+export const canLockOrientation = () => {
+  return OrientationTurbo.canLockOrientation();
+};
+
+/**
  * Gets device auto-rotate status
  * @platform Android only
  * @returns DeviceAutoRotateStatus on Android, null on iOS

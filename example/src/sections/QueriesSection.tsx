@@ -1,4 +1,5 @@
 import {
+  canLockOrientation,
   getCurrentOrientation,
   getDeviceAutoRotateStatus,
   isLocked,
@@ -21,6 +22,10 @@ export function QueriesSection({ run }: { run: RunAction }) {
         <ActionButton
           title="isLocked"
           onPress={() => run('isLocked()', isLocked)}
+        />
+        <ActionButton
+          title="canLockOrientation"
+          onPress={() => run('canLockOrientation()', canLockOrientation)}
         />
         <ActionButton
           title="getDeviceAutoRotateStatus"

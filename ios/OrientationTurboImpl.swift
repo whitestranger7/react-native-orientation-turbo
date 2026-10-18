@@ -78,4 +78,9 @@ public class OrientationTurboImpl: NSObject, OrientationTurboPublicProtocol {
   @objc public func isLocked() -> Bool {
     return orientationManager.isLocked()
   }
+  
+  /// `false` when the system ignores orientation locks (iPad app that supports resizing)
+  @objc public func canLockOrientation() -> Bool {
+    return OrientationLockSupport.canLockOrientation
+  }
 }
