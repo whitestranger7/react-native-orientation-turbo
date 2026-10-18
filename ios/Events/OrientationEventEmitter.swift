@@ -34,7 +34,7 @@ internal class OrientationEventEmitter {
   func emitLockOrientationChange() {
     guard let orientationManager = orientationManager else { return }
     
-    let isLocked = orientationManager.getIsLocked()
+    let isLocked = orientationManager.isLocked()
     var eventData: [String: Any] = [
       "isLocked": isLocked
     ]

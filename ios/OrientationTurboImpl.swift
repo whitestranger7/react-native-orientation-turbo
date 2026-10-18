@@ -26,10 +26,6 @@ public class OrientationTurboImpl: NSObject, OrientationTurboPublicProtocol {
     super.init()
   }
   
-  deinit {
-    orientationTracker.stopOrientationTracking()
-  }
-  
   // MARK: - AppDelegate Integration
   
   /// Returns the currently supported interface orientations for the AppDelegate to use

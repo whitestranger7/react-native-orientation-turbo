@@ -69,10 +69,6 @@ internal class OrientationManager {
     return lockQueue.sync { currentLockedOrientation }
   }
   
-  func getIsLocked() -> Bool {
-    return lockQueue.sync { isOrientationLocked }
-  }
-  
   func getLockedOrientationString() -> String? {
     guard let mask = getLockedOrientation() else { return nil }
     return getOrientationString(from: mask)
