@@ -8,94 +8,76 @@
 import UIKit
 
 internal class OrientationManager {
-  
+
   // MARK: - Properties
-  private var currentLockedOrientation: UIInterfaceOrientationMask?
-  private var isOrientationLocked: Bool = false
-  private var currentDeviceOrientation: String = Orientation.portrait.rawValue
-  
-  private let lockQueue = DispatchQueue(label: "orientation.lock.queue", attributes: .concurrent)
+  /// `nil` when unlocked
+  private let lockedOrientation = LockedValue<UIInterfaceOrientationMask?>(nil)
+  private let currentDeviceOrientation = LockedValue(Orientation.portrait.rawValue)
+
   private let versionHandler = OrientationVersionHandler()
   private let detector = OrientationDetector()
-  
+
   // MARK: - Initialization
   init() {
-    currentDeviceOrientation = detector.getOrientationFromDevice()
-  }
-  
-  // MARK: - Public Methods
-  
-  func getSupportedInterfaceOrientations() -> UIInterfaceOrientationMask {
-    return lockQueue.sync {
-      if isOrientationLocked, let lockedOrientation = currentLockedOrientation {
-        return lockedOrientation
-      } else {
-        return .all
-      }
+    if Thread.isMainThread {
+      currentDeviceOrientation.set(detector.getOrientationFromDevice())
     }
   }
-  
+
+  // MARK: - Public Methods
+
+  func getSupportedInterfaceOrientations() -> UIInterfaceOrientationMask {
+    return lockedOrientation.get() ?? .all
+  }
+
   func lockToPortrait(_ direction: String? = nil) {
     let orientation: UIInterfaceOrientationMask = (direction == "UPSIDE_DOWN") ? .portraitUpsideDown : .portrait
-    lockToOrientation(orientation)
+    setLockedOrientation(orientation)
   }
-  
+
   func lockToLandscape(_ direction: String) {
     let landscapeDirection = LandscapeDirection(rawValue: direction) ?? .right
-    lockToOrientation(landscapeDirection.interfaceOrientationMask)
+    setLockedOrientation(landscapeDirection.interfaceOrientationMask)
   }
-  
+
   func unlockAllOrientations() {
-    updateLockState(locked: false, orientation: nil)
+    setLockedOrientation(nil)
   }
-  
+
   func getCurrentOrientation() -> String {
     return detector.getCurrentOrientation()
   }
-  
+
   func getCurrentDeviceOrientation() -> String {
-    return currentDeviceOrientation
+    return currentDeviceOrientation.get()
   }
-  
+
   func setCurrentDeviceOrientation(_ orientation: String) {
-    currentDeviceOrientation = orientation
+    currentDeviceOrientation.set(orientation)
   }
-  
+
   func isLocked() -> Bool {
-    return lockQueue.sync { isOrientationLocked }
+    return lockedOrientation.get() != nil
   }
-  
-  func getLockedOrientation() -> UIInterfaceOrientationMask? {
-    return lockQueue.sync { currentLockedOrientation }
-  }
-  
+
   func getLockedOrientationString() -> String? {
-    guard let mask = getLockedOrientation() else { return nil }
+    guard let mask = lockedOrientation.get() else { return nil }
     return getOrientationString(from: mask)
   }
-  
+
   // MARK: - Private Methods
-  
-  private func lockToOrientation(_ orientation: UIInterfaceOrientationMask) {
-    updateLockState(locked: true, orientation: orientation)
-    versionHandler.requestOrientationChange(orientation)
-  }
-  
-  private func updateLockState(locked: Bool, orientation: UIInterfaceOrientationMask?) {
-    lockQueue.async(flags: .barrier) { [weak self] in
-      self?.isOrientationLocked = locked
-      self?.currentLockedOrientation = orientation
-      
-      DispatchQueue.main.async {
-        self?.notifyOrientationSupportChanged()
-      }
+
+  /// The state changes right away; UIKit applies it on the main queue, in call order
+  private func setLockedOrientation(_ orientation: UIInterfaceOrientationMask?) {
+    lockedOrientation.set(orientation)
+
+    let supportedOrientations = orientation ?? .all
+    DispatchQueue.main.async { [weak self] in
+      self?.versionHandler.apply(supportedOrientations)
+      self?.detector.refreshInterfaceOrientation()
     }
   }
-  
-  private func notifyOrientationSupportChanged() {
-    versionHandler.updateSupportedOrientations(getSupportedInterfaceOrientations())
-  }
-  
+
   private func getOrientationString(from mask: UIInterfaceOrientationMask) -> String {
     switch mask {
     case .portrait:

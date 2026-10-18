@@ -81,7 +81,6 @@ These currently fail. Remove each row when its fix lands.
 | T5 | Android | Reports `PORTRAIT` without changing the lock. |
 | T9 | iOS | The first lock inside a Modal is reported but not applied; the second tap works. |
 | T10 | iOS | Opening the **default** Modal while locked to landscape crashes the app ([#19](https://github.com/whitestranger7/react-native-orientation-turbo/issues/19)). |
-| T11 | iOS | **Unlock all** after the delayed lock appears to be applied one step late. |
 | T2, T7 | Android | Orientation events can flicker or arrive early around the 45° boundaries ([#20](https://github.com/whitestranger7/react-native-orientation-turbo/issues/20)). |
 
 ## Reporting a problem
