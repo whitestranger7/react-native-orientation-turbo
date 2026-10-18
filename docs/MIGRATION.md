@@ -89,7 +89,7 @@ Both systems can ignore orientation locks:
 - **iPadOS**: resizable (multitasking) apps ignore locks. Set `UIRequiresFullScreen` to make them work ([iPad](../README.md#ipad)).
 - **Android 16+**: apps targeting API 36+ can't lock orientation on screens 600dp wide or wider ([Android 16+ large screens](../README.md#android-16-large-screens)).
 
-On these devices 3.0 doesn't report a lock that wasn't applied: `isLocked()` stays `false` and no `onLockOrientationChange` event fires. Use the new `canLockOrientation()` to adapt your UI.
+On these devices the lock is still recorded (`isLocked()` returns `true` and `onLockOrientationChange` fires), but the screen keeps following the system. Use the new `canLockOrientation()` to find out whether locks are applied and adapt your UI.
 
 ### New features
 
