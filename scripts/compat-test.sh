@@ -103,7 +103,7 @@ create_app() {
 run_step "create app" create_app || exit 1
 
 # ---------------------------------------------------------------------------
-# 3. Apply the README setup
+# 3. Native setup (npx react-native-orientation-turbo setup) and a test screen
 # ---------------------------------------------------------------------------
 apply_setup() {
   cd "$APP_DIR" || return 1
@@ -111,59 +111,6 @@ apply_setup() {
 const fs = require('fs');
 const path = require('path');
 const [appDir, appName] = process.argv.slice(2);
-
-const patch = (file, find, replace) => {
-  const content = fs.readFileSync(file, 'utf8');
-  if (!content.includes(find)) {
-    throw new Error(`${path.relative(appDir, file)}: anchor not found: ${find}`);
-  }
-  fs.writeFileSync(file, content.replace(find, replace));
-};
-
-// iOS: supportedInterfaceOrientationsFor in AppDelegate (every app) + early lock where React Native starts
-const iosDir = path.join(appDir, 'ios', appName);
-const appDelegate = path.join(iosDir, 'AppDelegate.swift');
-const sceneDelegate = path.join(iosDir, 'SceneDelegate.swift');
-patch(appDelegate, 'import UIKit', 'import UIKit\nimport OrientationTurbo');
-fs.appendFileSync(appDelegate, `
-extension AppDelegate {
-  func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
-  }
-}
-`);
-if (fs.existsSync(sceneDelegate)) {
-  patch(sceneDelegate, 'import UIKit', 'import UIKit\nimport OrientationTurbo');
-  patch(sceneDelegate, 'reactNativeFactory?.startReactNative(', 'OrientationTurbo.shared.lockToPortrait()\n    reactNativeFactory?.startReactNative(');
-  console.log('iOS setup: SceneDelegate app');
-} else {
-  patch(appDelegate, 'factory.startReactNative(', 'OrientationTurbo.shared.lockToPortrait()\n    factory.startReactNative(');
-  console.log('iOS setup: AppDelegate-only app');
-}
-
-// Android: early lock in MainActivity
-const javaDir = path.join(appDir, 'android', 'app', 'src', 'main', 'java');
-const findFile = (dir, name) => {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      const found = findFile(full, name);
-      if (found) return found;
-    } else if (entry.name === name) {
-      return full;
-    }
-  }
-  return null;
-};
-const mainActivity = findFile(javaDir, 'MainActivity.kt');
-patch(mainActivity, 'import com.facebook.react.ReactActivity\n', 'import android.os.Bundle\nimport com.facebook.react.ReactActivity\nimport com.orientationturbo.OrientationTurbo\n');
-patch(mainActivity, 'class MainActivity : ReactActivity() {\n', `class MainActivity : ReactActivity() {
-
-  override fun onCreate(savedInstanceState: Bundle?) {
-    OrientationTurbo.lockToPortrait(this)
-    super.onCreate(savedInstanceState)
-  }
-`);
 
 // JS: a screen that calls every public API
 fs.writeFileSync(path.join(appDir, 'App.tsx'), `import { useEffect, useState } from 'react';
@@ -217,8 +164,10 @@ export default function App() {
   );
 }
 `);
-console.log('setup applied');
+console.log('test screen written');
 NODE
+  # Native setup through the package's own setup command, as consumers would run it
+  npx react-native-orientation-turbo setup --lock portrait
 }
 run_step "apply setup" apply_setup || exit 1
 

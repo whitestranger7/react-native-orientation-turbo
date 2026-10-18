@@ -43,7 +43,31 @@ or
 yarn add react-native-orientation-turbo
 ```
 
+### Automatic setup
+
+From your app's root directory, run:
+
+```sh
+npx react-native-orientation-turbo setup
+```
+
+It applies the native setup described below:
+
+- **iOS:** adds `import OrientationTurbo` and the required `application(_:supportedInterfaceOrientationsFor:)` method to `AppDelegate.swift`. Works for AppDelegate-only apps (React Native templates up to 0.87) and SceneDelegate apps (0.88+).
+- **Android:** nothing is required.
+
+Options:
+
+- `--lock <orientation>`: also lock orientation before React Native starts (see [Early Orientation Locking](#early-orientation-locking)), in `SceneDelegate.swift` or `AppDelegate.swift` and in `MainActivity.kt`. One of `portrait`, `portrait-upside-down`, `landscape-left`, `landscape-right`.
+- `--dry-run`: show what would change without writing anything.
+
+Running it again is safe: steps that are already set up are skipped. If a file doesn't look like the React Native template (for example an Objective-C `AppDelegate.mm`, a Java `MainActivity`, or an existing custom `supportedInterfaceOrientationsFor`), that step isn't changed: the command reports that the setup was not successful, prints the manual steps, and exits with a non-zero code. Follow the manual setup below in that case.
+
+Then install pods (`cd ios && bundle exec pod install`) and rebuild the app.
+
 ### iOS Setup
+
+These are the manual steps. You don't need them if the automatic setup succeeded.
 
 1. Install pods:
 ```sh
