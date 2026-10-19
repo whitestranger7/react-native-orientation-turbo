@@ -22,7 +22,7 @@ internal class OrientationManager {
   // MARK: - Initialization
   init() {
     if Thread.isMainThread {
-      currentDeviceOrientation.set(detector.getOrientationFromDevice())
+      currentDeviceOrientation.set(OrientationDetector.getOrientationFromDevice())
     }
   }
 

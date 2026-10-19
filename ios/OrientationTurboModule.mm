@@ -10,9 +10,14 @@
 @implementation OrientationTurboModule
 RCT_EXPORT_MODULE(OrientationTurbo)
 
++ (BOOL)requiresMainQueueSetup {
+  return YES;
+}
+
 - (instancetype)init {
   self = [super init];
   if (self) {
+    [[OrientationTurboImpl shared] getCurrentOrientation];
     __weak __typeof(self) weakSelf = self;
     [[OrientationTurboImpl shared] setOnOrientationChange:^(NSDictionary *event) {
       [weakSelf emitOnOrientationChange:event];

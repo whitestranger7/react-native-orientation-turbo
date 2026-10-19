@@ -105,6 +105,11 @@ export function useOrientationTester(addLog: AddLog) {
       scheduleRefresh();
     });
 
+    try {
+      addLog('result', `initial UI orientation: ${getCurrentOrientation()}`);
+    } catch (error) {
+      addLog('error', `initial UI orientation failed: ${String(error)}`);
+    }
     startOrientationTracking();
     setIsTracking(true);
     addLog('action', 'startOrientationTracking() (on mount)');

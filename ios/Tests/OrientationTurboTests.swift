@@ -36,6 +36,82 @@ final class OrientationLockSupportTests: XCTestCase {
 
 final class OrientationDetectorTests: XCTestCase {
 
+  /// Keep main occupied while reading on another thread: a queued refresh cannot hide a stale first value,
+  /// and a synchronous dispatch to main would time out rather than deadlocking the test suite.
+  private func readFromBackground(_ detector: OrientationDetector) -> String? {
+    let result = LockedValue<String?>(nil)
+    let finished = DispatchSemaphore(value: 0)
+    DispatchQueue.global().async {
+      result.set(detector.getCurrentOrientation())
+      finished.signal()
+    }
+    XCTAssertEqual(finished.wait(timeout: .now() + 1), .success)
+    return result.get()
+  }
+
+  func testFirstBackgroundReadIsSeededFromTheInterfaceWithoutAnEarlierQuery() {
+    XCTAssertTrue(Thread.isMainThread)
+    let detector = OrientationDetector(interfaceOrientation: { _ in .landscapeLeft })
+    XCTAssertEqual(readFromBackground(detector), "LANDSCAPE_LEFT")
+  }
+
+  func testLifecycleUpdatesAreVisibleToTheFirstBackgroundRead() {
+    let center = NotificationCenter()
+    var orientation: UIInterfaceOrientation = .portrait
+    let detector = OrientationDetector(notificationCenter: center, interfaceOrientation: { _ in orientation })
+    for name in [UIScene.didActivateNotification, UIWindow.didBecomeKeyNotification, UIApplication.didBecomeActiveNotification] {
+      orientation = orientation == .landscapeRight ? .portrait : .landscapeRight
+      center.post(name: name, object: nil)
+      XCTAssertEqual(readFromBackground(detector), OrientationDetector.getOrientation(from: orientation))
+    }
+  }
+
+  func testMissingOrUnknownSceneKeepsTheLastKnownUIOrientation() {
+    var orientation: UIInterfaceOrientation?
+    let detector = OrientationDetector(interfaceOrientation: { _ in orientation })
+    XCTAssertEqual(readFromBackground(detector), "PORTRAIT")
+    orientation = .landscapeRight
+    XCTAssertEqual(detector.refreshInterfaceOrientation(), "LANDSCAPE_RIGHT")
+    orientation = nil
+    XCTAssertEqual(detector.refreshInterfaceOrientation(), "LANDSCAPE_RIGHT")
+    orientation = .unknown
+    XCTAssertEqual(detector.refreshInterfaceOrientation(), "LANDSCAPE_RIGHT")
+    XCTAssertEqual(readFromBackground(detector), "LANDSCAPE_RIGHT")
+  }
+
+  func testLifecycleObserversDoNotKeepTheDetectorAlive() {
+    let center = NotificationCenter()
+    weak var reference: OrientationDetector?
+    autoreleasepool {
+      let detector = OrientationDetector(notificationCenter: center, interfaceOrientation: { _ in .landscapeLeft })
+      reference = detector
+      XCTAssertEqual(detector.getCurrentOrientation(), "LANDSCAPE_LEFT")
+    }
+    XCTAssertNil(reference)
+    center.post(name: UIScene.didActivateNotification, object: nil)
+  }
+
+  func testBackgroundInitializationDoesNotWaitForMain() {
+    let detector = LockedValue<OrientationDetector?>(nil)
+    let initialized = DispatchSemaphore(value: 0)
+    DispatchQueue.global().async {
+      detector.set(OrientationDetector(interfaceOrientation: { _ in .landscapeRight }))
+      initialized.signal()
+    }
+    XCTAssertEqual(initialized.wait(timeout: .now() + 1), .success)
+
+    let ready = expectation(description: "main-queue initialization")
+    DispatchQueue.main.async {
+      if let detector = detector.get() {
+        XCTAssertEqual(self.readFromBackground(detector), "LANDSCAPE_RIGHT")
+      } else {
+        XCTFail("Detector was not initialized")
+      }
+      ready.fulfill()
+    }
+    wait(for: [ready], timeout: 2)
+  }
+
   /// UIKit: UIInterfaceOrientationLandscapeLeft = UIDeviceOrientationLandscapeRight (UIOrientation.h)
   func testDeviceOrientationConvertsToTheInterfaceOrientationThatShowsIt() {
     XCTAssertEqual(OrientationDetector.interfaceOrientation(for: .portrait), .portrait)
@@ -45,12 +121,11 @@ final class OrientationDetectorTests: XCTestCase {
   }
 
   func testInterfaceOrientationNamesMatchTheLibrary() {
-    let detector = OrientationDetector()
-    XCTAssertEqual(detector.getOrientation(from: .portrait), "PORTRAIT")
-    XCTAssertEqual(detector.getOrientation(from: .portraitUpsideDown), "PORTRAIT_UPSIDE_DOWN")
-    XCTAssertEqual(detector.getOrientation(from: .landscapeLeft), "LANDSCAPE_LEFT")
-    XCTAssertEqual(detector.getOrientation(from: .landscapeRight), "LANDSCAPE_RIGHT")
-    XCTAssertNil(detector.getOrientation(from: .unknown))
+    XCTAssertEqual(OrientationDetector.getOrientation(from: .portrait), "PORTRAIT")
+    XCTAssertEqual(OrientationDetector.getOrientation(from: .portraitUpsideDown), "PORTRAIT_UPSIDE_DOWN")
+    XCTAssertEqual(OrientationDetector.getOrientation(from: .landscapeLeft), "LANDSCAPE_LEFT")
+    XCTAssertEqual(OrientationDetector.getOrientation(from: .landscapeRight), "LANDSCAPE_RIGHT")
+    XCTAssertNil(OrientationDetector.getOrientation(from: .unknown))
   }
 }
 

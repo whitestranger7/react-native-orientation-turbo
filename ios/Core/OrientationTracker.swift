@@ -11,7 +11,6 @@ internal class OrientationTracker {
 
   // MARK: - Properties
   private weak var orientationManager: OrientationManager?
-  private let detector = OrientationDetector()
 
   private var observer: NSObjectProtocol?
 
@@ -42,7 +41,7 @@ internal class OrientationTracker {
     guard observer == nil else { return }
 
     UIDevice.current.beginGeneratingDeviceOrientationNotifications()
-    orientationManager?.setCurrentDeviceOrientation(detector.getOrientationFromDevice())
+    orientationManager?.setCurrentDeviceOrientation(OrientationDetector.getOrientationFromDevice())
 
     observer = NotificationCenter.default.addObserver(
       forName: UIDevice.orientationDidChangeNotification,
@@ -62,7 +61,7 @@ internal class OrientationTracker {
   }
 
   private func deviceOrientationDidChange() {
-    let newOrientation = detector.getOrientationFromDevice()
+    let newOrientation = OrientationDetector.getOrientationFromDevice()
     guard let orientationManager = orientationManager,
           newOrientation != orientationManager.getCurrentDeviceOrientation() else {
       return

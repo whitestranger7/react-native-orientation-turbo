@@ -376,6 +376,8 @@ unlockAllOrientations();
 
 Returns the orientation the **screen currently shows** (the UI orientation), on both platforms. This is not necessarily the locked orientation: for example, on Android 16+ large screens the system ignores locks, and this returns what is actually on screen. Use `isLocked()` to find out whether a lock was requested.
 
+On iOS the value updates once the interface finishes rotating, even when tracking is stopped. A read right after a lock call can still return the previous orientation.
+
 **Returns:** `'PORTRAIT'` | `'PORTRAIT_UPSIDE_DOWN'` | `'LANDSCAPE_LEFT'` | `'LANDSCAPE_RIGHT'` (see [Orientation](#orientation) for what left and right mean)
 
 ```typescript

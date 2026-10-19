@@ -6,14 +6,49 @@
 //
 
 import UIKit
+import CoreFoundation
 
 internal class OrientationDetector {
 
   // MARK: - Properties
-  /// Last interface orientation read on the main thread, for callers on other threads
+  /// Last known UI orientation. Before a scene reports one, the API falls back to portrait.
   private let cachedInterfaceOrientation = LockedValue(Orientation.portrait.rawValue)
   private var geometryObservation: NSKeyValueObservation?
+  private var legacyRunLoopObserver: CFRunLoopObserver?
   private weak var observedWindowScene: UIWindowScene?
+  /// Main thread only; avoids repeating a full refresh when the selected scene hasn't rotated.
+  private var lastInterfaceOrientation: UIInterfaceOrientation?
+  private var lifecycleObservers: [NSObjectProtocol] = []
+  private let notificationCenter: NotificationCenter
+  private let readInterfaceOrientation: (UIWindowScene?) -> UIInterfaceOrientation?
+
+  init(
+    notificationCenter: NotificationCenter = .default,
+    interfaceOrientation: @escaping (UIWindowScene?) -> UIInterfaceOrientation? = { scene in
+      guard let scene = scene else { return nil }
+      if #available(iOS 16.0, *) {
+        return scene.effectiveGeometry.interfaceOrientation
+      }
+      return scene.interfaceOrientation
+    }
+  ) {
+    self.notificationCenter = notificationCenter
+    self.readInterfaceOrientation = interfaceOrientation
+    if Thread.isMainThread {
+      startObserving()
+    } else {
+      DispatchQueue.main.async { [weak self] in self?.startObserving() }
+    }
+  }
+
+  deinit {
+    for observer in lifecycleObservers {
+      notificationCenter.removeObserver(observer)
+    }
+    if let observer = legacyRunLoopObserver {
+      CFRunLoopRemoveObserver(CFRunLoopGetMain(), observer, .commonModes)
+    }
+  }
 
   // MARK: - Public Methods
 
@@ -34,15 +69,19 @@ internal class OrientationDetector {
     let windowScene = WindowSceneProvider.activeWindowScene()
     observeGeometryChanges(of: windowScene)
 
-    let orientation = windowScene.flatMap { getOrientation(from: $0) } ?? getOrientationFromDevice()
-    cachedInterfaceOrientation.set(orientation)
-    return orientation
+    let interfaceOrientation = readInterfaceOrientation(windowScene)
+    lastInterfaceOrientation = interfaceOrientation
+    if let interfaceOrientation = interfaceOrientation,
+       let orientation = Self.getOrientation(from: interfaceOrientation) {
+      cachedInterfaceOrientation.set(orientation)
+    }
+    return cachedInterfaceOrientation.get()
   }
 
   /// The device orientation, expressed as the interface orientation that shows it.
   /// UIKit defines each UIInterfaceOrientation as the matching UIDeviceOrientation (UIOrientation.h:
   /// `UIInterfaceOrientationLandscapeLeft = UIDeviceOrientationLandscapeRight`), so the raw values convert directly.
-  func getOrientationFromDevice() -> String {
+  static func getOrientationFromDevice() -> String {
     let deviceOrientation = UIDevice.current.orientation
     switch deviceOrientation {
     case .faceUp: return Orientation.faceUp.rawValue
@@ -58,12 +97,8 @@ internal class OrientationDetector {
   
   // MARK: - Private Methods
 
-  private func getOrientation(from windowScene: UIWindowScene) -> String? {
-    return getOrientation(from: windowScene.interfaceOrientation)
-  }
-  
   /// The single mapping from UIKit to the library's orientations; names match one to one
-  func getOrientation(from interfaceOrientation: UIInterfaceOrientation) -> String? {
+  static func getOrientation(from interfaceOrientation: UIInterfaceOrientation) -> String? {
     switch interfaceOrientation {
     case .portrait: return Orientation.portrait.rawValue
     case .portraitUpsideDown: return Orientation.portraitUpsideDown.rawValue
@@ -74,16 +109,55 @@ internal class OrientationDetector {
     }
   }
 
-  /// Keeps the cache current when a rotation finishes (iOS 16+)
-  private func observeGeometryChanges(of windowScene: UIWindowScene?) {
-    guard #available(iOS 16.0, *) else { return }
-    guard let windowScene = windowScene, windowScene !== observedWindowScene else { return }
-
-    observedWindowScene = windowScene
-    geometryObservation = windowScene.observe(\.effectiveGeometry, options: [.new]) { [weak self] _, _ in
-      DispatchQueue.main.async {
+  /// Subscribe before the first JS query, including apps that connect their scene after initialization.
+  private func startObserving() {
+    let notifications: [Notification.Name] = [
+      UIScene.willConnectNotification,
+      UIScene.didActivateNotification,
+      UIScene.willEnterForegroundNotification,
+      UIScene.didDisconnectNotification,
+      UIApplication.didBecomeActiveNotification,
+      UIWindow.didBecomeKeyNotification,
+    ]
+    for name in notifications {
+      lifecycleObservers.append(notificationCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
         self?.refreshInterfaceOrientation()
+      })
+    }
+    if #available(iOS 16.0, *) {
+      // Geometry observation is attached to the selected scene below.
+    } else {
+      // UIWindowScene.interfaceOrientation does not reliably emit KVO. Check once before the loop
+      // sleeps, after UIKit's work, without waking an idle loop or rebuilding the scene list each pass.
+      legacyRunLoopObserver = CFRunLoopObserverCreateWithHandler(nil, CFRunLoopActivity.beforeWaiting.rawValue, true, CFIndex.max) { [weak self] _, _ in
+        guard let self = self, let scene = self.observedWindowScene,
+              self.readInterfaceOrientation(scene) != self.lastInterfaceOrientation else { return }
+        self.refreshInterfaceOrientation()
       }
+      CFRunLoopAddObserver(CFRunLoopGetMain(), legacyRunLoopObserver, .commonModes)
+    }
+    refreshInterfaceOrientation()
+  }
+
+  /// iOS 16+ reports geometry changes directly; iOS 15 uses the main-loop observer above.
+  private func observeGeometryChanges(of windowScene: UIWindowScene?) {
+    guard windowScene !== observedWindowScene else { return }
+
+    geometryObservation = nil
+    observedWindowScene = windowScene
+    guard let windowScene = windowScene else { return }
+    if #available(iOS 16.0, *) {
+      geometryObservation = windowScene.observe(\.effectiveGeometry, options: [.new]) { [weak self] _, _ in
+        self?.interfaceGeometryDidChange()
+      }
+    }
+  }
+
+  private func interfaceGeometryDidChange() {
+    if Thread.isMainThread {
+      refreshInterfaceOrientation()
+    } else {
+      DispatchQueue.main.async { [weak self] in self?.refreshInterfaceOrientation() }
     }
   }
 }

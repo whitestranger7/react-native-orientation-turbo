@@ -54,6 +54,7 @@ Start every run from a fresh launch. Use **Clear log** between test cases so the
 | **T13** | Large screens / windowed | On D3 and D5, run T3 and T4 | Write down what happens. On iPadOS 26 the example opens as a window shaped like the lock instead of rotating the screen. On an Android 16+ large screen locks are ignored (the example targets API 36), `canLockOrientation()` is `false`, `getCurrentOrientation()` shows what's on screen, and `isLocked()` stays `true` (a lock was requested); on a folded foldable both work. |
 | **T14** | Native-side lock reaches JS (iOS) | Run from Xcode; **Debug → Pause**; in the debugger console run `expr -l swift -- import OrientationTurbo; OrientationTurbo.shared.lockToLandscape("LEFT")`; **Continue** | The UI rotates, and the log shows exactly **one** `onLockOrientationChange` with `isLocked=true, orientation=LANDSCAPE_LEFT`. |
 | **T15** | Stable orientation events (Android) | **Unlock all**, hold the device in landscape, then: tilt it ~20° towards portrait and back; shake it; rotate it slowly to portrait | Tilting and shaking produce **no** `onOrientationChange` events. Rotating to portrait gives **one** event, about 200 ms after the device is clearly upright. On the emulator use **Extended controls → Virtual sensors** to set the angles. |
+| **T16** | UI orientation with tracking stopped (iOS) | **Unlock all**; **Stop tracking**; rotate and wait for the UI transition to finish; query `getCurrentOrientation()` once. Background the app, rotate, return and repeat. Check the initial UI read in the event log after a landscape launch. | The first query reports the displayed UI orientation without a warm-up read. Repeat with SceneDelegate and AppDelegate-only apps (SDK older than 27), including iOS 15 when available. A query before a launch rotation finishes may still report portrait. A missing/unknown scene retains the last known UI orientation (initially `PORTRAIT`); face-up/down readings do not replace it. |
 
 ## What to run on which device
 
@@ -76,6 +77,7 @@ Start every run from a fresh launch. Use **Clear log** between test cases so the
 | T13 Large screens / windowed | — | — | ✅ | — | ✅ |
 | T14 Native-side lock reaches JS | ✅ | ✅ | — | — | — |
 | T15 Stable orientation events | — | — | — | ✅ | ✅ |
+| T16 UI orientation with tracking stopped | ✅ | ✅ | — | — | — |
 
 For a small change, run the affected tests on D1 and D4 at least. Before a release, run the whole matrix.
 
