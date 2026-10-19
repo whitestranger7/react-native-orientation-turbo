@@ -71,7 +71,7 @@ Upside-down still depends on the device: iPhones without a Home button never rot
 
 #### Android: orientation events are debounced
 
-`onOrientationChange` fires about 200 ms after the device settles in a new orientation, instead of on every sensor reading near a boundary ([#20](https://github.com/whitestranger7/react-native-orientation-turbo/issues/20)). Small tilts and shaking no longer emit events.
+`onOrientationChange` fires about 200 ms after the device settles in a new orientation, instead of on every sensor reading near a boundary ([#20](https://github.com/whitestranger7/react-native-orientation-turbo/issues/20)). Small tilts and shaking no longer emit events. Leaving the zone, or a flat/unknown reading, cancels the pending event.
 
 #### Locks made from native code emit `onLockOrientationChange`
 

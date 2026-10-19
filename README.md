@@ -495,6 +495,8 @@ Subscribes to orientation changes and receives real-time updates.
 
 On Android the orientation comes from the accelerometer. To avoid flicker, a change is only reported when the device is clearly in the new orientation (within 30° of it) and has stayed there for about 200 ms; small tilts and shaking don't produce events.
 
+Leaving that zone or receiving an unknown reading cancels the pending event. Re-entering the zone requires a fresh 200 ms interval. Pausing or stopping tracking also cancels pending events.
+
 **Returns:** Subscription object with `remove()` method to unsubscribe
 
 ```typescript
