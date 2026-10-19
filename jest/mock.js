@@ -10,9 +10,9 @@
  * or in a test file:
  *   jest.mock('react-native-orientation-turbo', () => require('react-native-orientation-turbo/jest/mock'));
  *
- * Every API is a jest.fn(), so calls can be asserted. The mock keeps state like the native code:
- * locks change isLocked() / getCurrentOrientation() and notify onLockOrientationChange listeners.
- * Test helpers (not part of the library API): __setDeviceOrientation, __setCanLockOrientation, __reset.
+ * Every API is a jest.fn(). Requested locks, physical orientation and displayed orientation are separate.
+ * The default simulation applies supported locks and unlocked cardinal rotations immediately.
+ * Helpers can override the displayed orientation or simulate a system that ignores locks.
  */
 
 const LandscapeDirection = Object.freeze({
@@ -37,9 +37,17 @@ const Orientation = Object.freeze({
 const fn = (implementation) =>
   typeof jest !== 'undefined' ? jest.fn(implementation) : implementation;
 
+const INTERFACE_ORIENTATIONS = new Set([
+  Orientation.PORTRAIT,
+  Orientation.PORTRAIT_UPSIDE_DOWN,
+  Orientation.LANDSCAPE_LEFT,
+  Orientation.LANDSCAPE_RIGHT,
+]);
+
 const initialState = () => ({
   lockedOrientation: null,
   deviceOrientation: Orientation.PORTRAIT,
+  interfaceOrientation: Orientation.PORTRAIT,
   isTracking: false,
   canLock: true,
 });
@@ -55,6 +63,12 @@ function subscribe(listeners, callback) {
 
 function setLock(lockedOrientation) {
   state.lockedOrientation = lockedOrientation;
+  if (state.canLock) {
+    const orientation = lockedOrientation ?? state.deviceOrientation;
+    if (INTERFACE_ORIENTATIONS.has(orientation)) {
+      state.interfaceOrientation = orientation;
+    }
+  }
   const event = {
     orientation: lockedOrientation,
     isLocked: lockedOrientation != null,
@@ -82,20 +96,18 @@ const api = {
   // Invalid directions are ignored, like in the native code
   lockToPortrait: fn((direction) => {
     const orientation = PORTRAIT_LOCKS[direction ?? PortraitDirection.UP];
-    if (orientation != null) {
+    if (INTERFACE_ORIENTATIONS.has(orientation)) {
       setLock(orientation);
     }
   }),
   lockToLandscape: fn((direction) => {
     const orientation = LANDSCAPE_LOCKS[direction];
-    if (orientation != null) {
+    if (INTERFACE_ORIENTATIONS.has(orientation)) {
       setLock(orientation);
     }
   }),
   unlockAllOrientations: fn(() => setLock(null)),
-  getCurrentOrientation: fn(
-    () => state.lockedOrientation ?? state.deviceOrientation
-  ),
+  getCurrentOrientation: fn(() => state.interfaceOrientation),
   isLocked: fn(() => state.lockedOrientation != null),
   canLockOrientation: fn(() => state.canLock),
   getDeviceAutoRotateStatus: fn(() => null),
@@ -112,9 +124,23 @@ const api = {
 /** Simulates the device rotating; notifies onOrientationChange listeners while tracking is on */
 function __setDeviceOrientation(orientation) {
   state.deviceOrientation = orientation;
+  if (
+    (state.lockedOrientation == null || !state.canLock) &&
+    INTERFACE_ORIENTATIONS.has(orientation)
+  ) {
+    state.interfaceOrientation = orientation;
+  }
   if (state.isTracking) {
     orientationListeners.forEach((listener) => listener({ orientation }));
   }
+}
+
+/** Sets the displayed UI orientation without changing physical orientation, locks or events. */
+function __setInterfaceOrientation(orientation) {
+  if (!INTERFACE_ORIENTATIONS.has(orientation)) {
+    throw new RangeError('Interface orientation must be portrait or landscape');
+  }
+  state.interfaceOrientation = orientation;
 }
 
 /** Sets what canLockOrientation() returns (e.g. false to simulate an iPad or Android large screen) */
@@ -137,6 +163,7 @@ module.exports = {
   PortraitDirection,
   Orientation,
   __setDeviceOrientation,
+  __setInterfaceOrientation,
   __setCanLockOrientation,
   __reset,
 };

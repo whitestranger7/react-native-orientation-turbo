@@ -696,10 +696,21 @@ jest.mock('react-native-orientation-turbo', () =>
 );
 ```
 
-Every function is a `jest.fn()`, and the mock keeps state like the native code: it starts unlocked in portrait, locks change `isLocked()` / `getCurrentOrientation()` and notify `onLockOrientationChange` listeners, and invalid directions are ignored. Test helpers:
+Public API functions are `jest.fn()` mocks. The mock starts unlocked in portrait and keeps requested locks, physical orientation and displayed UI orientation separate. By default, supported locks and unlocked portrait/landscape rotations update the UI immediately. Lock events describe the request; orientation events describe the physical device. Callbacks run synchronously, without native rotation delays or Android's 200 ms settling interval.
+
+The mock always accepts portrait upside-down; on iPhones without a Home button, the native library ignores that request without changing lock state or emitting a lock event.
+
+Test helpers:
+
+- `__setDeviceOrientation(value)`: changes physical orientation and notifies listeners while tracking is on. Portrait/landscape readings also update the UI when unlocked or locks are ignored; `FACE_UP`/`FACE_DOWN` leave the UI unchanged.
+- `__setInterfaceOrientation(value)`: sets the displayed orientation without changing device orientation, requested locks or emitting events. Accepts only portrait/landscape values; invalid values throw `RangeError`. Later simulated locks/rotations can update the UI again.
+- `__setCanLockOrientation(false)`: makes subsequent lock/unlock requests leave the UI unchanged while still recording requested state and emitting lock events. Changing capability alone does not rotate the UI.
+- `__reset()`: resets all state, listeners and recorded API calls.
 
 ```ts
 import {
+  getCurrentOrientation,
+  isLocked,
   lockToLandscape,
   LandscapeDirection,
   onOrientationChange,
@@ -708,6 +719,7 @@ import {
 import {
   __reset,
   __setDeviceOrientation,
+  __setInterfaceOrientation,
   __setCanLockOrientation,
 } from 'react-native-orientation-turbo/jest/mock';
 
@@ -728,7 +740,15 @@ test('reacts to rotation', () => {
 
 test('handles devices that ignore locks', () => {
   __setCanLockOrientation(false); // e.g. iPad or Android large screen
-  // ...
+  lockToLandscape(LandscapeDirection.LEFT);
+  expect(isLocked()).toBe(true);
+  expect(getCurrentOrientation()).toBe('PORTRAIT');
+});
+
+test('reads the displayed orientation independently', () => {
+  __setDeviceOrientation('FACE_UP');
+  __setInterfaceOrientation('LANDSCAPE_RIGHT');
+  expect(getCurrentOrientation()).toBe('LANDSCAPE_RIGHT');
 });
 ```
 
