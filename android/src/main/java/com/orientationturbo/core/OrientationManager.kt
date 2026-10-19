@@ -34,7 +34,7 @@ internal class OrientationManager(private val reactContext: ReactApplicationCont
       Log.w(TAG, "lockToPortrait ignored: invalid direction \"$direction\" (expected UP or UPSIDE_DOWN)")
       return
     }
-    OrientationController.lock(reactContext.currentActivity, orientation)
+    OrientationController.lock({ reactContext.currentActivity }, orientation)
   }
 
   fun lockToLandscape(direction: String) {
@@ -43,7 +43,7 @@ internal class OrientationManager(private val reactContext: ReactApplicationCont
       Log.w(TAG, "lockToLandscape ignored: invalid direction \"$direction\" (expected LEFT or RIGHT)")
       return
     }
-    OrientationController.lock(reactContext.currentActivity, orientation)
+    OrientationController.lock({ reactContext.currentActivity }, orientation)
   }
 
   /** What the screen shows; falls back to the stored state when there's no display to read */
@@ -53,7 +53,7 @@ internal class OrientationManager(private val reactContext: ReactApplicationCont
   }
 
   fun unlockAllOrientations() {
-    OrientationController.unlock(reactContext.currentActivity)
+    OrientationController.unlock { reactContext.currentActivity }
   }
 
   private companion object {

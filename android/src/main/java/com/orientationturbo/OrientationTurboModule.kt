@@ -8,6 +8,7 @@ import com.orientationturbo.events.OrientationEventEmitter
 import com.orientationturbo.enums.Orientation
 import com.orientationturbo.utils.OrientationSync
 
+import android.app.Activity
 import com.facebook.react.bridge.LifecycleEventListener
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.WritableMap
@@ -27,12 +28,14 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
     ::emitOnLockOrientationChange,
   )
   private val onLockChange: (Orientation?) -> Unit = orientationEventEmitter::onLockOrientationChange
+  private val currentActivity: () -> Activity? = { reactContext.currentActivity }
 
   @Volatile
   private var isManifestSyncPending = false
 
   init {
     OrientationController.onLockChange = onLockChange
+    OrientationController.attachActivityProvider(currentActivity)
     reactContext.addLifecycleEventListener(this)
 
     // The manifest can only be read once an activity exists
@@ -44,10 +47,11 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   }
 
   override fun onHostResume() {
-    if (isManifestSyncPending) {
+    if (isManifestSyncPending && reactContext.currentActivity != null) {
       isManifestSyncPending = false
       OrientationSync.initializeSharedState(reactContext)
     }
+    OrientationController.onActivityAvailable(currentActivity)
     orientationTracker.resume()
   }
 
@@ -62,6 +66,7 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
   override fun invalidate() {
     orientationTracker.stopOrientationTracking()
     reactContext.removeLifecycleEventListener(this)
+    OrientationController.detachActivityProvider(currentActivity)
     if (OrientationController.onLockChange === onLockChange) {
       OrientationController.onLockChange = null
     }

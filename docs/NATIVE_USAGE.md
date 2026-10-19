@@ -668,6 +668,8 @@ Both platforms automatically integrate with React Native when the library is ins
 
 Android records lock/unlock state before the call returns. Activity updates and lock events run in request order on the UI thread; a native UI-thread call applies earlier queued requests before its own. Each event carries its request's lock state, so a synchronous query during an event can already reflect a newer request. Applying a request does not mean the UI has finished rotating.
 
+If no Activity is available, the latest lock or unlock is kept and applied when the app resumes (also after the Activity is recreated), without a second lock event. A resume doesn't override orientation changes other code made on the same Activity, such as a video player going fullscreen. Explicit requests take precedence over the manifest default. If the Activity passed to a native call is finishing or destroyed, the lock is applied to the React Native Activity instead.
+
 ---
 
 ## Troubleshooting

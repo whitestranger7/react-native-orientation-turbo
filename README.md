@@ -442,6 +442,8 @@ Subscribes to orientation changes and receives real-time updates.
 
 On Android, lock events follow request order and describe each request, even if a newer request has already updated `isLocked()`. The event describes the requested lock, rather than confirming that the screen has finished rotating.
 
+If no Activity is available, Android retains the latest lock or unlock and applies it when the React Native host resumes. Activity recreation also reapplies that request, without emitting another lock event. A resume doesn't override orientation changes made by other code on the same Activity (for example, a video player going fullscreen). Explicit requests take precedence over manifest defaults.
+
 **Parameters:**
 
 - `callback`: Function called when lock state orientation changes, receives `LockOrientationSubscription` object
