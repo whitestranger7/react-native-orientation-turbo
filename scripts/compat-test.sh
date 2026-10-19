@@ -257,7 +257,10 @@ fi
 # ---------------------------------------------------------------------------
 build_ios() {
   cd "$APP_DIR" || return 1
+  ruby --version || return 1
+  bundle --version || return 1
   bundle install || return 1
+  bundle exec pod --version || return 1
   if [[ -n "$FRAMEWORKS" ]]; then
     (cd ios && USE_FRAMEWORKS="$FRAMEWORKS" bundle exec pod install) || return 1
   else
