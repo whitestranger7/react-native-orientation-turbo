@@ -10,6 +10,8 @@ const path = require('path');
 
 const README_URL =
   'https://github.com/whitestranger7/react-native-orientation-turbo#installation';
+const SCENE_MIGRATION_URL =
+  'https://github.com/whitestranger7/react-native-orientation-turbo/blob/v3/docs/IOS_SCENES.md';
 
 const LOCKS = {
   'portrait': {
@@ -227,7 +229,7 @@ function findOne(dir, fileName) {
 
 /**
  * Plans every change without writing anything.
- * Returns steps: {platform, title, status: 'change' | 'done' | 'skipped' | 'failed', file?, content?, message?, manual?}
+ * Returns steps: {platform, title, status: 'change' | 'done' | 'skipped' | 'warning' | 'failed', file?, content?, message?, manual?}
  */
 function planSetup({ appRoot, lock = null }) {
   const steps = [];
@@ -271,6 +273,21 @@ function planSetup({ appRoot, lock = null }) {
         manual: 'appdelegate',
       });
     } else {
+      // Diagnose the legacy template without guessing the consumer's build SDK.
+      // A SceneDelegate file alone doesn't establish that UIKit uses scenes.
+      const appDelegateContent = fs.readFileSync(appDelegate.file, 'utf8');
+      if (/^[ \t]*\S*\.startReactNative\(/m.test(appDelegateContent)) {
+        steps.push({
+          platform: 'iOS',
+          title: 'Scene lifecycle',
+          status: 'warning',
+          message:
+            'React Native starts in AppDelegate. When building with the iOS 27 SDK or newer, ' +
+            'adopt the UIScene lifecycle before running on iOS 27 or newer. ' +
+            'This command configures orientation; it does not migrate the app lifecycle. ' +
+            `Migration: ${SCENE_MIGRATION_URL}`,
+        });
+      }
       steps.push(
         planFile(
           'iOS',

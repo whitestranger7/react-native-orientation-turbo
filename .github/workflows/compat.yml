@@ -17,7 +17,7 @@ on:
       - 'package.json'
       - 'yarn.lock'
       - 'turbo.json'
-      - 'scripts/compat-test.sh'
+      - 'scripts/compat-*'
       - '.github/actions/setup/**'
       - '.github/workflows/compat.yml'
   pull_request:
@@ -34,7 +34,7 @@ on:
       - 'package.json'
       - 'yarn.lock'
       - 'turbo.json'
-      - 'scripts/compat-test.sh'
+      - 'scripts/compat-*'
       - '.github/actions/setup/**'
       - '.github/workflows/compat.yml'
   workflow_dispatch:
@@ -83,6 +83,40 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: compat-android-rn-${{ matrix.react-native }}
+          path: ${{ runner.temp }}/compat/logs
+
+  ios-scenes:
+    name: ios scene launch (RN 0.80, Xcode 27.1)
+    runs-on: xcode-27
+    timeout-minutes: 90
+    # Match ci.yml's policy while this GitHub runner is in public preview.
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+        with:
+          xcode-version: '27.1'
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1.329.0
+        with:
+          ruby-version: '3.3'
+          bundler: '2.6.9'
+
+      - name: Migrate and launch oldest consumer
+        run: scripts/compat-test.sh 0.80.0 --skip-android --ios-scene-smoke --work-dir "$RUNNER_TEMP/compat"
+
+      - name: Upload launch evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: compat-ios-scenes-rn-0.80.0
           path: ${{ runner.temp }}/compat/logs
 
   ios:

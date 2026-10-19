@@ -34,6 +34,8 @@ yarn android
 
 ### iOS
 
+This example uses `SceneDelegate`, as required to launch on iOS 27 when built with the iOS 27 SDK. For apps based on older React Native templates, follow the library's [scene migration guide](../docs/IOS_SCENES.md). The orientation callback stays in `AppDelegate`; the early lock belongs before React Native starts in `SceneDelegate`.
+
 For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
 
 The first time you create a new project, run the Ruby bundler to install CocoaPods itself:

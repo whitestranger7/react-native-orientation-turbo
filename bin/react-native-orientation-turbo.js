@@ -72,12 +72,14 @@ function main() {
     change: options.dryRun ? '•' : '✔',
     done: '✔',
     skipped: '–',
+    warning: '!',
     failed: '✖',
   };
   const labels = {
     change: options.dryRun ? 'would change' : 'updated',
     done: 'already set up',
     skipped: 'skipped',
+    warning: 'check required',
     failed: 'failed',
   };
 
@@ -116,7 +118,7 @@ function main() {
   console.log(
     options.dryRun
       ? '\nDry run: nothing was written.'
-      : '\nSetup complete. Rebuild the app (iOS: run `pod install` first).'
+      : '\nOrientation setup complete. Rebuild the app (iOS: run `pod install` first).'
   );
   return 0;
 }

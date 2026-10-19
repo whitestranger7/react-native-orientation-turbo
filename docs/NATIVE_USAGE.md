@@ -44,10 +44,12 @@ The iOS implementation provides a clean, protocol-based API that separates conce
 
 The `supportedInterfaceOrientationsFor` method always goes in `AppDelegate.swift`. Where you put the optional early lock depends on how your app starts React Native:
 
-- **AppDelegate-only apps** (React Native templates up to 0.87): React Native starts in `AppDelegate.swift`, so lock there (below).
+- **AppDelegate-only apps** (React Native templates up to 0.87, built with an SDK older than 27): React Native starts in `AppDelegate.swift`, so lock there (below).
 - **SceneDelegate apps** (React Native template from 0.88, and apps that adopted the UIScene lifecycle): React Native starts in `SceneDelegate.swift`, so lock there (see the next example).
 
 The library works with both: it applies locks to the window scenes that are in the foreground, and reads the orientation from the active one.
+
+**iOS 27 SDK requirement:** apps built with SDK 27 or newer must adopt the UIScene lifecycle to launch on iOS 27 or newer. Orientation integration alone does not migrate the lifecycle. This also applies to pure UIKit apps. Apps built with an older SDK can still use their legacy lifecycle after an OS update. See the [scene migration guide](IOS_SCENES.md) and [Apple TN3187](https://developer.apple.com/documentation/technotes/tn3187-migrating-to-the-uikit-scene-based-life-cycle).
 
 **AppDelegate-only app, `AppDelegate.swift`:**
 

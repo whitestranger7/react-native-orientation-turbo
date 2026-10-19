@@ -69,7 +69,7 @@ npx react-native-orientation-turbo setup
 
 It applies the native setup described below:
 
-- **iOS:** adds `import OrientationTurbo` and the required `application(_:supportedInterfaceOrientationsFor:)` method to `AppDelegate.swift`. Works for AppDelegate-only apps (React Native templates up to 0.87) and SceneDelegate apps (0.88+).
+- **iOS:** adds `import OrientationTurbo` and the required `application(_:supportedInterfaceOrientationsFor:)` method to `AppDelegate.swift`, in both legacy and scene-based apps. When building with the **iOS 27 SDK or newer**, legacy apps also need the separate [scene lifecycle migration](docs/IOS_SCENES.md).
 - **Android:** nothing is required.
 
 Options:
@@ -81,9 +81,15 @@ Running it again is safe: steps that are already set up are skipped. If a file d
 
 Then install pods (`cd ios && bundle exec pod install`) and rebuild the app.
 
+The command configures orientation support; it does not migrate your app's lifecycle. It warns when React Native starts in `AppDelegate`. A successful setup does not verify that the app can launch with your chosen SDK.
+
 ### iOS Setup
 
-These are the manual steps. You don't need them if the automatic setup succeeded.
+These are the manual orientation setup steps. Automatic setup applies them for you. The SDK requirement below applies to both setup methods.
+
+#### iOS 27 SDK: scene lifecycle required
+
+Apps built with the **iOS 27 SDK or newer must use the UIScene lifecycle to launch on iOS 27 or newer**. Updating the device OS alone does not impose this requirement on apps built with an older SDK. React Native templates before 0.88 use the legacy lifecycle: [migrate those apps to scenes](docs/IOS_SCENES.md), or upgrade to a scene-based template. Adding the orientation callback alone does not perform this migration. Multiple windows are not required. See [Apple TN3187](https://developer.apple.com/documentation/technotes/tn3187-migrating-to-the-uikit-scene-based-life-cycle).
 
 1. Install pods:
 
@@ -104,9 +110,9 @@ func application(_ application: UIApplication, supportedInterfaceOrientationsFor
 }
 ```
 
-Where React Native starts depends on your app's setup. Both are supported:
+Where React Native starts depends on your app's lifecycle:
 
-**AppDelegate-only apps** (the React Native template up to 0.87). React Native starts in `AppDelegate.swift`:
+**AppDelegate-only apps** (the React Native template up to 0.87, built with an SDK older than 27). React Native starts in `AppDelegate.swift`:
 
 ```swift
 import UIKit

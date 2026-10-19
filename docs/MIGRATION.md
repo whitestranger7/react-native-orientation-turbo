@@ -10,6 +10,7 @@
 ### Quick checklist
 
 - [ ] Your app runs React Native **0.80 or newer** with the **New Architecture**.
+- [ ] iOS: if building with the **iOS 27 SDK or newer**, your app uses the UIScene lifecycle. Older React Native templates need a separate [scene migration](IOS_SCENES.md); orientation setup does not perform it.
 - [ ] Code that branches on `LANDSCAPE_LEFT` / `LANDSCAPE_RIGHT` from `onOrientationChange` is checked against the [new meaning](#landscape_left--landscape_right-are-swapped-in-orientation-events).
 - [ ] Android: `OrientationTurbo_*` entries are removed from `gradle.properties`.
 - [ ] Android: exhaustive Kotlin `when` over `Orientation` handles `PORTRAIT_UPSIDE_DOWN`.
@@ -27,6 +28,8 @@
 | iOS installation | CocoaPods | CocoaPods (Swift Package Manager is planned for a later 3.x release) |
 
 On React Native 0.80 and 0.81, don't turn the New Architecture off (`newArchEnabled=false` / `RCT_NEW_ARCH_ENABLED=0`).
+
+When built with the iOS 27 SDK or newer, an AppDelegate-only app cannot launch on iOS 27 or newer. Apps built with an older SDK retain legacy lifecycle support when the device OS is updated. This is a UIKit requirement, independent of the library version. React Native 0.88's template already uses scenes; earlier templates need the [migration guide](IOS_SCENES.md). You can adopt scenes while keeping the minimum deployment target at iOS 15.1.
 
 ### Behaviour changes
 

@@ -4,11 +4,12 @@
 # exactly as a consumer would install it.
 #
 # Usage:
-#   scripts/compat-test.sh <react-native-version> [--work-dir <dir>] [--frameworks static|dynamic] [--skip-ios] [--skip-android]
+#   scripts/compat-test.sh <react-native-version> [--work-dir <dir>] [--frameworks static|dynamic] [--skip-ios] [--skip-android] [--ios-scene-smoke]
 #
 # Example:
 #   scripts/compat-test.sh 0.80.0
 #   scripts/compat-test.sh 0.88.0 --frameworks static
+#   scripts/compat-test.sh 0.80.0 --skip-android --ios-scene-smoke
 #
 # Steps: npm pack the library → create an app from the RN template → install the tarball →
 # apply the README setup (AppDelegate / SceneDelegate / MainActivity) and a screen that calls every API →
@@ -32,15 +33,22 @@ WORK_DIR=""
 FRAMEWORKS=""
 SKIP_IOS=0
 SKIP_ANDROID=0
+IOS_SCENE_SMOKE=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --work-dir) WORK_DIR="$2"; shift 2 ;;
     --frameworks) FRAMEWORKS="$2"; shift 2 ;;
     --skip-ios) SKIP_IOS=1; shift ;;
     --skip-android) SKIP_ANDROID=1; shift ;;
+    --ios-scene-smoke) IOS_SCENE_SMOKE=1; shift ;;
     *) echo "Unknown option: $1"; exit 2 ;;
   esac
 done
+
+if (( IOS_SCENE_SMOKE == 1 )) && { [[ "$RN_VERSION" != '0.80.0' || "$(uname)" != 'Darwin' ]] || (( SKIP_IOS == 1 )); }; then
+  echo '--ios-scene-smoke requires RN 0.80.0 and an enabled iOS build on macOS.' >&2
+  exit 2
+fi
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="CompatApp"
@@ -102,6 +110,17 @@ create_app() {
 }
 run_step "create app" create_app || exit 1
 
+# Explicit test-only migration of the oldest consumer. The public setup command
+# continues to configure orientation only; it never rewrites the app lifecycle.
+migrate_ios_scene() {
+  cd "$APP_DIR" || return 1
+  bundle install || return 1
+  bundle exec ruby "$REPO_ROOT/scripts/compat-ios-scene.rb" "$APP_DIR"
+}
+if (( IOS_SCENE_SMOKE == 1 )); then
+  run_step "ios scene migration" migrate_ios_scene || exit 1
+fi
+
 # ---------------------------------------------------------------------------
 # 3. Native setup (npx react-native-orientation-turbo setup) and a test screen
 # ---------------------------------------------------------------------------
@@ -155,7 +174,8 @@ export default function App() {
 
   const autoRotate: DeviceAutoRotateStatus | null = getDeviceAutoRotateStatus();
   return (
-    <View>
+    <View style={{ flex: 1, backgroundColor: '#fff', padding: 24, paddingTop: 80 }}>
+      <Text style={{ color: '#111', fontSize: 20 }}>Orientation Turbo consumer</Text>
       <Text>orientation: {orientation}</Text>
       <Text>locked: {String(isLocked())} / can lock: {String(canLockOrientation())}</Text>
       <Text>last lock event: {JSON.stringify(lock)}</Text>
@@ -275,9 +295,15 @@ build_ios() {
     sed -i.bak 's/^#  define FMT_USE_CONSTEVAL 1$/#  define FMT_USE_CONSTEVAL 0/' "$fmt_base" && rm -f "$fmt_base.bak"
     echo "NOTE: applied the fmt consteval workaround (React Native's fmt with a newer Xcode)"
   fi
-  xcodebuild -workspace "ios/$APP_NAME.xcworkspace" -scheme "$APP_NAME" -configuration Debug \
-    -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build
+  local configuration=Debug
+  (( IOS_SCENE_SMOKE == 1 )) && configuration=Release
+  xcodebuild -workspace "ios/$APP_NAME.xcworkspace" -scheme "$APP_NAME" -configuration "$configuration" \
+    -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+    -derivedDataPath "$WORK_DIR/DerivedData" build
 }
 if (( SKIP_IOS == 0 )) && [[ "$(uname)" == "Darwin" ]]; then
-  run_step "ios build" build_ios
+  if run_step "ios build" build_ios && (( IOS_SCENE_SMOKE == 1 )); then
+    run_step "ios launch" bash "$REPO_ROOT/scripts/compat-ios-smoke.sh" \
+      "$WORK_DIR/DerivedData/Build/Products/Release-iphonesimulator/$APP_NAME.app" "$LOG_DIR"
+  fi
 fi

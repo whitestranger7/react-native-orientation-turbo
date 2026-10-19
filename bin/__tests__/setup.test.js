@@ -120,7 +120,9 @@ extension AppDelegate {
     fs.writeFileSync(file, custom);
 
     const steps = runSetup(appRoot);
-    expect(steps.find((step) => step.platform === 'iOS').status).toBe('failed');
+    expect(
+      steps.find((step) => step.title.startsWith('AppDelegate')).status
+    ).toBe('failed');
     expect(fs.readFileSync(file, 'utf8')).toBe(custom);
   });
 
@@ -174,6 +176,33 @@ describe('CLI', () => {
     expect(code).toBe(0);
     expect(output).toContain('would change');
     expect(read(appRoot, APP_DELEGATE)).toBe(before);
+  });
+
+  it('warns legacy apps about SDK 27 on setup, repeat runs and dry runs without blocking older SDKs', () => {
+    const appRoot = makeApp('rn-0.80');
+    // A file on disk does not establish that the app adopted the scene lifecycle.
+    fs.writeFileSync(
+      path.join(appRoot, SCENE_DELEGATE),
+      '// Not configured yet\n'
+    );
+    for (const args of [['setup', '--dry-run'], ['setup'], ['setup']]) {
+      const { code, output } = run(args, appRoot);
+      expect(code).toBe(0);
+      expect(output).toContain('iOS 27 SDK or newer');
+      expect(output).toContain('does not migrate the app lifecycle');
+      expect(output).toContain('docs/IOS_SCENES.md');
+    }
+    expect(read(appRoot, APP_DELEGATE)).toContain('startReactNative(');
+    expect(read(appRoot, APP_DELEGATE)).toContain(
+      'supportedInterfaceOrientationsFor'
+    );
+  });
+
+  it('does not diagnose the scene template as starting React Native in AppDelegate', () => {
+    const { code, output } = run(['setup'], makeApp('rn-0.88'));
+    expect(code).toBe(0);
+    expect(output).not.toContain('React Native starts in AppDelegate');
+    expect(output).toContain('Orientation setup complete');
   });
 
   it('exits with 1 and prints the manual steps when a step fails', () => {
