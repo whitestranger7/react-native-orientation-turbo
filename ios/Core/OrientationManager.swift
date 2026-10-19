@@ -14,13 +14,26 @@ internal class OrientationManager {
   private let lockedOrientation = LockedValue<UIInterfaceOrientationMask?>(nil)
   private let currentDeviceOrientation = LockedValue(Orientation.portrait.rawValue)
 
-  private let versionHandler = OrientationVersionHandler()
+  private let targetWindows: () -> [UIWindow]
+  private let sceneForWindow: (UIWindow) -> AnyObject?
+  private let applyOrientation: (UIInterfaceOrientationMask, UIWindow?) -> Void
   private let detector = OrientationDetector()
-  /// Main thread only. True while a presented controller can't show the locked orientation
-  private var isLockSuspended = false
+  /// Main thread only; windows and their scenes can disconnect without being retained here.
+  private let suspendedWindows = NSHashTable<UIWindow>.weakObjects()
 
   // MARK: - Initialization
-  init() {
+  init(
+    targetWindows: @escaping () -> [UIWindow] = {
+      WindowSceneProvider.targetWindowScenes().compactMap { WindowSceneProvider.mainWindow(of: $0) }
+    },
+    sceneForWindow: @escaping (UIWindow) -> AnyObject? = { $0.windowScene },
+    applyOrientation: @escaping (UIInterfaceOrientationMask, UIWindow?) -> Void = {
+      OrientationVersionHandler().apply($0, to: $1)
+    }
+  ) {
+    self.targetWindows = targetWindows
+    self.sceneForWindow = sceneForWindow
+    self.applyOrientation = applyOrientation
     if Thread.isMainThread {
       currentDeviceOrientation.set(OrientationDetector.getOrientationFromDevice())
     }
@@ -31,14 +44,27 @@ internal class OrientationManager {
   /// A presented controller (e.g. an RN Modal) that supports none of the locked orientations would make UIKit
   /// throw `UIApplicationInvalidInterfaceOrientation`. While it's shown, the lock is suspended; it's re-applied after.
   func getSupportedInterfaceOrientations() -> UIInterfaceOrientationMask {
+    guard Thread.isMainThread else { return lockedOrientation.get() ?? .all }
+    let window = WindowSceneProvider.activeWindowScene().flatMap { WindowSceneProvider.mainWindow(of: $0) }
+    return getSupportedInterfaceOrientations(for: window)
+  }
+
+  func getSupportedInterfaceOrientations(for window: UIWindow?) -> UIInterfaceOrientationMask {
     let supportedOrientations = lockedOrientation.get() ?? .all
-    guard Thread.isMainThread else { return supportedOrientations }
-    
+    guard Thread.isMainThread, let window = window else { return supportedOrientations }
+    return supportedMask(supportedOrientations, for: window, scheduleReapplication: true)
+  }
+
+  private func supportedMask(
+    _ supportedOrientations: UIInterfaceOrientationMask,
+    for window: UIWindow,
+    scheduleReapplication: Bool
+  ) -> UIInterfaceOrientationMask {
     if supportedOrientations != .all,
-       let presented = WindowSceneProvider.topmostPresentedViewController(),
+       let presented = WindowSceneProvider.topmostPresentedViewController(in: window),
        presented.supportedInterfaceOrientations.intersection(supportedOrientations).isEmpty {
-      if !isLockSuspended {
-        isLockSuspended = true
+      if !suspendedWindows.contains(window) {
+        suspendedWindows.add(window)
         OrientationLogger.warning(
           "\(type(of: presented)) doesn't support the locked orientation; the lock is suspended while it's shown. " +
           "For an RN <Modal>, set supportedOrientations to include the locked orientation."
@@ -47,11 +73,15 @@ internal class OrientationManager {
       return presented.supportedInterfaceOrientations
     }
     
-    if isLockSuspended {
-      isLockSuspended = false
-      DispatchQueue.main.async { [weak self] in
-        guard let self = self else { return }
-        self.versionHandler.apply(self.lockedOrientation.get() ?? .all)
+    if suspendedWindows.contains(window) {
+      suspendedWindows.remove(window)
+      if scheduleReapplication {
+        DispatchQueue.main.async { [weak self, weak window, weak capturedScene = sceneForWindow(window)] in
+          guard let self = self, let window = window,
+                let scene = self.sceneForWindow(window), scene === capturedScene else { return }
+          let mask = self.supportedMask(self.lockedOrientation.get() ?? .all, for: window, scheduleReapplication: false)
+          self.applyOrientation(mask, window)
+        }
       }
     }
     return supportedOrientations
@@ -122,8 +152,17 @@ internal class OrientationManager {
 
     let supportedOrientations = orientation ?? .all
     DispatchQueue.main.async { [weak self] in
-      self?.versionHandler.apply(supportedOrientations)
-      self?.detector.refreshInterfaceOrientation()
+      guard let self = self else { return }
+      let windows = self.targetWindows()
+      if windows.isEmpty {
+        self.applyOrientation(supportedOrientations, nil)
+      } else {
+        for window in windows {
+          let mask = self.supportedMask(supportedOrientations, for: window, scheduleReapplication: false)
+          self.applyOrientation(mask, window)
+        }
+      }
+      self.detector.refreshInterfaceOrientation()
     }
   }
 

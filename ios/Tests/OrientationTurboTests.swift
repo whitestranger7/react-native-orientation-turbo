@@ -163,3 +163,169 @@ final class OrientationManagerTests: XCTestCase {
     XCTAssertEqual(manager.getSupportedInterfaceOrientations(), .landscapeRight)
   }
 }
+
+final class OrientationWindowTests: XCTestCase {
+  private final class Controller: UIViewController {
+    var presented: UIViewController?
+    var dismissing = false
+    let mask: UIInterfaceOrientationMask
+
+    init(_ mask: UIInterfaceOrientationMask = .all) {
+      self.mask = mask
+      super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    override var presentedViewController: UIViewController? { presented }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask { mask }
+    override var isBeingDismissed: Bool { dismissing }
+  }
+
+  private let scenes = NSMapTable<UIWindow, NSObject>.weakToStrongObjects()
+
+  private func makeManager(
+    targetWindows: @escaping () -> [UIWindow],
+    applyOrientation: @escaping (UIInterfaceOrientationMask, UIWindow?) -> Void
+  ) -> OrientationManager {
+    return OrientationManager(
+      targetWindows: targetWindows,
+      sceneForWindow: { [scenes] in scenes.object(forKey: $0) },
+      applyOrientation: applyOrientation
+    )
+  }
+
+  private func window() -> (UIWindow, Controller) {
+    let window = UIWindow()
+    scenes.setObject(NSObject(), forKey: window)
+    let root = Controller()
+    window.rootViewController = root
+    return (window, root)
+  }
+
+  private func drainMainQueue() {
+    let drained = expectation(description: "orientation application")
+    DispatchQueue.main.async { drained.fulfill() }
+    wait(for: [drained], timeout: 2)
+  }
+
+  func testMaskUsesTheQueriedWindowInsteadOfAnotherWindowsModal() {
+    let (first, firstRoot) = window()
+    let (second, secondRoot) = window()
+    let manager = makeManager(targetWindows: { [] }, applyOrientation: { _, _ in })
+    XCTAssertTrue(manager.lockToLandscape("LEFT"))
+    firstRoot.presented = Controller(.portrait)
+    secondRoot.presented = Controller(.landscapeLeft)
+
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: first), .portrait)
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: second), .landscapeLeft)
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: nil), .landscapeLeft)
+    XCTAssertTrue(manager.isLocked())
+  }
+
+  func testLockApplicationComputesEachWindowsCompatibleMask() {
+    let (first, firstRoot) = window()
+    let (second, _) = window()
+    firstRoot.presented = Controller(.portrait)
+    var applications: [(UIInterfaceOrientationMask, UIWindow?)] = []
+    let manager = makeManager(targetWindows: { [first, second] }, applyOrientation: { applications.append(($0, $1)) })
+    XCTAssertTrue(manager.lockToLandscape("RIGHT"))
+    drainMainQueue()
+
+    XCTAssertEqual(applications.count, 2)
+    XCTAssertEqual(applications[0].0, .portrait)
+    XCTAssertTrue(applications[0].1 === first)
+    XCTAssertEqual(applications[1].0, .landscapeRight)
+    XCTAssertTrue(applications[1].1 === second)
+  }
+
+  func testDismissingOneModalReappliesOnlyItsWindowAndKeepsTheOtherSuspended() {
+    let (first, firstRoot) = window()
+    let (second, secondRoot) = window()
+    var applications: [(UIInterfaceOrientationMask, UIWindow?)] = []
+    let manager = makeManager(targetWindows: { [] }, applyOrientation: { applications.append(($0, $1)) })
+    XCTAssertTrue(manager.lockToLandscape("LEFT"))
+    drainMainQueue()
+    applications.removeAll()
+    firstRoot.presented = Controller(.portrait)
+    secondRoot.presented = Controller(.portrait)
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: first), .portrait)
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: second), .portrait)
+    firstRoot.presented = nil
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: first), .landscapeLeft)
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: first), .landscapeLeft)
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: second), .portrait)
+    drainMainQueue()
+
+    XCTAssertEqual(applications.count, 1)
+    XCTAssertTrue(applications.first?.1 === first)
+    XCTAssertEqual(applications.first?.0, .landscapeLeft)
+    secondRoot.presented = nil
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: second), .landscapeLeft)
+    drainMainQueue()
+    XCTAssertEqual(applications.count, 2)
+    XCTAssertTrue(applications.last?.1 === second)
+  }
+
+  func testReapplicationRechecksAModalPresentedBeforeTheQueueRuns() {
+    let (window, root) = window()
+    var masks: [UIInterfaceOrientationMask] = []
+    let manager = makeManager(targetWindows: { [] }, applyOrientation: { mask, _ in masks.append(mask) })
+    XCTAssertTrue(manager.lockToLandscape("LEFT"))
+    drainMainQueue()
+    masks.removeAll()
+    root.presented = Controller(.portrait)
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: window), .portrait)
+    root.presented = nil
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: window), .landscapeLeft)
+    root.presented = Controller(.portrait)
+    drainMainQueue()
+    XCTAssertEqual(masks, [.portrait])
+  }
+
+  func testUnlockBeforeQueuedReapplicationDoesNotRestoreTheOldLock() {
+    let (window, root) = window()
+    var masks: [UIInterfaceOrientationMask] = []
+    let manager = makeManager(targetWindows: { [] }, applyOrientation: { mask, _ in masks.append(mask) })
+    XCTAssertTrue(manager.lockToLandscape("LEFT"))
+    drainMainQueue()
+    masks.removeAll()
+    root.presented = Controller(.portrait)
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: window), .portrait)
+    root.presented = nil
+    _ = manager.getSupportedInterfaceOrientations(for: window)
+    manager.unlockAllOrientations()
+    drainMainQueue()
+    XCTAssertEqual(masks, [.all, .all])
+    XCTAssertFalse(manager.isLocked())
+  }
+
+  func testDismissedAncestorAlsoExcludesItsPresentedChildren() {
+    let (window, root) = window()
+    let dismissing = Controller(.portrait)
+    dismissing.dismissing = true
+    dismissing.presented = Controller(.portrait)
+    root.presented = dismissing
+    XCTAssertNil(WindowSceneProvider.topmostPresentedViewController(in: window))
+  }
+
+  func testQueuedRestorationSkipsAWindowDetachedFromItsScene() {
+    let (window, root) = window()
+    var masks: [UIInterfaceOrientationMask] = []
+    let manager = makeManager(targetWindows: { [] }, applyOrientation: { mask, _ in masks.append(mask) })
+    XCTAssertTrue(manager.lockToLandscape("LEFT"))
+    drainMainQueue()
+    masks.removeAll()
+    root.presented = Controller(.portrait)
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: window), .portrait)
+    root.presented = nil
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(for: window), .landscapeLeft)
+    scenes.removeObject(forKey: window)
+    drainMainQueue()
+    XCTAssertTrue(masks.isEmpty)
+  }
+
+  func testPublicAPIKeepsTheLegacySelectorAndAddsTheWindowSelector() {
+    XCTAssertTrue(OrientationTurboImpl.shared.responds(to: NSSelectorFromString("getSupportedInterfaceOrientations")))
+    XCTAssertTrue(OrientationTurboImpl.shared.responds(to: NSSelectorFromString("getSupportedInterfaceOrientationsFor:")))
+  }
+}

@@ -40,7 +40,7 @@ const LOCKS = {
 const SUPPORTED_ORIENTATIONS_METHOD = `
 extension AppDelegate {
   func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
+    return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)
   }
 }
 `;
@@ -66,16 +66,26 @@ function addSwiftImport(content) {
 function setupAppDelegate(content) {
   if (content.includes('supportedInterfaceOrientationsFor')) {
     if (
-      content.includes(
-        'OrientationTurbo.shared.getSupportedInterfaceOrientations()'
+      /OrientationTurbo\.shared\.getSupportedInterfaceOrientations\(for:\s*\w+\)/.test(
+        content
       )
     ) {
       return { content, alreadyDone: true };
     }
+    const legacyMethod =
+      /(func\s+application\s*\([^{}]*supportedInterfaceOrientationsFor\s+(\w+)\s*:\s*UIWindow\?[^{}]*\)\s*->\s*UIInterfaceOrientationMask\s*\{\s*return\s+)OrientationTurbo\.shared\.getSupportedInterfaceOrientations\(\)(\s*\})/;
+    if (legacyMethod.test(content)) {
+      return {
+        content: content.replace(
+          legacyMethod,
+          '$1OrientationTurbo.shared.getSupportedInterfaceOrientations(for: $2)$3'
+        ),
+      };
+    }
     return {
       error:
         'AppDelegate already implements application(_:supportedInterfaceOrientationsFor:). ' +
-        'Return OrientationTurbo.shared.getSupportedInterfaceOrientations() from it.',
+        'Return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window) from it.',
     };
   }
   if (!/class\s+AppDelegate\b/.test(content)) {
@@ -413,7 +423,7 @@ const MANUAL_STEPS = {
     import OrientationTurbo
 
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-      return OrientationTurbo.shared.getSupportedInterfaceOrientations()
+      return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)
     }`,
   'early-lock': `Before React Native starts (SceneDelegate, or AppDelegate in apps without one), add:
 

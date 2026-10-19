@@ -10,7 +10,9 @@ import UIKit
 /// Public API for native iOS developers to interact with OrientationTurbo
 /// This interface excludes React Native specific methods to prevent conflicts
 @objc public protocol OrientationTurboPublicProtocol {
+  @available(swift, deprecated: 1.0, message: "Use getSupportedInterfaceOrientations(for:) instead")
   func getSupportedInterfaceOrientations() -> UIInterfaceOrientationMask
+  func getSupportedInterfaceOrientations(for window: UIWindow?) -> UIInterfaceOrientationMask
   func lockToPortrait()
   @available(swift, deprecated: 1.0, message: "Use lockToPortrait(_: PortraitDirection) instead")
   func lockToPortrait(_ direction: String?)

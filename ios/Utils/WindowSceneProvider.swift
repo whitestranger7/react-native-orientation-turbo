@@ -33,8 +33,12 @@ internal enum WindowSceneProvider {
 
   /// The root view controller and every controller presented on top of it (e.g. an RN Modal)
   static func viewControllerChain(of windowScene: UIWindowScene) -> [UIViewController] {
+    return viewControllerChain(of: mainWindow(of: windowScene))
+  }
+
+  static func viewControllerChain(of window: UIWindow?) -> [UIViewController] {
     var chain: [UIViewController] = []
-    var current = mainWindow(of: windowScene)?.rootViewController
+    var current = window?.rootViewController
     while let viewController = current {
       chain.append(viewController)
       current = viewController.presentedViewController
@@ -45,7 +49,11 @@ internal enum WindowSceneProvider {
   /// The controller presented on top of the active scene's root, ignoring one that is being dismissed
   static func topmostPresentedViewController() -> UIViewController? {
     guard let windowScene = activeWindowScene() else { return nil }
-    let presented = viewControllerChain(of: windowScene).dropFirst().filter { !$0.isBeingDismissed }
+    return topmostPresentedViewController(in: mainWindow(of: windowScene))
+  }
+
+  static func topmostPresentedViewController(in window: UIWindow?) -> UIViewController? {
+    let presented = viewControllerChain(of: window).dropFirst().prefix { !$0.isBeingDismissed }
     return presented.last
   }
 

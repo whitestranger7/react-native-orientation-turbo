@@ -107,6 +107,10 @@ Only relevant if you call the library from Swift, Objective-C, Kotlin or Java.
 
 #### iOS
 
+Pass the AppDelegate callback's window to `OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)` so modal suspension stays local to its scene. Run `npx react-native-orientation-turbo setup` to update the 2.x callback automatically. The no-argument overload remains available but is deprecated in Swift.
+
+If you conform to `OrientationTurboPublicProtocol` yourself (for example in test mocks), implement `getSupportedInterfaceOrientations(for:)`.
+
 - **Typed overloads**: `lockToPortrait(_: PortraitDirection)` and `lockToLandscape(_: LandscapeDirection)`. The string versions are deprecated in Swift (they still work; Objective-C is unaffected):
 
   ```swift

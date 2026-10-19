@@ -43,7 +43,7 @@ describe('setup: RN 0.80 template (AppDelegate-only)', () => {
       'supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask'
     );
     expect(appDelegate).toContain(
-      'return OrientationTurbo.shared.getSupportedInterfaceOrientations()'
+      'return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)'
     );
   });
 
@@ -81,6 +81,53 @@ describe('setup: RN 0.80 template (AppDelegate-only)', () => {
       first
     );
   });
+
+  it('upgrades the handwritten 2.x callback to pass its window and stays idempotent', () => {
+    const appRoot = makeApp('rn-0.80');
+    runSetup(appRoot);
+    const file = path.join(appRoot, APP_DELEGATE);
+    fs.writeFileSync(
+      file,
+      read(appRoot, APP_DELEGATE).replace(
+        'getSupportedInterfaceOrientations(for: window)',
+        'getSupportedInterfaceOrientations()'
+      )
+    );
+
+    runSetup(appRoot);
+    expect(read(appRoot, APP_DELEGATE)).toContain(
+      'getSupportedInterfaceOrientations(for: window)'
+    );
+    expect(
+      read(appRoot, APP_DELEGATE).match(/supportedInterfaceOrientationsFor/g)
+    ).toHaveLength(1);
+    expect(
+      runSetup(appRoot).filter((step) => step.status === 'change')
+    ).toHaveLength(0);
+  });
+
+  it('uses the existing callback parameter name when upgrading', () => {
+    const appRoot = makeApp('rn-0.80');
+    runSetup(appRoot);
+    const file = path.join(appRoot, APP_DELEGATE);
+    fs.writeFileSync(
+      file,
+      read(appRoot, APP_DELEGATE)
+        .replace('For window: UIWindow?', 'For targetWindow: UIWindow?')
+        .replace(
+          'getSupportedInterfaceOrientations(for: window)',
+          'getSupportedInterfaceOrientations()'
+        )
+    );
+
+    runSetup(appRoot);
+    expect(read(appRoot, APP_DELEGATE)).toContain(
+      'getSupportedInterfaceOrientations(for: targetWindow)'
+    );
+    expect(
+      runSetup(appRoot).filter((step) => step.status === 'change')
+    ).toHaveLength(0);
+  });
 });
 
 describe('setup: RN 0.88 template (SceneDelegate)', () => {
@@ -90,7 +137,7 @@ describe('setup: RN 0.88 template (SceneDelegate)', () => {
 
     expect(steps.map((step) => step.status)).not.toContain('failed');
     expect(read(appRoot, APP_DELEGATE)).toContain(
-      'return OrientationTurbo.shared.getSupportedInterfaceOrientations()'
+      'return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)'
     );
     expect(read(appRoot, APP_DELEGATE)).not.toContain('lockToPortrait');
 
@@ -215,7 +262,7 @@ describe('CLI', () => {
 
     expect(code).toBe(1);
     expect(output).toContain('Setup was not successful');
-    expect(output).toContain('getSupportedInterfaceOrientations()');
+    expect(output).toContain('getSupportedInterfaceOrientations(for: window)');
   });
 
   it('rejects an invalid --lock value', () => {

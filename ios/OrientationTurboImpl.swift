@@ -36,8 +36,13 @@ public class OrientationTurboImpl: NSObject, OrientationTurboPublicProtocol {
   // MARK: - AppDelegate Integration
   
   /// Returns the currently supported interface orientations for the AppDelegate to use
+  @available(swift, deprecated: 1.0, message: "Use getSupportedInterfaceOrientations(for:) instead")
   @objc public func getSupportedInterfaceOrientations() -> UIInterfaceOrientationMask {
     return orientationManager.getSupportedInterfaceOrientations()
+  }
+
+  @objc public func getSupportedInterfaceOrientations(for window: UIWindow?) -> UIInterfaceOrientationMask {
+    return orientationManager.getSupportedInterfaceOrientations(for: window)
   }
   
   // MARK: - Orientation Tracking

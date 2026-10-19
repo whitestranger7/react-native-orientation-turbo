@@ -79,6 +79,8 @@ Options:
 
 Running it again is safe: steps that are already set up are skipped. If a file doesn't look like the React Native template (for example an Objective-C `AppDelegate.mm`, a Java `MainActivity`, or an existing custom `supportedInterfaceOrientationsFor`), that step isn't changed: the command reports that the setup was not successful, prints the manual steps, and exits with a non-zero code. Follow the manual setup below in that case.
 
+If your AppDelegate already returns `OrientationTurbo.shared.getSupportedInterfaceOrientations()` (the 2.x setup), the command updates it to pass `window`. This keeps modal lock suspension and restoration local to the queried window's scene. Existing no-argument calls still work, but multi-window apps should forward `window` as shown below.
+
 Then install pods (`cd ios && bundle exec pod install`) and rebuild the app.
 
 The command configures orientation support; it does not migrate your app's lifecycle. It warns when React Native starts in `AppDelegate`. A successful setup does not verify that the app can launch with your chosen SDK.
@@ -106,7 +108,7 @@ import OrientationTurbo  // Add this import
 
 // Inside your AppDelegate class:
 func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-  return OrientationTurbo.shared.getSupportedInterfaceOrientations()
+  return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)
 }
 ```
 
@@ -138,7 +140,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
   // Add this method
   func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
+    return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)
   }
 }
 ```
@@ -160,7 +162,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
   // Add this method
   func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
+    return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)
   }
 }
 ```

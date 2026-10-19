@@ -12,9 +12,14 @@ internal class OrientationVersionHandler {
     // MARK: - Public Methods
     
     /// Main thread only
-    func apply(_ supportedOrientations: UIInterfaceOrientationMask) {
+    func apply(_ supportedOrientations: UIInterfaceOrientationMask, to window: UIWindow? = nil) {
         if #available(iOS 16.0, *) {
-            applyModern(supportedOrientations)
+            if let window = window {
+                guard let scene = window.windowScene else { return }
+                applyModern(supportedOrientations, to: [scene])
+            } else {
+                applyModern(supportedOrientations, to: WindowSceneProvider.targetWindowScenes())
+            }
         } else {
             applyLegacy(supportedOrientations)
         }
@@ -23,8 +28,7 @@ internal class OrientationVersionHandler {
     // MARK: - iOS 16+ Implementation
     
     @available(iOS 16.0, *)
-    private func applyModern(_ supportedOrientations: UIInterfaceOrientationMask) {
-        let windowScenes = WindowSceneProvider.targetWindowScenes()
+    private func applyModern(_ supportedOrientations: UIInterfaceOrientationMask, to windowScenes: [UIWindowScene]) {
         guard !windowScenes.isEmpty else {
             OrientationLogger.warning("Orientation change skipped: no window scene available")
             return
@@ -32,7 +36,7 @@ internal class OrientationVersionHandler {
 
         let geometryPreferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: supportedOrientations)
         for windowScene in windowScenes {
-            for viewController in WindowSceneProvider.viewControllerChain(of: windowScene) {
+            for viewController in windowScene.windows.flatMap({ WindowSceneProvider.viewControllerChain(of: $0) }) {
                 viewController.setNeedsUpdateOfSupportedInterfaceOrientations()
             }
 
@@ -46,7 +50,8 @@ internal class OrientationVersionHandler {
     
     private func applyLegacy(_ supportedOrientations: UIInterfaceOrientationMask) {
         // Force device orientation using private API (use with caution)
-        if supportedOrientations != .all, let targetOrientation = getTargetOrientation(from: supportedOrientations) {
+        if WindowSceneProvider.targetWindowScenes().count <= 1,
+           supportedOrientations != .all, let targetOrientation = getTargetOrientation(from: supportedOrientations) {
             UIDevice.current.setValue(targetOrientation.rawValue, forKey: "orientation")
         }
         

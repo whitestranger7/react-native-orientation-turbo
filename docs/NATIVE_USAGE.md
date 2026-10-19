@@ -49,6 +49,8 @@ The `supportedInterfaceOrientationsFor` method always goes in `AppDelegate.swift
 
 The library works with both: it applies locks to the window scenes that are in the foreground, and reads the orientation from the active one.
 
+Pass the callback's `window` to `getSupportedInterfaceOrientations(for: window)`. A modal that can't show the locked orientation then suspends the lock only in its own window, and dismissing it restores only that scene. The no-argument method still works (deprecated in Swift), but in multi-window apps it can't tell which window UIKit is asking about.
+
 `getCurrentOrientation()` reads the UI orientation, independently of device tracking. The React Native module initializes its cache on the main queue before JS uses it. Native callers should initialize `OrientationTurbo.shared` on the main thread before making background reads. Those reads remain nonblocking: with no known scene orientation they return the last known UI value, or portrait initially. Scene activation and completed interface changes keep the cache current; physical face-up/down readings do not replace it.
 
 The callback supplies the runtime app mask, replacing Info.plist's orientation defaults. A portrait-only plist does not prevent a landscape lock through this callback. UIKit also checks the visible controller and device/system restrictions. The library rejects portrait upside-down on iPhones without a Home button, and temporarily suspends locks for incompatible presented controllers. It does not query UIKit's application orientation mask during validation, since that can call this same delegate again. Accepted locks record the request immediately; UIKit applies rotation asynchronously. Unlocking returns `.all`, rather than restoring plist defaults. Enforce app-specific restrictions in your app's lock requests and controllers.
@@ -78,7 +80,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   
   // REQUIRED: This method is essential for orientation control
   func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
+    return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)
   }
 }
 ```
@@ -94,7 +96,7 @@ import OrientationTurbo
 class AppDelegate: UIResponder, UIApplicationDelegate {
   // REQUIRED, also in SceneDelegate apps
   func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
+    return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)
   }
 }
 
@@ -251,7 +253,7 @@ class OrientationAwareViewController: UIViewController {
 ```swift
 // THIS IS MANDATORY - Without this, orientation locking won't work
 func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-    return OrientationTurbo.shared.getSupportedInterfaceOrientations()
+    return OrientationTurbo.shared.getSupportedInterfaceOrientations(for: window)
 }
 ```
 
