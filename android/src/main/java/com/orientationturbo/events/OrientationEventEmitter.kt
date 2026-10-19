@@ -3,6 +3,7 @@ package com.orientationturbo.events
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableMap
 import com.orientationturbo.core.OrientationManager
+import com.orientationturbo.enums.Orientation
 
 internal class OrientationEventEmitter(
   private val orientationManager: OrientationManager,
@@ -16,9 +17,8 @@ internal class OrientationEventEmitter(
     emitOnOrientationChange(eventData)
   }
 
-  fun onLockOrientationChange() {
+  fun onLockOrientationChange(lockedOrientation: Orientation?) {
     val eventData = Arguments.createMap().apply {
-      val lockedOrientation = orientationManager.getLockedOrientation()
       if (lockedOrientation != null) {
         putString("orientation", lockedOrientation.value)
       } else {

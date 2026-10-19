@@ -5,6 +5,7 @@ import com.orientationturbo.core.OrientationManager
 import com.orientationturbo.core.OrientationTracker
 import com.orientationturbo.core.OrientationStatus
 import com.orientationturbo.events.OrientationEventEmitter
+import com.orientationturbo.enums.Orientation
 import com.orientationturbo.utils.OrientationSync
 
 import com.facebook.react.bridge.LifecycleEventListener
@@ -25,7 +26,7 @@ class OrientationTurboModule(private val reactContext: ReactApplicationContext) 
     ::emitOnOrientationChange,
     ::emitOnLockOrientationChange,
   )
-  private val onLockChange: () -> Unit = orientationEventEmitter::onLockOrientationChange
+  private val onLockChange: (Orientation?) -> Unit = orientationEventEmitter::onLockOrientationChange
 
   @Volatile
   private var isManifestSyncPending = false

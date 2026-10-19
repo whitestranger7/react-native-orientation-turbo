@@ -440,6 +440,8 @@ if (status) {
 
 Subscribes to orientation changes and receives real-time updates.
 
+On Android, lock events follow request order and describe each request, even if a newer request has already updated `isLocked()`. The event describes the requested lock, rather than confirming that the screen has finished rotating.
+
 **Parameters:**
 
 - `callback`: Function called when lock state orientation changes, receives `LockOrientationSubscription` object

@@ -666,6 +666,8 @@ Both platforms automatically integrate with React Native when the library is ins
 - **Persistent state**: Orientation settings survive app lifecycle events and React Native reloads
 - **Thread-safe**: All state operations are thread-safe and can be called from any context
 
+Android records lock/unlock state before the call returns. Activity updates and lock events run in request order on the UI thread; a native UI-thread call applies earlier queued requests before its own. Each event carries its request's lock state, so a synchronous query during an event can already reflect a newer request. Applying a request does not mean the UI has finished rotating.
+
 ---
 
 ## Troubleshooting

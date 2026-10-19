@@ -18,18 +18,26 @@ internal object OrientationController {
 
   /** Called after every lock change, whether it comes from JS or from native code */
   @Volatile
-  var onLockChange: (() -> Unit)? = null
+  var onLockChange: ((Orientation?) -> Unit)? = null
+
+  private val requests = OrientationRequestQueue(
+    OrientationState::setLockedOrientation,
+    { task ->
+      if (UiThreadUtil.isOnUiThread()) task() else UiThreadUtil.runOnUiThread { task() }
+    },
+    { orientation -> onLockChange?.invoke(orientation) },
+  )
 
   fun lock(activity: Activity?, orientation: Orientation) {
-    OrientationState.setLockedOrientation(orientation)
-    setRequestedOrientation(activity, orientation.toActivityInfoOrientation())
-    onLockChange?.invoke()
+    requests.submit(orientation) {
+      setRequestedOrientation(activity, orientation.toActivityInfoOrientation())
+    }
   }
 
   fun unlock(activity: Activity?) {
-    OrientationState.setLockedOrientation(null)
-    setRequestedOrientation(activity, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
-    onLockChange?.invoke()
+    requests.submit(null) {
+      setRequestedOrientation(activity, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+    }
   }
 
   /** `null` for an invalid direction */
@@ -70,13 +78,7 @@ internal object OrientationController {
       return
     }
 
-    if (UiThreadUtil.isOnUiThread()) {
-      activity.requestedOrientation = requestedOrientation
-    } else {
-      UiThreadUtil.runOnUiThread {
-        activity.requestedOrientation = requestedOrientation
-      }
-    }
+    activity.requestedOrientation = requestedOrientation
   }
 
   private fun Orientation.toActivityInfoOrientation(): Int {
