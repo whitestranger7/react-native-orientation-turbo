@@ -13,6 +13,12 @@ The example app opens a **test screen** that exercises the whole API. Its `Info.
 - **Scenarios:** Modal with default orientations, Modal with all orientations, delayed landscape lock
 - **Event log:** every action, result and event, newest first, with millisecond timestamps
 
+## iOS orientation defaults regression
+
+On an iPhone test build, temporarily set `UISupportedInterfaceOrientations` in the example's Info.plist to portrait only, keeping the required AppDelegate callback. Rebuild and launch. Landscape left and right locks must still rotate the UI and report the requested lock. On an iPhone without a Home button, an upside-down request must leave the previous lock unchanged. Repeat the modal tests T9/T10 below, then unlock: `isLocked()` becomes false and the library returns its `.all` mask rather than restoring portrait-only plist defaults. Restore the plist after testing.
+
+This distinguishes app defaults from device restrictions and runtime controller masks. Check the displayed UI orientation as well as the requested lock state.
+
 ## Devices
 
 | ID | Device | Example | How to run |

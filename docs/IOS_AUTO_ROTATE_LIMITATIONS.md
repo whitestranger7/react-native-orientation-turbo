@@ -39,7 +39,7 @@ Apple's privacy-focused approach restricts apps from accessing system-level sett
 
 #### 3. App-Centric Orientation Control
 iOS orientation control is primarily app-centric rather than system-centric:
-- Apps declare supported orientations in `Info.plist`
+- Apps declare default orientations in `Info.plist`; an app delegate can supply the runtime mask instead
 - Apps control orientation through `UIInterfaceOrientationMask`
 - System auto-rotate settings have limited impact on individual apps
 

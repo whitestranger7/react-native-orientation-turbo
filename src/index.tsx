@@ -28,8 +28,9 @@ export const stopOrientationTracking = () => {
 
 /**
  * Locks to portrait
- * On iOS the lock is ignored (no state change, no event) when the orientation can't be shown:
- * `UPSIDE_DOWN` on iPhones without a Home button, or an orientation missing from Info.plist
+ * On iOS, `UPSIDE_DOWN` on iPhones without a Home button is ignored (no state change, no event).
+ * Info.plist orientations are defaults; the required app delegate callback supplies the runtime mask.
+ * Accepted requests update state immediately; UIKit applies rotation asynchronously, subject to controller/system restrictions.
  * @platform iOS and Android
  */
 export const lockToPortrait = (direction?: PortraitDirection) => {
@@ -38,6 +39,7 @@ export const lockToPortrait = (direction?: PortraitDirection) => {
 
 /**
  * Locks to landscape
+ * Records the request immediately; UIKit applies rotation asynchronously, subject to controller/system restrictions.
  * @platform iOS and Android
  */
 export const lockToLandscape = (direction: LandscapeDirection) => {

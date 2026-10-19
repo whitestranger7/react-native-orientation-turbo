@@ -332,7 +332,7 @@ Use programmatic locking instead of manifest locking for better device compatibi
 ### iOS Issues
 - Ensure the AppDelegate `supportedInterfaceOrientationsFor` method is implemented
 - Check that orientation changes happen on the main thread
-- Verify Info.plist includes the orientations you want to support
+- Check the app delegate's runtime orientation mask and the visible controller's supported orientations. Info.plist provides defaults when the delegate does not supply a mask; it is not an extra restriction on library locks.
 
 ### Android Issues  
 - Verify imports: `import com.orientationturbo.OrientationTurbo` and `import com.orientationturbo.enums.LandscapeDirection`

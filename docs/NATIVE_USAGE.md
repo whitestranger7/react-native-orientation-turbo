@@ -49,6 +49,8 @@ The `supportedInterfaceOrientationsFor` method always goes in `AppDelegate.swift
 
 The library works with both: it applies locks to the window scenes that are in the foreground, and reads the orientation from the active one.
 
+The callback supplies the runtime app mask, replacing Info.plist's orientation defaults. A portrait-only plist does not prevent a landscape lock through this callback. UIKit also checks the visible controller and device/system restrictions. The library rejects portrait upside-down on iPhones without a Home button, and temporarily suspends locks for incompatible presented controllers. It does not query UIKit's application orientation mask during validation, since that can call this same delegate again. Accepted locks record the request immediately; UIKit applies rotation asynchronously. Unlocking returns `.all`, rather than restoring plist defaults. Enforce app-specific restrictions in your app's lock requests and controllers.
+
 **iOS 27 SDK requirement:** apps built with SDK 27 or newer must adopt the UIScene lifecycle to launch on iOS 27 or newer. Orientation integration alone does not migrate the lifecycle. This also applies to pure UIKit apps. Apps built with an older SDK can still use their legacy lifecycle after an OS update. See the [scene migration guide](IOS_SCENES.md) and [Apple TN3187](https://developer.apple.com/documentation/technotes/tn3187-migrating-to-the-uikit-scene-based-life-cycle).
 
 **AppDelegate-only app, `AppDelegate.swift`:**

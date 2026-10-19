@@ -18,50 +18,25 @@ internal enum OrientationLockSupport {
     return requiresFullScreen()
   }()
 
-  /// Orientations a lock can be applied to: those the app declares in Info.plist, minus portrait upside-down
-  /// on iPhones without a Home button (the system excludes it there, see TN3192)
-  static let applicableOrientations: UIInterfaceOrientationMask = {
-    var orientations = declaredOrientations()
-    if isIPhoneWithoutHomeButton() {
-      orientations.remove(.portraitUpsideDown)
-    }
-    return orientations
-  }()
+  /// Device restrictions only. The app delegate supplies the runtime app mask; Info.plist is its fallback,
+  /// not an additional limit. UIKit also checks the visible controller's supported orientations.
+  static let applicableOrientations = deviceOrientations(
+    idiom: UIDevice.current.userInterfaceIdiom,
+    model: modelIdentifier()
+  )
 
   static func canApply(_ orientations: UIInterfaceOrientationMask) -> Bool {
     return !orientations.intersection(applicableOrientations).isEmpty
   }
 
-  private static func declaredOrientations() -> UIInterfaceOrientationMask {
-    let bundle = Bundle.main
-    let padOrientations = UIDevice.current.userInterfaceIdiom == .pad
-      ? bundle.object(forInfoDictionaryKey: "UISupportedInterfaceOrientations~ipad") as? [String]
-      : nil
-    return orientations(fromInfoPlistNames: padOrientations ?? bundle.object(forInfoDictionaryKey: "UISupportedInterfaceOrientations") as? [String])
-  }
-
-  static func orientations(fromInfoPlistNames names: [String]?) -> UIInterfaceOrientationMask {
-    guard let names = names else { return .all }
-
-    var orientations: UIInterfaceOrientationMask = []
-    for name in names {
-      switch name {
-      case "UIInterfaceOrientationPortrait": orientations.insert(.portrait)
-      case "UIInterfaceOrientationPortraitUpsideDown": orientations.insert(.portraitUpsideDown)
-      case "UIInterfaceOrientationLandscapeLeft": orientations.insert(.landscapeLeft)
-      case "UIInterfaceOrientationLandscapeRight": orientations.insert(.landscapeRight)
-      default: break
-      }
+  static func deviceOrientations(idiom: UIUserInterfaceIdiom, model: String) -> UIInterfaceOrientationMask {
+    if idiom == .phone && !hasHomeButton(model: model) {
+      return .allButUpsideDown
     }
-    return orientations.isEmpty ? .all : orientations
+    return .all
   }
 
   /// iPhones with a Home button that run iOS 15+: 6s / 6s Plus / SE, 7, 8 / 8 Plus, SE (2nd and 3rd generation)
-  private static func isIPhoneWithoutHomeButton() -> Bool {
-    guard UIDevice.current.userInterfaceIdiom == .phone else { return false }
-    return !hasHomeButton(model: modelIdentifier())
-  }
-
   static func hasHomeButton(model: String) -> Bool {
     let homeButtonModels: Set<String> = ["iPhone10,1", "iPhone10,2", "iPhone10,4", "iPhone10,5", "iPhone12,8", "iPhone14,6"]
     return model.hasPrefix("iPhone8,") || model.hasPrefix("iPhone9,") || homeButtonModels.contains(model)

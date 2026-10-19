@@ -18,19 +18,19 @@ final class OrientationLockSupportTests: XCTestCase {
     }
   }
 
-  func testInfoPlistOrientations() {
-    let mask = OrientationLockSupport.orientations(fromInfoPlistNames: [
-      "UIInterfaceOrientationPortrait",
-      "UIInterfaceOrientationLandscapeLeft",
-      "UIInterfaceOrientationLandscapeRight",
-    ])
-    XCTAssertEqual(mask, [.portrait, .landscapeLeft, .landscapeRight])
+  func testPhonesWithoutHomeButtonSupportBothLandscapesButNotUpsideDown() {
+    for model in ["iPhone10,3", "iPhone16,1", "iPhone99,9"] {
+      XCTAssertEqual(
+        OrientationLockSupport.deviceOrientations(idiom: .phone, model: model),
+        [.portrait, .landscapeLeft, .landscapeRight],
+        model
+      )
+    }
   }
 
-  func testMissingOrEmptyInfoPlistOrientationsMeanAll() {
-    XCTAssertEqual(OrientationLockSupport.orientations(fromInfoPlistNames: nil), .all)
-    XCTAssertEqual(OrientationLockSupport.orientations(fromInfoPlistNames: []), .all)
-    XCTAssertEqual(OrientationLockSupport.orientations(fromInfoPlistNames: ["Unknown"]), .all)
+  func testHomeButtonPhonesAndIPadsSupportAllOrientations() {
+    XCTAssertEqual(OrientationLockSupport.deviceOrientations(idiom: .phone, model: "iPhone14,6"), .all)
+    XCTAssertEqual(OrientationLockSupport.deviceOrientations(idiom: .pad, model: "iPad16,6"), .all)
   }
 }
 
@@ -74,5 +74,17 @@ final class OrientationManagerTests: XCTestCase {
     manager.unlockAllOrientations()
     XCTAssertFalse(manager.isLocked())
     XCTAssertEqual(manager.getSupportedInterfaceOrientations(), .all)
+  }
+
+  func testRejectedUpsideDownLockPreservesAnExistingLandscapeLock() throws {
+    guard !OrientationLockSupport.applicableOrientations.contains(.portraitUpsideDown) else {
+      throw XCTSkip("This device supports portrait upside-down")
+    }
+    let manager = OrientationManager()
+    XCTAssertTrue(manager.lockToLandscape("RIGHT"))
+    XCTAssertFalse(manager.lockToPortrait("UPSIDE_DOWN"))
+    XCTAssertTrue(manager.isLocked())
+    XCTAssertEqual(manager.getLockedOrientationString(), "LANDSCAPE_RIGHT")
+    XCTAssertEqual(manager.getSupportedInterfaceOrientations(), .landscapeRight)
   }
 }

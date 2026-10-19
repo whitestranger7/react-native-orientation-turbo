@@ -77,9 +77,9 @@ Upside-down still depends on the device: iPhones without a Home button never rot
 
 `OrientationTurbo.lockTo…` calls from Kotlin/Swift made after React Native started now notify JS listeners, on both platforms.
 
-#### iOS: locks to unsupported orientations are ignored
+#### iOS: device restrictions and runtime orientation masks
 
-If the target orientation isn't in your Info.plist `UISupportedInterfaceOrientations` (or the device can't show it, such as upside-down on iPhones without a Home button), the lock is ignored with a warning. In 2.x it could crash with `UIApplicationInvalidInterfaceOrientation`.
+Portrait upside-down locks on iPhones without a Home button are ignored with a warning, without a state change or lock event. Info.plist orientation entries are defaults, not an additional restriction when the app delegate supplies a runtime mask. A portrait-only plist can therefore coexist with a landscape lock through the required delegate callback. UIKit still checks controller and system restrictions; accepting a lock records the request, and does not guarantee that the UI has rotated. Unlocking restores the library's `.all` mask, rather than the plist defaults. See [iOS Setup](../README.md#ios-setup).
 
 #### iOS: `<Modal>` while locked
 

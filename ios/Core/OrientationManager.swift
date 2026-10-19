@@ -57,7 +57,8 @@ internal class OrientationManager {
     return supportedOrientations
   }
 
-  /// Returns `false` (and keeps the current state) when the orientation can't be shown on this device / app
+  /// Returns `false` (and keeps the current state) for an invalid direction or an unsupported device orientation.
+  /// Accepted locks update state immediately; UIKit applies them asynchronously, subject to controller/system policy.
   @discardableResult
   func lockToPortrait(_ direction: String? = nil) -> Bool {
     guard let portraitDirection = direction.map({ PortraitDirection(rawValue: $0) }) ?? .up else {
@@ -107,7 +108,7 @@ internal class OrientationManager {
   private func lock(to orientation: UIInterfaceOrientationMask) -> Bool {
     guard OrientationLockSupport.canApply(orientation) else {
       OrientationLogger.warning(
-        "Lock to \(getOrientationString(from: orientation)) ignored: this device or the app's Info.plist doesn't support it " +
+        "Lock to \(getOrientationString(from: orientation)) ignored: this device doesn't support it " +
         "(iPhones without a Home button don't support portrait upside-down)"
       )
       return false

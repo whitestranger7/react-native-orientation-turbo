@@ -167,7 +167,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 The [example app](example/ios/OrientationTurboExample) uses the SceneDelegate setup.
 
-3. Make sure your `Info.plist` lists every orientation you want to lock to (`UISupportedInterfaceOrientations`, and `UISupportedInterfaceOrientations~ipad` for iPad). The library can only lock to orientations the app declares: a lock to any other orientation is ignored (the state doesn't change, no event is sent, and a warning is logged).
+3. Configure sensible orientation defaults in `Info.plist` (`UISupportedInterfaceOrientations`, and `UISupportedInterfaceOrientations~ipad` for iPad). UIKit uses these defaults when the app delegate does not supply an orientation mask. With the callback above, the library supplies the runtime app mask: a portrait-only plist does **not** prevent a landscape lock. UIKit also checks the visible controller's supported orientations and device/system restrictions. See [Apple's orientation callback documentation](https://developer.apple.com/documentation/uikit/uiapplicationdelegate/application%28_%3Asupportedinterfaceorientationsfor%3A%29).
+
+On iPhones without a Home button, portrait upside-down locks are ignored without changing state or emitting a lock event. Other accepted locks record the requested state immediately; UIKit applies rotation asynchronously. A custom controller or system policy can prevent rotation, so `isLocked()` describes the request, not proof that the UI rotated. Use `getCurrentOrientation()` to read the UI orientation. Keep any app-specific orientation policy in your app and avoid requesting locks it disallows. Unlocking restores the library's `.all` mask; it does not restore the plist defaults.
 
 #### Swift Package Manager
 
