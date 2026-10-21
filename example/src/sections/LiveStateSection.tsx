@@ -1,5 +1,8 @@
+import { useWindowDimensions } from 'react-native';
+
 import { ActionButton } from '../components/ActionButton';
 import { ButtonRow } from '../components/ButtonRow';
+import { Hint } from '../components/Hint';
 import { Readout } from '../components/Readout';
 import { Section } from '../components/Section';
 import type { OrientationState } from '../hooks/useOrientationTester';
@@ -11,12 +14,26 @@ type Props = {
 };
 
 export function LiveStateSection({ state, onRefresh }: Props) {
+  const { width, height } = useWindowDimensions();
+
   return (
     <Section title="Live state">
       <Readout
-        label="getCurrentOrientation()"
+        label="UI orientation (sampled)"
         value={state.currentOrientation}
       />
+      <Readout
+        label="Last physical orientation"
+        value={state.lastOrientationEvent}
+      />
+      <Readout
+        label="Window size"
+        value={`${Math.round(width)} × ${Math.round(height)}`}
+      />
+      <Hint>
+        Physical events can differ from the UI. After rotation finishes, tap
+        Refresh to sample getCurrentOrientation().
+      </Hint>
       <Readout label="isLocked()" value={state.isLocked} />
       <Readout label="canLockOrientation()" value={state.canLockOrientation} />
       <Readout
@@ -26,10 +43,6 @@ export function LiveStateSection({ state, onRefresh }: Props) {
             ? null
             : formatValue(state.autoRotateStatus)
         }
-      />
-      <Readout
-        label="Last onOrientationChange"
-        value={state.lastOrientationEvent}
       />
       <Readout
         label="Last onLockOrientationChange"

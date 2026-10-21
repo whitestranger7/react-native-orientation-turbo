@@ -93,7 +93,10 @@ export function useOrientationTester(addLog: AddLog) {
   useEffect(() => {
     const orientationSubscription = onOrientationChange(({ orientation }) => {
       setLastOrientationEvent(orientation);
-      addLog('event', `onOrientationChange: ${orientation}`);
+      addLog('event', `onOrientationChange (physical): ${orientation}`);
+      const uiOrientation = getCurrentOrientation();
+      setCurrentOrientation(uiOrientation);
+      addLog('result', `UI orientation at physical callback: ${uiOrientation}`);
       scheduleRefresh();
     });
     const lockSubscription = onLockOrientationChange((event) => {
@@ -105,11 +108,7 @@ export function useOrientationTester(addLog: AddLog) {
       scheduleRefresh();
     });
 
-    try {
-      addLog('result', `initial UI orientation: ${getCurrentOrientation()}`);
-    } catch (error) {
-      addLog('error', `initial UI orientation failed: ${String(error)}`);
-    }
+    addLog('result', `initial UI orientation: ${getCurrentOrientation()}`);
     startOrientationTracking();
     setIsTracking(true);
     addLog('action', 'startOrientationTracking() (on mount)');

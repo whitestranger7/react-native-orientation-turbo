@@ -71,7 +71,9 @@ Upside-down still depends on the device: iPhones without a Home button never rot
 
 #### Android: orientation events are debounced
 
-`onOrientationChange` fires about 200 ms after the device settles in a new orientation, instead of on every sensor reading near a boundary ([#20](https://github.com/whitestranger7/react-native-orientation-turbo/issues/20)). Small tilts and shaking no longer emit events. Leaving the zone, or a flat/unknown reading, cancels the pending event.
+`onOrientationChange` fires about 200 ms after readings settle in a new orientation zone, filtering brief boundary excursions and reducing the sensor jitter reported in [#20](https://github.com/whitestranger7/react-native-orientation-turbo/issues/20). Leaving the zone, or a flat/unknown reading, cancels the pending event. Sustained motion into another zone can still emit an event.
+
+The UI-transition synchronization requested in #20 is not implemented: physical events can precede UI rotation or disagree with it under a lock or disabled auto-rotate. Use `getCurrentOrientation()` to sample UI orientation and window/view dimensions for layout. For notch and navigation-bar padding, use per-edge safe-area insets, such as [useSafeAreaInsets()](https://appandflow.github.io/react-native-safe-area-context/docs/api/use-safe-area-insets/) from `react-native-safe-area-context`; they follow the displayed UI on both platforms. See the [event contract](../README.md#subscriptions).
 
 #### Locks made from native code emit `onLockOrientationChange`
 

@@ -444,7 +444,7 @@ if (status) {
 
 #### `onLockOrientationChange(callback: (subscription: LockOrientationSubscription) => void)`
 
-Subscribes to orientation changes and receives real-time updates.
+Reports lock and unlock requests.
 
 On Android, lock events follow request order and describe each request, even if a newer request has already updated `isLocked()`. The event describes the requested lock, rather than confirming that the screen has finished rotating.
 
@@ -497,15 +497,19 @@ const MyComponent = () => {
 
 #### `onOrientationChange(callback: (subscription: OrientationSubscription) => void)`
 
-Subscribes to orientation changes and receives real-time updates.
+Reports the physical device orientation while tracking is started. Events can arrive before or after the UI rotates, and can differ from the displayed orientation under a lock or when system auto-rotate is disabled. They do not signal completion of a UI transition.
+
+Use `getCurrentOrientation()` for a synchronous UI orientation read. For responsive layout, use React Native's [useWindowDimensions](https://reactnative.dev/docs/usewindowdimensions) or a view's [onLayout](https://reactnative.dev/docs/view#onlayout) to respond to the available size; neither is a rotation-animation completion event. v3.0 has no interface-orientation subscription.
+
+For notch and navigation-bar padding, use per-edge safe-area insets (for example [useSafeAreaInsets()](https://appandflow.github.io/react-native-safe-area-context/docs/api/use-safe-area-insets/) or `SafeAreaView` from `react-native-safe-area-context`); they follow the displayed UI on both platforms.
 
 **Parameters:**
 
 - `callback`: Function called when device physical orientation changes, receives `OrientationSubscription` object
 
-On Android the orientation comes from the accelerometer. To avoid flicker, a change is only reported when the device is clearly in the new orientation (within 30° of it) and has stayed there for about 200 ms; small tilts and shaking don't produce events.
+On Android the orientation comes from the accelerometer. A change is reported after readings stay within 30° of a new orientation for about 200 ms. Brief excursions are filtered; motion that remains in another zone long enough can still produce an event. This delay does not wait for Android's screen rotation. On iOS events follow device-orientation notifications, without the Android settling delay.
 
-Leaving that zone or receiving an unknown reading cancels the pending event. Re-entering the zone requires a fresh 200 ms interval. Pausing or stopping tracking also cancels pending events.
+On Android, leaving that zone or receiving an unknown reading cancels the pending event. Re-entering the zone requires a fresh 200 ms interval. Pausing or stopping tracking also cancels pending events.
 
 **Returns:** Subscription object with `remove()` method to unsubscribe
 
