@@ -171,11 +171,25 @@ The example app only covers the React Native version in this repo. To check the 
 
 ```sh
 scripts/compat-test.sh 0.80.0                        # oldest supported version
-scripts/compat-test.sh 0.88.0 --frameworks static    # USE_FRAMEWORKS=static (or dynamic)
+scripts/compat-test.sh 0.88.0 --frameworks static    # USE_FRAMEWORKS=static
+scripts/compat-test.sh 0.88.0 --frameworks dynamic --skip-android
+scripts/compat-test.sh 0.88.0 --android-agp9 --skip-ios
 scripts/compat-test.sh 0.84.0 --skip-ios             # Android only
 ```
 
 It packs the library with `npm pack`, creates an app from the React Native template in a temporary directory, installs the tarball, applies the README setup, and runs `tsc`, an Android debug build and an iOS simulator build. It prints a pass/fail summary with a log file per step. Run it for the oldest and newest supported versions before a release, and whenever native code, the build files or the codegen spec change.
+
+The workflow keeps the default RN 0.80/0.82/0.84/0.88 builds and endpoint static-framework checks, plus three representative required variants:
+
+| Variant | Consumer / runner | What is checked |
+|---|---|---|
+| Older Swift compiler | RN 0.80, Xcode 16.4 on macOS 15 | Build the packed library with an older supported host toolchain. This represents the older compiler family, not every Xcode patch release. |
+| Dynamic frameworks | RN 0.88, Xcode 26.6 | Verify that the OrientationTurbo pod target is a dynamic framework, then build the consumer. Static lanes verify their target too. |
+| AGP 9 defaults | RN 0.88, AGP 9.2.1 / JDK 17 | Enable built-in Kotlin/new DSL in the generated host, remove its external Kotlin Android plugin, build the app, then assert both app and library use the requested mode and have Kotlin compile tasks. |
+
+`--android-agp9` is a test-host migration for RN 0.88 only. It does not patch React Native or the installed library. The normal template still opts out; enabling [built-in Kotlin](https://developer.android.com/build/migrate-to-built-in-kotlin) requires removing the host's external Kotlin Android plugin. A failure in the app or RN Gradle plugin must be investigated separately from a library failure; the lane remains required and does not accept an expected failure as a pass.
+
+Requested variants fail if their platform is disabled, the template no longer matches, or the configuration checks fail. Logs include the selected Xcode and verified linkage/AGP mode. Record the first CI outcomes in [release verification](docs/RELEASE_VERIFICATION.md); adding a lane is not itself a passing result.
 
 ### Commit message convention
 

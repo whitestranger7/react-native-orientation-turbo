@@ -4,7 +4,7 @@
 # exactly as a consumer would install it.
 #
 # Usage:
-#   scripts/compat-test.sh <react-native-version> [--work-dir <dir>] [--frameworks static|dynamic] [--skip-ios] [--skip-android] [--ios-scene-smoke]
+#   scripts/compat-test.sh <react-native-version> [--work-dir <dir>] [--frameworks static|dynamic] [--skip-ios] [--skip-android] [--ios-scene-smoke] [--android-agp9]
 #
 # Example:
 #   scripts/compat-test.sh 0.80.0
@@ -34,6 +34,7 @@ FRAMEWORKS=""
 SKIP_IOS=0
 SKIP_ANDROID=0
 IOS_SCENE_SMOKE=0
+ANDROID_AGP9=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --work-dir) WORK_DIR="$2"; shift 2 ;;
@@ -41,9 +42,23 @@ while [[ $# -gt 0 ]]; do
     --skip-ios) SKIP_IOS=1; shift ;;
     --skip-android) SKIP_ANDROID=1; shift ;;
     --ios-scene-smoke) IOS_SCENE_SMOKE=1; shift ;;
+    --android-agp9) ANDROID_AGP9=1; shift ;;
     *) echo "Unknown option: $1"; exit 2 ;;
   esac
 done
+
+if [[ -n "$FRAMEWORKS" && "$FRAMEWORKS" != static && "$FRAMEWORKS" != dynamic ]]; then
+  echo '--frameworks must be static or dynamic.' >&2
+  exit 2
+fi
+if [[ -n "$FRAMEWORKS" ]] && { (( SKIP_IOS == 1 )) || [[ "$(uname)" != Darwin ]]; }; then
+  echo '--frameworks requires an enabled iOS build on macOS.' >&2
+  exit 2
+fi
+if (( ANDROID_AGP9 == 1 )) && { [[ "$RN_VERSION" != '0.88.0' ]] || (( SKIP_ANDROID == 1 )); }; then
+  echo '--android-agp9 requires RN 0.88.0 and an enabled Android build.' >&2
+  exit 2
+fi
 
 if (( IOS_SCENE_SMOKE == 1 )) && { [[ "$RN_VERSION" != '0.80.0' || "$(uname)" != 'Darwin' ]] || (( SKIP_IOS == 1 )); }; then
   echo '--ios-scene-smoke requires RN 0.80.0 and an enabled iOS build on macOS.' >&2
@@ -53,6 +68,7 @@ fi
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="CompatApp"
 LABEL="rn-${RN_VERSION}${FRAMEWORKS:+-frameworks-$FRAMEWORKS}"
+(( ANDROID_AGP9 == 1 )) && LABEL="$LABEL-agp9"
 WORK_DIR="${WORK_DIR:-${TMPDIR:-/tmp}/orientation-turbo-compat/$LABEL}"
 APP_DIR="$WORK_DIR/$APP_NAME"
 LOG_DIR="$WORK_DIR/logs"
@@ -80,6 +96,7 @@ run_step() { # $1 step name, $2.. command
 summary() {
   printf '\n==== Compatibility summary: react-native %s%s ====\n' "$RN_VERSION" "${FRAMEWORKS:+ (USE_FRAMEWORKS=$FRAMEWORKS)}"
   printf '%s\n' "${RESULTS[@]}"
+  (( ANDROID_AGP9 == 1 )) && printf 'Android mode: AGP 9 built-in Kotlin + new DSL\n'
   printf 'Work dir: %s\n' "$WORK_DIR"
   exit "$FAILED"
 }
@@ -262,13 +279,21 @@ pick_java_home() {
     echo "${JAVA_HOME:-}"
   fi
 }
+configure_android_agp9() {
+  node "$REPO_ROOT/scripts/compat-android-agp9.js" "$APP_DIR"
+}
 build_android() {
   local java_home
   java_home="$(pick_java_home)"
   echo "JAVA_HOME=$java_home"
-  cd "$APP_DIR/android" && JAVA_HOME="$java_home" ./gradlew assembleDebug -PreactNativeArchitectures=arm64-v8a --console=plain
+  local -a gradle_tasks=(assembleDebug)
+  (( ANDROID_AGP9 == 1 )) && gradle_tasks+=(":app:verifyOrientationTurboAgp9")
+  cd "$APP_DIR/android" && JAVA_HOME="$java_home" ./gradlew "${gradle_tasks[@]}" -PreactNativeArchitectures=arm64-v8a --console=plain
 }
 if (( SKIP_ANDROID == 0 )); then
+  if (( ANDROID_AGP9 == 1 )); then
+    run_step "configure android agp9" configure_android_agp9 || exit 1
+  fi
   run_step "android build" build_android
 fi
 
@@ -277,6 +302,7 @@ fi
 # ---------------------------------------------------------------------------
 build_ios() {
   cd "$APP_DIR" || return 1
+  xcodebuild -version || return 1
   ruby --version || return 1
   bundle --version || return 1
   bundle install || return 1
@@ -285,6 +311,9 @@ build_ios() {
     (cd ios && USE_FRAMEWORKS="$FRAMEWORKS" bundle exec pod install) || return 1
   else
     (cd ios && bundle exec pod install) || return 1
+  fi
+  if [[ -n "$FRAMEWORKS" ]]; then
+    bundle exec ruby "$REPO_ROOT/scripts/compat-ios-linkage.rb" "$APP_DIR" "$FRAMEWORKS" || return 1
   fi
   # React Native <= 0.83 compiles fmt 11.0.2 from source, which Xcode 26.4+ / 27 rejects
   # ("call to consteval function ... is not a constant expression"). Not related to this library:

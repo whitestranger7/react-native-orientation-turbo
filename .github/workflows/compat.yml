@@ -48,7 +48,7 @@ concurrency:
 
 jobs:
   android:
-    name: android (RN ${{ matrix.react-native }})
+    name: android (RN ${{ matrix.react-native }}${{ matrix.agp9 && ', AGP 9 defaults' || '' }})
     runs-on: ubuntu-24.04
     timeout-minutes: 60
 
@@ -56,6 +56,10 @@ jobs:
       fail-fast: false
       matrix:
         react-native: ['0.80.0', '0.82.0', '0.84.0', '0.88.0']
+        agp9: [false]
+        include:
+          - react-native: '0.88.0'
+            agp9: true
 
     steps:
       - name: Checkout
@@ -76,13 +80,16 @@ jobs:
           /bin/bash -c "yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null"
 
       - name: Compatibility test
-        run: scripts/compat-test.sh ${{ matrix.react-native }} --skip-ios --work-dir "$RUNNER_TEMP/compat"
+        run: |
+          scripts/compat-test.sh ${{ matrix.react-native }} --skip-ios \
+            ${{ matrix.agp9 && '--android-agp9' || '' }} \
+            --work-dir "$RUNNER_TEMP/compat"
 
       - name: Upload logs
-        if: failure()
+        if: failure() || matrix.agp9
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: compat-android-rn-${{ matrix.react-native }}
+          name: compat-android-rn-${{ matrix.react-native }}${{ matrix.agp9 && '-agp9' || '' }}
           path: ${{ runner.temp }}/compat/logs
 
   ios-scenes:
@@ -120,8 +127,8 @@ jobs:
           path: ${{ runner.temp }}/compat/logs
 
   ios:
-    name: ios (RN ${{ matrix.react-native }}${{ matrix.frameworks && format(', frameworks {0}', matrix.frameworks) || '' }})
-    runs-on: macos-26
+    name: ios (RN ${{ matrix.react-native }}, Xcode ${{ matrix.xcode }}${{ matrix.frameworks && format(', frameworks {0}', matrix.frameworks) || '' }})
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
 
     strategy:
@@ -129,14 +136,28 @@ jobs:
       matrix:
         react-native: ['0.80.0', '0.82.0', '0.84.0', '0.88.0']
         frameworks: ['']
+        runner: ['macos-26']
+        xcode: ['26.6']
         include:
           - react-native: '0.80.0'
             frameworks: 'static'
+            runner: 'macos-26'
+            xcode: '26.6'
           - react-native: '0.88.0'
             frameworks: 'static'
+            runner: 'macos-26'
+            xcode: '26.6'
+          - react-native: '0.88.0'
+            frameworks: 'dynamic'
+            runner: 'macos-26'
+            xcode: '26.6'
+          - react-native: '0.80.0'
+            frameworks: ''
+            runner: 'macos-15'
+            xcode: '16.4'
 
     env:
-      XCODE_VERSION: '26.6'
+      XCODE_VERSION: ${{ matrix.xcode }}
 
     steps:
       - name: Checkout
@@ -165,8 +186,8 @@ jobs:
             --work-dir "$RUNNER_TEMP/compat"
 
       - name: Upload logs
-        if: failure()
+        if: failure() || matrix.frameworks == 'dynamic' || matrix.xcode == '16.4'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: compat-ios-rn-${{ matrix.react-native }}${{ matrix.frameworks && format('-frameworks-{0}', matrix.frameworks) || '' }}
+          name: compat-ios-rn-${{ matrix.react-native }}-xcode-${{ matrix.xcode }}${{ matrix.frameworks && format('-frameworks-{0}', matrix.frameworks) || '' }}
           path: ${{ runner.temp }}/compat/logs

@@ -35,6 +35,8 @@ What your app needs to use this library:
 | ------------ | ------- | --------------------------------------------------------------------------------------------------- |
 | 0.80 – 0.88  | **3.x** | Tested in CI on 0.80, 0.82, 0.84 and 0.88 (iOS and Android; iOS static frameworks on 0.80 and 0.88) |
 
+The compatibility workflow also defines required lanes for RN 0.80 with Xcode 16.4, RN 0.88 with dynamic frameworks, and RN 0.88 with AGP 9 built-in Kotlin/new DSL. These lanes need their first passing CI run before they count as release evidence. The standard RN 0.88 template keeps AGP 9's opt-outs; the additional lane migrates only its generated test host. See [Compatibility testing](CONTRIBUTING.md#compatibility-testing).
+
 Known limitations:
 
 - **iPad**: locks only apply when the app sets `UIRequiresFullScreen` ([iPad](#ipad)).
