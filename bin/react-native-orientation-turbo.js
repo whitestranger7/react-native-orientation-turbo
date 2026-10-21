@@ -46,7 +46,10 @@ function parseArgs(argv) {
       throw new Error(`Unknown option: ${arg}`);
     }
   }
-  if (options.lock != null && !(options.lock in LOCKS)) {
+  if (
+    options.lock != null &&
+    !Object.prototype.hasOwnProperty.call(LOCKS, options.lock)
+  ) {
     throw new Error(
       `Invalid --lock value "${options.lock}". Expected one of: ${Object.keys(LOCKS).join(', ')}`
     );
@@ -107,9 +110,22 @@ function main() {
       '\nSetup was not successful. Please apply these steps manually:\n'
     );
     for (const step of failed) {
-      console.log(
-        `${step.platform} – ${step.title}:\n${MANUAL_STEPS[step.manual] ?? ''}\n`
-      );
+      let instructions = MANUAL_STEPS[step.manual] ?? '';
+      if (options.lock != null) {
+        instructions = instructions
+          .replace(LOCKS.portrait.swift, LOCKS[options.lock].swift)
+          .replace(LOCKS.portrait.kotlin, LOCKS[options.lock].kotlin);
+        if (
+          step.manual === 'android-early-lock' &&
+          LOCKS[options.lock].kotlinImport
+        ) {
+          instructions = instructions.replace(
+            'import com.orientationturbo.OrientationTurbo',
+            `import com.orientationturbo.OrientationTurbo\n    import ${LOCKS[options.lock].kotlinImport}`
+          );
+        }
+      }
+      console.log(`${step.platform} – ${step.title}:\n${instructions}\n`);
     }
     console.log(`Full instructions: ${README_URL}`);
     return 1;

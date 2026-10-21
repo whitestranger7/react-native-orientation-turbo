@@ -81,6 +81,10 @@ Running it again is safe: steps that are already set up are skipped. If a file d
 
 If your AppDelegate already returns `OrientationTurbo.shared.getSupportedInterfaceOrientations()` (the 2.x setup), the command updates it to pass `window`. This keeps modal lock suspension and restoration local to the queried window's scene. Existing no-argument calls still work, but multi-window apps should forward `window` as shown below.
 
+Setup also checks Swift files in the AppDelegate folder and its subfolders, excluding dependency and build directories. A forwarding callback in a separate extension is recognized, and a legacy no-argument callback is upgraded in that file. Custom or unsupported callbacks require a manual update in the reported file.
+
+Comments and quoted examples do not count as setup. An existing early lock must match `--lock` and run before React Native startup (before `super.onCreate` on Android); otherwise the command reports the existing choice or unsupported placement and asks you to update it manually. If both AppDelegate and SceneDelegate contain startup code, setup reports the ambiguity.
+
 Then install pods (`cd ios && bundle exec pod install`) and rebuild the app.
 
 The command configures orientation support; it does not migrate your app's lifecycle. It warns when React Native starts in `AppDelegate`. A successful setup does not verify that the app can launch with your chosen SDK.
