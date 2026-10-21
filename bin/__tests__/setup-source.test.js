@@ -170,6 +170,63 @@ extension AppDelegate {
     }
   );
 
+  it.each(['current', 'legacy', 'custom'])(
+    'recognizes a %s Swift callback with an escaped method name',
+    (version) => {
+      const body =
+        version === 'custom'
+          ? 'return .portrait'
+          : `return OrientationTurbo.shared.getSupportedInterfaceOrientations(${version === 'legacy' ? '' : 'for: window'})`;
+      const content =
+        swift() +
+        swiftCallback(body).replace('func application(', 'func `application`(');
+      const result = setupAppDelegate(content);
+      if (version === 'custom') {
+        expect(result.error).toContain('custom or ambiguous');
+      } else {
+        expect(result.error).toBeUndefined();
+        expect(result.content).toContain('func `application`(');
+        expect(
+          result.content.match(/supportedInterfaceOrientationsFor/g)
+        ).toHaveLength(1);
+        expect(result.content).toContain(
+          'getSupportedInterfaceOrientations(for: window)'
+        );
+        expect(setupAppDelegate(result.content).content).toBe(result.content);
+      }
+    }
+  );
+
+  it.each(['onCreate', '`onCreate`'])(
+    'refuses an expression-bodied Kotlin %s instead of adding a second override',
+    (name) => {
+      const content = kotlin().replace(
+        'class MainActivity : ReactActivity() {',
+        `class MainActivity : ReactActivity() {\n  override fun ${name}(state: android.os.Bundle?) = super.onCreate(state)`
+      );
+      const result = addKotlinEarlyLock(content, 'portrait');
+      expect(result.error).toContain(
+        'unsupported signature or expression body'
+      );
+      expect(result.content).toBeUndefined();
+    }
+  );
+
+  it('inserts into an escaped block-bodied Kotlin onCreate without duplicating it', () => {
+    const content = kotlinOnCreate(
+      'super.onCreate(savedInstanceState)'
+    ).replace('fun onCreate(', 'fun `onCreate`(');
+    const result = addKotlinEarlyLock(content, 'portrait');
+    expect(result.error).toBeUndefined();
+    expect(result.content).toContain('fun `onCreate`(');
+    expect(result.content).toContain(
+      'OrientationTurbo.lockToPortrait(this)\n    super.onCreate(savedInstanceState)'
+    );
+    expect(addKotlinEarlyLock(result.content, 'portrait').content).toBe(
+      result.content
+    );
+  });
+
   it('preserves a runtime Kotlin lock when onCreate is absent and gives safe advice', () => {
     const content = kotlin().replace(
       'class MainActivity : ReactActivity() {',

@@ -291,9 +291,9 @@ lockToLandscape(LandscapeDirection.RIGHT);
 // Unlock all orientations (allow rotation)
 unlockAllOrientations();
 
-// Get current orientation. If screen is locked - returns lock state, if not - returns current device orientation
+// Get the orientation currently displayed by the interface
 const currentOrientation = getCurrentOrientation();
-console.log(currentOrientation); // 'PORTRAIT' | 'LANDSCAPE_LEFT' | 'LANDSCAPE_RIGHT' | 'FACE_UP' | 'FACE_DOWN'
+console.log(currentOrientation); // 'PORTRAIT' | 'PORTRAIT_UPSIDE_DOWN' | 'LANDSCAPE_LEFT' | 'LANDSCAPE_RIGHT'
 
 // Check if orientation is currently locked
 const locked = isLocked();

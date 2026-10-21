@@ -306,6 +306,14 @@ function addKotlinEarlyLock(content, lock) {
   const onCreates = methods(code, 'MainActivity', 'kotlin').filter(
     (method) => method.match[1] === 'onCreate'
   );
+  const declaredOnCreates = declarations(code, 'MainActivity', 'kotlin').filter(
+    (method) => method.match[1] === 'onCreate'
+  );
+  if (declaredOnCreates.length !== onCreates.length)
+    return {
+      error:
+        'MainActivity.onCreate has an unsupported signature or expression body; add the early lock manually.',
+    };
   let result = content;
   if (onCreates.length > 0) {
     const method = onCreates[0];

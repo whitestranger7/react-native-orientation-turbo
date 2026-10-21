@@ -329,3 +329,29 @@ final class OrientationWindowTests: XCTestCase {
     XCTAssertTrue(OrientationTurboImpl.shared.responds(to: NSSelectorFromString("getSupportedInterfaceOrientationsFor:")))
   }
 }
+
+final class OrientationTurboPublicProtocolTests: XCTestCase {
+  private final class Client: NSObject, OrientationTurboPublicProtocol {
+    var calls: [String] = []
+
+    func getSupportedInterfaceOrientations() -> UIInterfaceOrientationMask { .all }
+    func getSupportedInterfaceOrientations(for window: UIWindow?) -> UIInterfaceOrientationMask { .all }
+    func lockToPortrait() { calls.append("portrait") }
+    func lockToPortrait(_ direction: String?) { calls.append("portrait:\(direction ?? "nil")") }
+    func lockToLandscape(_ direction: String) { calls.append("landscape:\(direction)") }
+    func unlockAllOrientations() {}
+    func getCurrentOrientation() -> String { "PORTRAIT" }
+    func isLocked() -> Bool { false }
+    func canLockOrientation() -> Bool { true }
+  }
+
+  func testTypedLocksForwardToAnyPublicProtocolConformer() {
+    let client = Client()
+    let api: OrientationTurboPublicProtocol = client
+    api.lockToPortrait(PortraitDirection.up)
+    api.lockToPortrait(PortraitDirection.upsideDown)
+    api.lockToLandscape(LandscapeDirection.left)
+    api.lockToLandscape(LandscapeDirection.right)
+    XCTAssertEqual(client.calls, ["portrait:UP", "portrait:UPSIDE_DOWN", "landscape:LEFT", "landscape:RIGHT"])
+  }
+}

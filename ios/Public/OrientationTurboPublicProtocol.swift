@@ -27,10 +27,10 @@ import UIKit
 // Typed variants for Swift. Objective-C keeps the string methods.
 public extension OrientationTurboPublicProtocol {
   func lockToPortrait(_ direction: PortraitDirection) {
-    (self as? OrientationTurboImpl)?.lockToPortrait(direction.rawValue)
+    lockToPortrait(direction.rawValue)
   }
 
   func lockToLandscape(_ direction: LandscapeDirection) {
-    (self as? OrientationTurboImpl)?.lockToLandscape(direction.rawValue)
+    lockToLandscape(direction.rawValue)
   }
 }

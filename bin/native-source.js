@@ -72,6 +72,13 @@ function sourceView(source, { strings = true, language = 'swift' } = {}) {
       index++;
       continue;
     }
+    // Backticks escape native identifiers; they are not string delimiters.
+    if (source[index] === '`' && /^`\w+`$/.test(source.slice(index, end))) {
+      characters[index] = ' ';
+      characters[end - 1] = ' ';
+      index = end;
+      continue;
+    }
     if (
       strings ||
       source.startsWith('//', index) ||

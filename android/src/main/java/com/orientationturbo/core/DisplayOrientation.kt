@@ -4,7 +4,6 @@ import com.orientationturbo.enums.Orientation
 
 import android.app.Activity
 import android.content.Context
-import android.content.res.Configuration
 import android.os.Build
 import android.view.Display
 import android.view.Surface
@@ -39,20 +38,19 @@ internal object DisplayOrientation {
   /** What the screen currently shows, or `null` if there's no display to read */
   fun currentOrientation(context: Context, activity: Activity?): Orientation? {
     val visualContext = activity ?: context
-    val rotation = displayOf(visualContext)?.rotation ?: return null
-    return orientationForRotation(rotation, isNaturalPortrait(visualContext, rotation))
+    val display = displayOf(visualContext) ?: return null
+    val mode = display.mode
+    return orientationForRotation(display.rotation, isNaturalPortrait(mode.physicalWidth, mode.physicalHeight))
   }
 
   fun isNaturalPortrait(context: Context, activity: Activity?): Boolean {
     val visualContext = activity ?: context
-    val rotation = displayOf(visualContext)?.rotation ?: Surface.ROTATION_0
-    return isNaturalPortrait(visualContext, rotation)
+    val mode = displayOf(visualContext)?.mode ?: return true
+    return isNaturalPortrait(mode.physicalWidth, mode.physicalHeight)
   }
 
-  private fun isNaturalPortrait(context: Context, rotation: Int): Boolean {
-    val isLandscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val isRotatedSideways = rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270
-    return isLandscape == isRotatedSideways
+  internal fun isNaturalPortrait(physicalWidth: Int, physicalHeight: Int): Boolean {
+    return physicalWidth <= physicalHeight
   }
 
   @Suppress("DEPRECATION")

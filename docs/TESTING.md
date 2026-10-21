@@ -102,7 +102,7 @@ For a small change, run the affected tests on D1 and D4 at least. Before a relea
 
 ### Multi-window (manual)
 
-- **Android:** open the example, open **Recents**, long-press the app icon → **Split screen**, pick a second app. Lock and unlock in the example and note what happens (Android ignores orientation requests for apps in split screen).
+- **Android:** open the example, open **Recents**, long-press the app icon → **Split screen**, pick a second app. Lock and unlock in the example and note what happens (Android ignores orientation requests for apps in split screen). Keep the display rotation fixed and resize the app across portrait and landscape window shapes: `getCurrentOrientation()` and physical-event directions must remain consistent. Repeat on a tablet with a landscape natural orientation.
 - **iPad (iPadOS 26+):** turn on **Settings → Multitasking & Gestures → Windowed Apps**, open the example next to another app, run T3 / T4 and note the result.
 
 ### Build checks

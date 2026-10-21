@@ -38,6 +38,19 @@ class DisplayOrientationTest {
   }
 
   @Test
+  fun physicalDisplayModesKeepDisplayAndSensorOrientationsAligned() {
+    // These are physical display modes, not the app's independently resizable bounds.
+    for ((width, height, expected) in listOf(
+      Triple(1080, 2400, Orientation.LANDSCAPE_RIGHT),
+      Triple(2400, 1080, Orientation.PORTRAIT_UPSIDE_DOWN),
+    )) {
+      val naturalPortrait = DisplayOrientation.isNaturalPortrait(width, height)
+      assertEquals(expected, DisplayOrientation.orientationForRotation(Surface.ROTATION_90, naturalPortrait))
+      assertEquals(expected, OrientationAngles.zoneFor(270, naturalPortrait))
+    }
+  }
+
+  @Test
   fun eventsAndDisplayAgree() {
     // A device turned clockwise reports angle 90; the system rotates the display to 270
     for (isNaturalPortrait in listOf(true, false)) {
