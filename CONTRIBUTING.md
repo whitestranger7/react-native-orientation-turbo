@@ -152,6 +152,8 @@ xcodebuild test -workspace OrientationTurboExample.xcworkspace -scheme Orientati
 
 The example app opens a test screen that exercises the whole API. Changes to native code, the build setup or the public API must be tested by hand on real devices or simulators, following the device and test matrix in **[docs/TESTING.md](docs/TESTING.md)**.
 
+Record release results in **[docs/RELEASE_VERIFICATION.md](docs/RELEASE_VERIFICATION.md)** with the tested commit/package hash, device and OS, RN version, SDK/toolchain, test IDs, outcomes and evidence links. Keep missing results unverified. A green build, unit-test run or implementation issue marked Done does not establish a manual pass; update the verification issues only when their required results are recorded.
+
 ### Compatibility
 
 The library is built by each app with *that app's* React Native version and toolchain, not with the versions in this repo. Every change must work across the whole supported range, **React Native 0.80 – 0.88**, not only in the example app (which uses 0.88):
