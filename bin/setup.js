@@ -17,7 +17,7 @@ const {
 } = require('./native-source');
 
 const README_URL =
-  'https://github.com/whitestranger7/react-native-orientation-turbo#installation';
+  'https://github.com/whitestranger7/react-native-orientation-turbo/blob/v3/README.md#installation';
 const SCENE_MIGRATION_URL =
   'https://github.com/whitestranger7/react-native-orientation-turbo/blob/v3/docs/IOS_SCENES.md';
 

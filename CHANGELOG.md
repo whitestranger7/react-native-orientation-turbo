@@ -2,6 +2,63 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0-rc.0] - 2026-10-28
+
+Release candidate for 3.0.0, published under the npm `next` tag: `npm install react-native-orientation-turbo@next`.
+Upgrading from 2.x: read the [migration guide](https://github.com/whitestranger7/react-native-orientation-turbo/blob/v3/docs/MIGRATION.md#migrating-from-2x-to-30).
+
+### Breaking Changes
+- **Minimum React Native version is now 0.80**; tested versions are 0.80 – 0.88 (2.x declared any version). The New Architecture remains required.
+- **`LANDSCAPE_LEFT` / `LANDSCAPE_RIGHT` in `onOrientationChange` are swapped compared to 2.x**, on both platforms. They now match the locks: `LANDSCAPE_LEFT` = bottom edge (home indicator / navigation bar) on the left. Remove any 2.x workaround that swapped them back.
+- **JavaScript `getCurrentOrientation()` now returns the displayed interface orientation** on both platforms; on Android it used to return the requested lock. Android native callers can use `getCurrentOrientation(activity)`; the no-argument overload keeps its previous behaviour.
+- **Invalid directions are ignored** with a warning, instead of falling back to LEFT (Android) / RIGHT (iOS).
+#### iOS
+- The undocumented `OrientationTurboShared` class is removed; `OrientationTurbo.shared` works as before.
+- The undocumented iOS 15 `OrientationSupportDidChange` / `ForceOrientationChange` notifications are no longer posted.
+- `OrientationTurboPublicProtocol` has a new requirement, `getSupportedInterfaceOrientations(for:)`. Only relevant if you conform to it yourself, for example in test mocks.
+#### Android
+- `android/gradle.properties` and its `OrientationTurbo_*` overrides are removed. Your app's `rootProject.ext` values still apply.
+- The `Orientation` enum has a new `PORTRAIT_UPSIDE_DOWN` value; an exhaustive Kotlin `when` needs a branch for it.
+- The public `com.orientationturbo.constants.AngleRanges` object is removed.
+
+### Added
+- **`canLockOrientation()`**: detects known platform restrictions on orientation locking, including resizable iPad apps (without `UIRequiresFullScreen`) and Android 16+ large screens for apps targeting API 36+, accounting for the applicable exemptions (games, and the API 36 opt-out property).
+- **Automatic setup**: `npx react-native-orientation-turbo setup [--lock …] [--dry-run]` edits AppDelegate / SceneDelegate / MainActivity. It upgrades a 2.x callback, ignores commented-out code, and prints manual steps when your project doesn't look like the template.
+- **Jest mock**: `react-native-orientation-turbo/jest/setup`, with helpers to simulate rotation, the displayed orientation and devices that ignore locks.
+- **SceneDelegate apps** (React Native 0.88 template) and iOS 27 SDK builds are supported. AppDelegate-only apps built with the iOS 27 SDK or newer must adopt UIScene before running on iOS 27 or newer; the setup command does not perform that migration. See the [scene migration guide](https://github.com/whitestranger7/react-native-orientation-turbo/blob/v3/docs/IOS_SCENES.md).
+#### iOS
+- `getSupportedInterfaceOrientations(for: window)`: pass the AppDelegate callback's window so a `<Modal>` only suspends the lock in its own window. The no-argument version is deprecated in Swift.
+- Typed `lockToPortrait(_: PortraitDirection)` / `lockToLandscape(_: LandscapeDirection)`; the string versions are deprecated in Swift.
+#### Android
+- `lockToPortrait(activity, PortraitDirection)`, `getCurrentOrientation(activity)` (what the screen shows) and `canLockOrientation(activity)`.
+
+### Fixed
+- **iOS: no crash when a `<Modal>` can't show the locked orientation** (`UIApplicationInvalidInterfaceOrientation`). The lock is suspended while the modal is shown and re-applied when it closes.
+- **iOS: no crash when locking on iPad** ([#19](https://github.com/whitestranger7/react-native-orientation-turbo/issues/19)).
+- **Android: orientation events no longer flicker** on small tilts or shaking ([#20](https://github.com/whitestranger7/react-native-orientation-turbo/issues/20)). A new orientation is reported after readings stay in it for about 200 ms.
+- Locks from native code (`OrientationTurbo.lockTo…`) now emit `onLockOrientationChange`, on both platforms.
+#### iOS
+- Locks apply in call order and the state is thread-safe; a lock or unlock is no longer one step late.
+- The first lock inside a `<Modal>` applies right away.
+- The first `getCurrentOrientation()` after a landscape launch returns the displayed orientation, even with tracking stopped.
+- Locks apply to every foreground window scene, and the orientation is read from the active one.
+- Portrait upside-down on iPhones without a Home button is ignored with a warning instead of silently failing.
+#### Android
+- Portrait upside-down is locked and reported (`PORTRAIT_UPSIDE_DOWN`; 2.x locked and reported `PORTRAIT`).
+- Tablets with a landscape natural orientation, and apps in split screen or a resized window, report correct orientations.
+- Locks requested from JS and native code apply in request order, and each lock event describes its own request.
+- A lock or unlock requested before the Activity exists is applied once it's available, and again after the Activity is recreated, without overriding orientation changes made by other code.
+- Tracking pauses in the background, stops when React Native reloads, and the manifest orientation is read once an Activity exists.
+
+### Known limitations
+- `onOrientationChange` reports the **physical device** orientation. It can fire before or after the screen rotates and can differ from the UI under a lock or with auto-rotate off. The UI-synchronization part of #20 isn't implemented; an interface-orientation event is planned for 3.x.
+- iOS installation is CocoaPods only; Swift Package Manager is planned for 3.x.
+
+### Technical Improvements
+- Built and tested against React Native 0.88 (AGP 9, Gradle 9, Kotlin 2.2, compileSdk 37), with a consumer test matrix for RN 0.80, 0.82, 0.84 and 0.88: Xcode 16.4 / 26.6 / 27.1, static and dynamic frameworks, and AGP 9 defaults.
+- Verified 16 KB ELF and APK alignment in the example release build.
+- Native unit tests for Android (JUnit) and iOS (XCTest).
+
 ## [2.2.0] - 2025-07-28
 
 ### Added
